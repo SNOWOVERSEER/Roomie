@@ -1,0 +1,254 @@
+.section {
+  padding: clamp(4.5rem, 8vw, 7.5rem) 0;
+  background: linear-gradient(
+    to bottom,
+    var(--cream),
+    var(--cream-warm) 30%,
+    var(--cream-warm)
+  );
+}
+
+.eyebrow {
+  font-family: var(--font-display), sans-serif;
+  font-weight: 600;
+  font-size: 0.95rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--orange-deep);
+}
+
+.heading {
+  margin-top: 0.7rem;
+  font-size: clamp(2.1rem, 3.5vw, 3.1rem);
+  font-weight: 800;
+}
+
+.lede {
+  margin-top: 0.9rem;
+  max-width: 56ch;
+  font-size: 1.1rem;
+  color: var(--ink-soft);
+}
+
+.grid {
+  margin-top: 3rem;
+  display: grid;
+  grid-template-columns: 1.12fr 0.88fr;
+  gap: clamp(1.6rem, 3vw, 2.4rem);
+  align-items: stretch;
+}
+
+/* ——— 在展主位 ——— */
+.featured {
+  display: grid;
+  align-content: start;
+  gap: 0.9rem;
+}
+
+.featuredCard {
+  position: relative;
+  display: block;
+  border-radius: var(--r-media);
+  overflow: hidden;
+  box-shadow: var(--shadow-lift);
+}
+
+.featuredCard img {
+  width: 100%;
+  height: 100%;
+  min-height: 420px;
+  object-fit: cover;
+  transition: transform var(--dur-slow) var(--ease-out);
+}
+.featuredCard:hover img {
+  transform: scale(1.03);
+}
+
+.featuredCard::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    to top,
+    rgba(18, 39, 94, 0.72),
+    rgba(18, 39, 94, 0) 55%
+  );
+}
+
+.nowChip {
+  position: absolute;
+  z-index: 1;
+  top: 1.1rem;
+  left: 1.1rem;
+  font-family: var(--font-display), sans-serif;
+  font-weight: 700;
+  font-size: 0.82rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #fff8ee;
+  background: var(--orange);
+  border-radius: 999px;
+  padding: 0.4em 1em;
+  box-shadow: 0 6px 18px rgba(212, 112, 42, 0.4);
+}
+
+.featuredBody {
+  position: absolute;
+  z-index: 1;
+  left: 1.4rem;
+  right: 1.4rem;
+  bottom: 1.2rem;
+  display: grid;
+  gap: 0.15rem;
+}
+
+.featuredNo {
+  font-family: var(--font-display), sans-serif;
+  font-weight: 800;
+  font-size: 0.9rem;
+  letter-spacing: 0.14em;
+  color: color-mix(in srgb, var(--cream) 80%, transparent);
+}
+
+.featuredTitle {
+  font-family: var(--font-display), sans-serif;
+  font-weight: 800;
+  font-size: clamp(1.5rem, 2.4vw, 2rem);
+  color: var(--cream-warm);
+  line-height: 1.15;
+}
+
+.featuredMeta {
+  font-size: 0.92rem;
+  color: color-mix(in srgb, var(--cream) 76%, transparent);
+}
+
+.featuredLinks {
+  display: flex;
+  gap: 0.7rem;
+  flex-wrap: wrap;
+}
+
+.featuredLinks a {
+  font-family: var(--font-display), sans-serif;
+  font-weight: 600;
+  font-size: 0.92rem;
+  color: var(--blue-deep);
+  border: 2px solid color-mix(in srgb, var(--blue) 30%, transparent);
+  border-radius: 999px;
+  padding: 0.45em 1.1em;
+  transition:
+    transform var(--dur-fast) var(--ease-soft),
+    border-color var(--dur-fast) var(--ease-out),
+    background var(--dur-fast) var(--ease-out);
+}
+.featuredLinks a:hover {
+  transform: translateY(-2px);
+  border-color: var(--blue);
+  background: rgba(58, 91, 199, 0.07);
+}
+.featuredLinks em {
+  font-style: normal;
+  color: var(--ink-soft);
+  font-weight: 600;
+  margin-left: 0.35em;
+}
+
+/* ——— 图纸位（soon） ——— */
+.soonCol {
+  display: grid;
+  gap: clamp(1rem, 2vw, 1.4rem);
+}
+
+.soonCard {
+  display: grid;
+  grid-template-columns: 132px 1fr;
+  gap: 1.1rem;
+  align-items: center;
+  background: color-mix(in srgb, var(--paper) 66%, transparent);
+  border: 2px dashed color-mix(in srgb, var(--blue) 26%, transparent);
+  border-radius: var(--r-card);
+  padding: 0.9rem;
+  transition: border-color var(--dur-fast) var(--ease-out);
+}
+.soonCard:hover {
+  border-color: color-mix(in srgb, var(--blue) 48%, transparent);
+}
+
+.soonMedia {
+  border-radius: 10px;
+  overflow: hidden;
+  box-shadow: var(--shadow-soft);
+}
+
+.soonMedia img {
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  object-fit: cover;
+}
+
+.soonNo {
+  font-family: var(--font-display), sans-serif;
+  font-weight: 700;
+  font-size: 0.78rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--orange-deep);
+}
+.soonNo em {
+  font-style: normal;
+  color: var(--ink-soft);
+}
+
+.soonBody h3 {
+  margin-top: 0.15rem;
+  font-size: 1.18rem;
+  font-weight: 700;
+}
+
+.soonBlurb {
+  margin-top: 0.2rem;
+  font-size: 0.9rem;
+  color: var(--ink-soft);
+}
+
+.wait {
+  margin-top: 0.65rem;
+  font-family: var(--font-display), sans-serif;
+  font-weight: 600;
+  font-size: 0.88rem;
+  color: var(--blue-deep);
+  border: 2px solid color-mix(in srgb, var(--blue) 32%, transparent);
+  border-radius: 999px;
+  padding: 0.38em 1em;
+  transition:
+    transform var(--dur-fast) var(--ease-soft),
+    border-color var(--dur-fast) var(--ease-out),
+    background var(--dur-fast) var(--ease-out),
+    color var(--dur-fast) var(--ease-out);
+}
+.wait:hover:not(:disabled) {
+  transform: translateY(-2px);
+  border-color: var(--blue);
+}
+.waitDone {
+  cursor: default;
+  color: #2c6e49;
+  border-color: color-mix(in srgb, #2c6e49 40%, transparent);
+  background: color-mix(in srgb, #2c6e49 8%, transparent);
+}
+
+@media (max-width: 900px) {
+  .grid {
+    grid-template-columns: 1fr;
+  }
+  .featuredCard img {
+    min-height: 320px;
+  }
+}
+
+@media (max-width: 480px) {
+  .soonCard {
+    grid-template-columns: 96px 1fr;
+  }
+}

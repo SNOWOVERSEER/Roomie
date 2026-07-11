@@ -17,12 +17,17 @@ export default function BrandStory() {
               Pet stuff shouldn&rsquo;t look like pet stuff.
             </h2>
             <p className={styles.body}>
-              Your cat lives in the living room, not in a pet aisle. So the
-              things they scratch, nap on and eat from should hold their own
-              next to the sofa you saved up for. That&rsquo;s the whole idea —
-              furniture you share, from a little studio in Melbourne.
+              Your cat lives in the living room, not in a pet aisle. So we run
+              Roomie like a gallery, not a warehouse: find a small maker doing
+              one thing beautifully, help shape it for real homes, and shelve
+              it only when it holds its own next to the sofa you saved up for.
+              A little curation studio in Melbourne.
             </p>
             <p className={styles.motto}>Pet things, part of home.</p>
+            <p className={styles.maker}>
+              Collection № 01 is made with <strong>GlugGlug</strong> — a studio
+              that treats loop-pile like paint.
+            </p>
           </Reveal>
         </div>
 

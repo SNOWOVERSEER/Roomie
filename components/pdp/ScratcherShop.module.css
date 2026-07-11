@@ -1,0 +1,141 @@
+/* ——— 图库：主图 + 缩略轨 ——— */
+.gallery {
+  display: grid;
+  gap: 0.9rem;
+}
+
+.main {
+  position: relative;
+  border-radius: var(--r-media);
+  overflow: hidden;
+  box-shadow: var(--shadow-lift);
+  background: var(--paper);
+}
+
+.main img {
+  width: 100%;
+  aspect-ratio: 4 / 4.4;
+  object-fit: cover;
+  animation: mainIn 380ms var(--ease-out) both;
+}
+
+@keyframes mainIn {
+  from {
+    opacity: 0;
+    transform: scale(1.012);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.counterTag {
+  position: absolute;
+  right: 0.9rem;
+  bottom: 0.9rem;
+  font-family: var(--font-display), sans-serif;
+  font-weight: 700;
+  font-size: 0.8rem;
+  color: var(--blue-deep);
+  background: color-mix(in srgb, var(--paper) 88%, transparent);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  border-radius: 999px;
+  padding: 0.3rem 0.8rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.thumbs {
+  display: flex;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+}
+
+.thumbs button {
+  flex: none;
+  padding: 3px;
+  border-radius: 12px;
+  border: 2.5px solid transparent;
+  transition:
+    border-color var(--dur-fast) var(--ease-out),
+    transform var(--dur-fast) var(--ease-soft),
+    opacity var(--dur-fast) var(--ease-out);
+  opacity: 0.82;
+}
+
+.thumbs button:hover {
+  transform: translateY(-2px);
+  opacity: 1;
+}
+
+.thumbs img {
+  width: 76px;
+  aspect-ratio: 1;
+  object-fit: cover;
+  border-radius: 9px;
+  display: block;
+}
+
+.thumbOn {
+  border-color: var(--orange) !important;
+  opacity: 1 !important;
+}
+
+/* ——— 画芯选择器 ——— */
+.picks {
+  margin-top: 0.7rem;
+  display: flex;
+  gap: 0.7rem;
+}
+
+.pick {
+  padding: 3px;
+  border-radius: 10px;
+  border: 2.5px solid transparent;
+  transition:
+    border-color var(--dur-fast) var(--ease-out),
+    transform var(--dur-fast) var(--ease-soft);
+}
+
+.pick img {
+  width: 56px;
+  aspect-ratio: 7 / 10;
+  object-fit: cover;
+  border-radius: 6px;
+  display: block;
+}
+
+.pick:hover {
+  transform: translateY(-3px);
+}
+
+.picked {
+  border-color: var(--orange);
+}
+
+.pickName {
+  margin-top: 0.7rem;
+  font-family: var(--font-display), sans-serif;
+  font-weight: 700;
+  color: var(--blue-deep);
+  animation: nameIn 260ms var(--ease-out) both;
+}
+
+.pickCaption {
+  font-size: 0.88rem;
+  color: var(--ink-soft);
+  margin-top: 0.15rem;
+  animation: nameIn 260ms var(--ease-out) both;
+}
+
+@keyframes nameIn {
+  from {
+    opacity: 0;
+    transform: translateX(8px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}

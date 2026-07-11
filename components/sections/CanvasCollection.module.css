@@ -1,0 +1,131 @@
+.section {
+  padding: clamp(5rem, 9vw, 8.5rem) 0 clamp(4.5rem, 8vw, 7.5rem);
+  background: var(--cream);
+}
+
+/* ——— 刊头 ——— */
+.masthead {
+  display: grid;
+  grid-template-columns: 1.25fr 0.75fr;
+  gap: clamp(2rem, 5vw, 4.5rem);
+  align-items: end;
+}
+
+.eyebrow {
+  font-family: var(--font-display), sans-serif;
+  font-weight: 600;
+  font-size: 0.95rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--orange-deep);
+}
+
+.heading {
+  margin-top: 0.7rem;
+  font-size: clamp(2.3rem, 4vw, 3.4rem);
+  font-weight: 800;
+}
+
+.lede {
+  margin-top: 1.1rem;
+  font-size: 1.14rem;
+  max-width: 52ch;
+  color: var(--ink-soft);
+}
+
+/* 目录卡：一张钉在墙上的系列清单 */
+.indexCard {
+  background: var(--paper);
+  border-radius: var(--r-card);
+  padding: 1.3rem 1.4rem 0.9rem;
+  box-shadow: var(--shadow-soft);
+  transform: rotate(0.8deg);
+}
+
+.indexTitle {
+  font-family: var(--font-display), sans-serif;
+  font-weight: 700;
+  font-size: 0.82rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+}
+
+.indexList {
+  list-style: none;
+  margin-top: 0.6rem;
+}
+
+.indexList a {
+  display: grid;
+  grid-template-columns: 3.2rem 1fr;
+  grid-template-areas:
+    "no name"
+    "no meta";
+  align-items: baseline;
+  padding: 0.72rem 0.4rem;
+  margin-inline: -0.4rem;
+  border-radius: 10px;
+  transition: background var(--dur-fast) var(--ease-out);
+}
+.indexList li + li a {
+  border-top: 1.5px dashed color-mix(in srgb, var(--ink-soft) 28%, transparent);
+}
+.indexList a:hover {
+  background: color-mix(in srgb, var(--blue) 7%, transparent);
+}
+
+.indexNo {
+  grid-area: no;
+  font-family: var(--font-display), sans-serif;
+  font-weight: 800;
+  color: var(--orange);
+  font-size: 1.02rem;
+}
+
+.indexName {
+  grid-area: name;
+  font-family: var(--font-display), sans-serif;
+  font-weight: 700;
+  color: var(--blue-deep);
+  font-size: 1.04rem;
+}
+
+.indexMeta {
+  grid-area: meta;
+  font-size: 0.84rem;
+  color: var(--ink-soft);
+}
+
+.indexNew {
+  color: var(--orange-deep);
+  font-weight: 600;
+}
+
+/* ——— 胶片区 ——— */
+.stripBlock {
+  margin-top: clamp(2.6rem, 5vw, 4rem);
+}
+
+/* ——— 门户卡行 ——— */
+.portals {
+  margin-top: clamp(3rem, 5.5vw, 4.5rem);
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: clamp(1.4rem, 3vw, 2.4rem);
+  align-items: stretch;
+}
+
+@media (max-width: 900px) {
+  .masthead {
+    grid-template-columns: 1fr;
+    align-items: start;
+  }
+  .indexCard {
+    max-width: 30rem;
+  }
+  .portals {
+    grid-template-columns: 1fr;
+    max-width: 34rem;
+  }
+}

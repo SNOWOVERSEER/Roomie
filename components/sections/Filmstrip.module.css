@@ -1,0 +1,122 @@
+/* 胶片轨道全宽出血，左端与 .shell 对齐 */
+.wrap {
+  --gutter: calc((100% - min(var(--w-page), 100% - clamp(2.5rem, 7vw, 6rem))) / 2);
+  position: relative;
+  width: 100%;
+}
+
+.track {
+  list-style: none;
+  display: flex;
+  gap: clamp(0.9rem, 1.8vw, 1.4rem);
+  overflow-x: auto;
+  padding: 0.4rem var(--gutter) 1rem;
+  scroll-snap-type: x proximity;
+  scroll-padding-inline-start: var(--gutter);
+  scrollbar-width: none;
+  cursor: grab;
+  /* 两端渐隐，滚到尽头时由按钮态揭示 */
+  mask-image: linear-gradient(
+    to right,
+    transparent,
+    #000 clamp(1rem, 4vw, 3.5rem),
+    #000 calc(100% - clamp(1rem, 4vw, 3.5rem)),
+    transparent
+  );
+}
+.track::-webkit-scrollbar {
+  display: none;
+}
+.track:active {
+  cursor: grabbing;
+}
+
+.slide {
+  flex: none;
+  scroll-snap-align: start;
+}
+
+.slide img {
+  height: clamp(320px, 44vh, 430px);
+  width: auto;
+  border-radius: var(--r-card);
+  box-shadow: var(--shadow-soft);
+  user-select: none;
+}
+
+.slide figcaption {
+  margin-top: 0.65rem;
+  max-width: 34ch;
+  font-size: 0.88rem;
+  color: var(--ink-soft);
+  display: flex;
+  gap: 0.55rem;
+  align-items: baseline;
+}
+
+.slideNo {
+  font-family: var(--font-display), sans-serif;
+  font-weight: 700;
+  font-size: 0.78rem;
+  color: var(--orange-deep);
+  letter-spacing: 0.06em;
+}
+
+/* 计数 + 箭头栏，与 shell 左缘对齐 */
+.rail {
+  margin: 0.4rem var(--gutter) 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.counter {
+  font-family: var(--font-display), sans-serif;
+  font-weight: 700;
+  font-size: 1.02rem;
+  color: var(--blue-deep);
+  font-variant-numeric: tabular-nums;
+}
+.counter em {
+  font-style: normal;
+  color: var(--ink-soft);
+  font-weight: 600;
+  font-size: 0.88rem;
+}
+
+.arrows {
+  display: flex;
+  gap: 0.6rem;
+}
+
+.arrows button {
+  display: grid;
+  place-items: center;
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  border: 2px solid color-mix(in srgb, var(--blue) 32%, transparent);
+  color: var(--blue-deep);
+  background: color-mix(in srgb, var(--paper) 75%, transparent);
+  transition:
+    transform var(--dur-fast) var(--ease-soft),
+    border-color var(--dur-fast) var(--ease-out),
+    opacity var(--dur-fast) var(--ease-out);
+}
+.arrows button:hover:not(:disabled) {
+  transform: translateY(-2px);
+  border-color: var(--blue);
+}
+.arrows button:active:not(:disabled) {
+  transform: scale(0.94);
+}
+.arrows button:disabled {
+  opacity: 0.32;
+  cursor: default;
+}
+
+@media (max-width: 720px) {
+  .slide img {
+    height: clamp(260px, 40vh, 340px);
+  }
+}

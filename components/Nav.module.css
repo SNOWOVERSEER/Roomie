@@ -56,6 +56,19 @@
   right: 0;
 }
 
+/* 新品霓点（猫屋预售期间） */
+.newLink::before {
+  content: "";
+  position: absolute;
+  top: 0.05rem;
+  right: -0.55rem;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--orange);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--orange) 22%, transparent);
+}
+
 .cart {
   display: flex;
   align-items: center;

@@ -1,0 +1,118 @@
+import type { Metadata } from "next";
+import Nav from "@/components/Nav";
+import Footer from "@/components/sections/Footer";
+import Reveal from "@/components/Reveal";
+import Crumb from "@/components/pdp/Crumb";
+import CrossSell from "@/components/pdp/CrossSell";
+import HouseShop from "@/components/pdp/HouseShop";
+import { getHouseRun } from "@/lib/shopify";
+import pdp from "@/components/pdp/pdp.module.css";
+import shop from "@/components/pdp/HouseShop.module.css";
+
+export const metadata: Metadata = {
+  title: "The Canvas House — Roomie",
+  description:
+    "An A-frame cat den wearing two full scratch-paintings, with a porthole door. First run of ten numbered pieces. Collection № 01, made with GlugGlug.",
+};
+
+/* № 01-B 详情页：夜幕预订舞台 + 剧照 + 预订流程说明。 */
+
+const STILLS = [
+  {
+    src: "/c01/house-ontop.webp",
+    alt: "A fluffy cat lounging on top of the Canvas House apex",
+    title: "The roof is a lookout",
+    body: "Rated for full-loaf lounging, obviously.",
+  },
+  {
+    src: "/c01/house-night.webp",
+    alt: "The wave canvas panel of the house at night, a cat tail in the foreground",
+    title: "Wave Light, after dark",
+    body: "The panels are the same swap-able prints as the scratcher.",
+  },
+  {
+    src: "/c01/house-paw.webp",
+    alt: "A tabby paw resting on the deep blue boat canvas",
+    title: "Two walls, claw-rated",
+    body: "Both faces are full scratch-canvases — shred away.",
+  },
+];
+
+export default async function HousePage() {
+  const run = await getHouseRun();
+
+  return (
+    <>
+      <Nav />
+      <main className={pdp.page}>
+        <Crumb piece="01-B The Canvas House" />
+        <HouseShop total={run.total} claimed={run.claimed} />
+
+        {/* 剧照三联 */}
+        <section className={pdp.section}>
+          <div className="shell">
+            <Reveal>
+              <p className={pdp.kicker}>Off the set</p>
+              <h2 className={pdp.sectionHeading}>
+                A den, a lookout, a gallery wall.
+              </h2>
+            </Reveal>
+            <div className={shop.stills}>
+              {STILLS.map((s, i) => (
+                <Reveal key={s.src} as="figure" delay={i * 100}>
+                  <div className={shop.stillMedia}>
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src={s.src} alt={s.alt} loading="lazy" />
+                  </div>
+                  <figcaption>
+                    <strong>{s.title}</strong>
+                    <span>{s.body}</span>
+                  </figcaption>
+                </Reveal>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* 预订流程 */}
+        <section className={`${pdp.section} ${pdp.sectionWarm}`}>
+          <div className="shell">
+            <Reveal>
+              <p className={pdp.kicker}>How the run works</p>
+              <h2 className={pdp.sectionHeading}>
+                Ten pieces, built in order.
+              </h2>
+            </Reveal>
+            {/* TODO 文案：预订政策细节待用户确认 */}
+            <ol className={pdp.steps}>
+              <Reveal as="li">
+                <h3>Reserve a number</h3>
+                <p>Pick the number you want — it's stamped on the frame.</p>
+              </Reveal>
+              <Reveal as="li" delay={90}>
+                <h3>We build in order</h3>
+                <p>№ 01 leaves the bench first. You'll see yours in progress.</p>
+              </Reveal>
+              <Reveal as="li" delay={180}>
+                <h3>Pay when it ships</h3>
+                <p>Nothing is charged until your house is on its way.</p>
+              </Reveal>
+            </ol>
+          </div>
+        </section>
+
+        <CrossSell
+          href="/scratcher"
+          kicker="Also in № 01 · shipping now"
+          title="The Canvas Scratcher"
+          blurb="The original leaning print — same canvases, same pine, AU$89."
+          image="/c01/scratcher-solo.webp"
+          imageAlt="The Canvas Scratcher leaning against a wall"
+          cta="Meet the Scratcher"
+          tone="day"
+        />
+      </main>
+      <Footer />
+    </>
+  );
+}

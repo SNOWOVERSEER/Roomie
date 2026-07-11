@@ -1,0 +1,66 @@
+/* 夜色收束段 —— 画里的深蓝夜空落到页面上 */
+.section {
+  background:
+    radial-gradient(
+      120% 90% at 50% -10%,
+      rgba(58, 91, 199, 0.35),
+      rgba(18, 39, 94, 0) 55%
+    ),
+    var(--navy);
+  padding: clamp(4.5rem, 8vw, 7.5rem) 0 clamp(5rem, 9vw, 8rem);
+}
+
+.inner {
+  text-align: center;
+  display: grid;
+  justify-items: center;
+}
+
+.heading {
+  font-size: clamp(2.1rem, 3.6vw, 3.1rem);
+  font-weight: 800;
+  color: var(--cream-warm);
+}
+
+.sub {
+  margin-top: 0.8rem;
+  color: color-mix(in srgb, var(--cream) 72%, transparent);
+  max-width: 46ch;
+}
+
+.row {
+  margin-top: 2.2rem;
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.ghostCream {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55em;
+  border: 2px solid color-mix(in srgb, var(--cream) 55%, transparent);
+  color: var(--cream);
+  font-family: var(--font-display), sans-serif;
+  font-weight: 600;
+  font-size: 1.02rem;
+  padding: 0.78em 1.6em;
+  border-radius: 999px;
+  transition:
+    transform var(--dur-fast) var(--ease-soft),
+    border-color var(--dur-fast) var(--ease-out),
+    background var(--dur-fast) var(--ease-out);
+}
+
+.ghostCream:hover {
+  transform: translateY(-2px);
+  border-color: var(--cream);
+  background: rgba(237, 234, 227, 0.08);
+}
+
+.fine {
+  margin-top: 1.6rem;
+  font-size: 0.88rem;
+  color: color-mix(in srgb, var(--cream) 52%, transparent);
+}

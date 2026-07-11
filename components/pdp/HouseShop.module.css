@@ -1,0 +1,185 @@
+/* ——— 夜幕主舞台的媒体 ——— */
+.screen {
+  border-radius: var(--r-media);
+  overflow: hidden;
+  box-shadow:
+    0 0 0 1px rgba(237, 234, 227, 0.14),
+    0 30px 80px rgba(2, 8, 28, 0.55);
+  transform: rotate(-1.2deg);
+}
+
+.screen video,
+.screen img {
+  width: 100%;
+  aspect-ratio: 4 / 5;
+  object-fit: cover;
+  display: block;
+}
+
+.mediaCol {
+  position: relative;
+}
+
+.filmTag {
+  position: absolute;
+  left: 50%;
+  bottom: -14px;
+  transform: translateX(-50%) rotate(1deg);
+  white-space: nowrap;
+  font-family: var(--font-display), sans-serif;
+  font-weight: 600;
+  font-size: 0.8rem;
+  color: var(--blue-deep);
+  background: var(--paper);
+  border-radius: 999px;
+  padding: 0.35rem 0.95rem;
+  box-shadow: var(--shadow-soft);
+}
+
+/* ——— 编号选择器：十张纸吊牌 ——— */
+.numbers {
+  margin-top: 0.8rem;
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 0.55rem;
+}
+
+.numTag {
+  position: relative;
+  font-family: var(--font-display), sans-serif;
+  font-weight: 800;
+  font-size: 1.05rem;
+  color: var(--blue-deep);
+  background: var(--cream-warm);
+  border: 2px solid color-mix(in srgb, var(--blue) 22%, transparent);
+  border-radius: 10px;
+  padding: 0.62em 0;
+  text-align: center;
+  transition:
+    transform var(--dur-fast) var(--ease-soft),
+    border-color var(--dur-fast) var(--ease-out),
+    background var(--dur-fast) var(--ease-out),
+    box-shadow var(--dur-fast) var(--ease-out);
+}
+
+/* 吊牌孔 */
+.numTag::before {
+  content: "";
+  position: absolute;
+  top: 4px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--blue) 24%, transparent);
+}
+
+.numTag:nth-child(odd) {
+  rotate: -1.6deg;
+}
+.numTag:nth-child(even) {
+  rotate: 1.4deg;
+}
+
+.numTag:hover:not(:disabled) {
+  transform: translateY(-3px);
+  border-color: var(--blue);
+}
+
+.numOn {
+  background: var(--orange);
+  border-color: var(--orange-deep);
+  color: #fff8ee;
+  box-shadow: 0 8px 20px rgba(212, 112, 42, 0.4);
+  rotate: 0deg !important;
+  transform: scale(1.06);
+}
+.numOn::before {
+  background: rgba(255, 248, 238, 0.6);
+}
+
+.numTag:disabled {
+  opacity: 0.38;
+  text-decoration: line-through;
+  cursor: default;
+}
+
+.numHint {
+  margin-top: 0.75rem;
+  font-size: 0.88rem;
+  color: var(--ink-soft);
+  min-height: 1.3em;
+  animation: hintIn 240ms var(--ease-out) both;
+}
+
+@keyframes hintIn {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* ——— 三张剧照 ——— */
+.stills {
+  margin-top: 2rem;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: clamp(1.2rem, 2.6vw, 2rem);
+}
+
+.stills figure:nth-child(2) {
+  margin-top: clamp(1rem, 2.6vw, 2.2rem);
+}
+
+.stillMedia {
+  overflow: hidden;
+  border-radius: var(--r-card);
+  box-shadow: var(--shadow-soft);
+}
+
+.stillMedia img {
+  aspect-ratio: 4 / 4.6;
+  object-fit: cover;
+  width: 100%;
+  transition: transform var(--dur-slow) var(--ease-out);
+}
+
+.stills figure:hover .stillMedia img {
+  transform: scale(1.045);
+}
+
+.stills figcaption {
+  margin-top: 0.8rem;
+  font-size: 0.92rem;
+  color: var(--ink-soft);
+  max-width: 30ch;
+}
+
+.stills figcaption strong {
+  display: block;
+  font-family: var(--font-display), sans-serif;
+  font-weight: 700;
+  color: var(--blue-deep);
+  font-size: 1.02rem;
+  margin-bottom: 0.15rem;
+}
+
+@media (max-width: 900px) {
+  .stills {
+    grid-template-columns: 1fr;
+    max-width: 30rem;
+  }
+  .stills figure:nth-child(2) {
+    margin-top: 0;
+  }
+  .mediaCol {
+    max-width: 440px;
+    width: 100%;
+    justify-self: center;
+  }
+}

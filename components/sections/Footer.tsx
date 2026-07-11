@@ -71,9 +71,9 @@ export default function Footer() {
 
         <nav className={styles.col} aria-label="Shop">
           <h3>Shop</h3>
-          <a href="#scratcher">Canvas Scratcher</a>
-          <a href="#collection">Collection</a>
-          <a href="#collection">Gift cards</a>
+          <a href="/scratcher">The Canvas Scratcher</a>
+          <a href="/house">The Canvas House</a>
+          <a href="/#collection">The shelf</a>
         </nav>
 
         <nav className={styles.col} aria-label="Help">

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import RoomieLogo from "./RoomieLogo";
 import { useCart } from "./CartContext";
 import styles from "./Nav.module.css";
@@ -18,13 +19,16 @@ export default function Nav() {
 
   return (
     <header className={`${styles.nav} ${solid ? styles.solid : ""}`}>
-      <a href="#top" aria-label="Roomie — back to top" className={styles.logo}>
+      <Link href="/" aria-label="Roomie — home" className={styles.logo}>
         <RoomieLogo height={38} />
-      </a>
+      </Link>
       <nav className={styles.links}>
-        <a href="#scratcher">The Scratcher</a>
-        <a href="#collection">Collection</a>
-        <a href="#story">Our idea</a>
+        <Link href="/scratcher">The Scratcher</Link>
+        <Link href="/house" className={styles.newLink}>
+          The House
+        </Link>
+        <Link href="/#collection">The shelf</Link>
+        <Link href="/#story">Our idea</Link>
       </nav>
       <button className={styles.cart} aria-label={`Basket, ${count} items`}>
         <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden>

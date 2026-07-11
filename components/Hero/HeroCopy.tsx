@@ -1,7 +1,7 @@
 "use client";
 
+import Link from "next/link";
 import { HERO_COPY } from "@/lib/heroConfig";
-import { useCart } from "@/components/CartContext";
 import type { FreezeSteps } from "./Hero";
 import styles from "./Hero.module.css";
 
@@ -15,8 +15,6 @@ interface Props {
  * 入场节拍由视频叙事驱动（beats），定格后由错峰序列驱动（steps）。
  */
 export default function HeroCopy({ beats, steps }: Props) {
-  const { add } = useCart();
-
   return (
     <div className={styles.copyLayer}>
       <div
@@ -32,10 +30,8 @@ export default function HeroCopy({ beats, steps }: Props) {
         </p>
 
         <div className={`${styles.ctaRow} ${steps.cta ? styles.on : ""}`}>
-          <button
-            className="btnPrimary"
-            onClick={() => add("canvas-scratcher", "The Canvas Scratcher")}
-          >
+          {/* 引流进详情页（下单在 /scratcher），不再直接加购 */}
+          <Link className="btnPrimary" href="/scratcher">
             {HERO_COPY.cta}
             <svg viewBox="0 0 20 20" width="17" height="17" aria-hidden>
               <path
@@ -47,7 +43,7 @@ export default function HeroCopy({ beats, steps }: Props) {
                 strokeLinejoin="round"
               />
             </svg>
-          </button>
+          </Link>
           <span className={styles.ctaNote}>{HERO_COPY.ctaNote}</span>
         </div>
       </div>
