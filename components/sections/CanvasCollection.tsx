@@ -5,9 +5,10 @@ import PortalCard from "./PortalCard";
 import styles from "./CanvasCollection.module.css";
 
 /*
- * № 01 系列刊头 —— landing 只负责勾兴趣：氛围（胶片）+ 两张门户卡。
+ * Canvas 系列刊头 —— landing 只负责勾兴趣：氛围（胶片）+ 两张门户卡。
  * 深挖内容（卖点/工艺/换画/购买）都在 /scratcher 与 /house 详情页。
- * 供应商（GlugGlug，合作制造方，logo 可露出）素材已去中文，见 /public/c01。
+ * 红线：站点绝不露出供应商品牌；/public/c01 素材已去中文并抹除全部 logo
+ * （LaMa inpaint 管线，2026-07-11）。
  */
 
 const SLIDES: Slide[] = [
@@ -64,35 +65,33 @@ const SLIDES: Slide[] = [
 
 export default function CanvasCollection() {
   return (
-    <section className={styles.section} id="collection-01">
-      {/* ——— 系列刊头 + 目录卡 ——— */}
+    <section className={styles.section} id="canvas">
+      {/* ——— 产品线刊头 + 清单卡 ——— */}
       <div className={`shell ${styles.masthead}`}>
         <Reveal className={styles.mastText}>
-          <p className={styles.eyebrow}>
-            Collection № 01 · made with GlugGlug
-          </p>
-          <h2 className={styles.heading}>The Canvas Series</h2>
+          <p className={styles.eyebrow}>The Canvas Series</p>
+          <h2 className={styles.heading}>One canvas, two pieces.</h2>
           <p className={styles.lede}>
-            One idea, two pieces of furniture: a framed print that leans on
-            your wall, and a little house that hides your cat. Both wear the
-            same swap-able scratch-canvas — art on the outside, territory
-            underneath.
+            Our signature scratch-canvas — a loop-pile painting cats are meant
+            to ruin — comes two ways: a framed print that leans on your wall,
+            and a little house that hides your cat. Art on the outside,
+            territory underneath.
           </p>
         </Reveal>
 
         <Reveal as="div" className={styles.indexCard} delay={110}>
-          <p className={styles.indexTitle}>In this collection</p>
+          <p className={styles.indexTitle}>The lineup</p>
           <ol className={styles.indexList}>
             <li>
               <Link href="/scratcher">
-                <span className={styles.indexNo}>01-A</span>
+                <span className={styles.indexNo}>A</span>
                 <span className={styles.indexName}>The Canvas Scratcher</span>
                 <span className={styles.indexMeta}>AU$89 · shipping now</span>
               </Link>
             </li>
             <li>
               <Link href="/house">
-                <span className={styles.indexNo}>01-B</span>
+                <span className={styles.indexNo}>B</span>
                 <span className={styles.indexName}>The Canvas House</span>
                 <span className={`${styles.indexMeta} ${styles.indexNew}`}>
                   new · first run of 10
@@ -116,7 +115,7 @@ export default function CanvasCollection() {
       <Reveal className={styles.stripBlock} delay={80}>
         <Filmstrip
           slides={SLIDES}
-          ariaLabel="Photos of the Canvas Series at home, shot by the GlugGlug studio"
+          ariaLabel="Photos of the Canvas Series at home"
         />
       </Reveal>
 
@@ -125,7 +124,7 @@ export default function CanvasCollection() {
         <Reveal delay={60}>
           <PortalCard
             href="/scratcher"
-            kicker="№ 01-A · AU$89 · four prints"
+            kicker="AU$89 · four prints"
             title="The Canvas Scratcher"
             blurb="A framed print your cat is allowed to ruin — slowly, and with great ceremony."
             cta="See it properly"
@@ -151,7 +150,7 @@ export default function CanvasCollection() {
         <Reveal delay={160}>
           <PortalCard
             href="/house"
-            kicker="№ 01-B · AU$189 · pre-release"
+            kicker="AU$189 · pre-release"
             title="The Canvas House"
             blurb="The canvas folded into a den — two scratch walls, a porthole door, ten numbered pieces."
             cta="Meet the House"

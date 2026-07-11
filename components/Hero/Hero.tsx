@@ -1,14 +1,14 @@
 "use client";
 
 /*
- * 集合店 Hero 备忘（2026-07-11）——
- * 当前 Hero 是「主推系列」（№ 01 The Canvas Series）的独占剧场。
- * 站点定位是集合店：等第二个系列上架时，把本组件升级为整屏横向滑动的
- * HeroCarousel，而不是替换内容：
- *   1. 每个系列一屏（各自的视频/落幅静帧 + 文案 + CTA），
- *      scroll-snap-x mandatory + 拖拽 + 键盘左右键，屏角放「№ 01 / № 02」编号导航；
- *   2. 数据源挂 lib/shopify.ts 的 getCollections()——每个 live 系列
- *      配一份自己的 heroConfig（视频、FRAME_RECT、时间轴各自独立）；
+ * Hero 备忘（2026-07-11 v2，随店铺定位更新）——
+ * 当前 Hero 是主打产品线（The Canvas Series）的独占剧场。
+ * 等第二条产品线上架时，把本组件升级为整屏横向滑动的 HeroCarousel，
+ * 而不是替换内容：
+ *   1. 每条产品线一屏（各自的视频/落幅静帧 + 文案 + CTA），
+ *      scroll-snap-x mandatory + 拖拽 + 键盘左右键 + 屏角点状导航；
+ *   2. 数据源：lib/ 里加一个 heroSlides 配置数组——每条线一份自己的
+ *      heroConfig（视频、FRAME_RECT、时间轴各自独立）；
  *   3. 本文件现有实现整体保留，作为 Carousel 的第 1 屏直接复用
  *      （视频剧场 + 换画交互不动，只是外面多一层滑轨）。
  */

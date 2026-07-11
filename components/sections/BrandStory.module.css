@@ -42,21 +42,6 @@
   letter-spacing: 0.04em;
 }
 
-/* 制造方铭牌 —— 画框角落的小字 */
-.maker {
-  margin-top: 1.5rem;
-  display: inline-block;
-  font-size: 0.9rem;
-  color: var(--ink-soft);
-  border-left: 3px solid color-mix(in srgb, var(--orange) 55%, transparent);
-  padding-left: 0.85rem;
-  max-width: 40ch;
-}
-
-.maker strong {
-  color: var(--blue-deep);
-}
-
 .swap {
   position: relative;
   display: block;

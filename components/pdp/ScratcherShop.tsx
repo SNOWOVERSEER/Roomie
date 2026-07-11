@@ -88,7 +88,7 @@ export default function ScratcherShop() {
         {/* ——— 购买面板 ——— */}
         <div className={pdp.panelCol}>
           <div className={pdp.panel}>
-            <p className={pdp.panelKicker}>№ 01-A · shipping now</p>
+            <p className={pdp.panelKicker}>Shipping now · free AU shipping</p>
             <h1 className={pdp.panelTitle}>The Canvas Scratcher</h1>
             <p className={pdp.panelTagline}>
               Looks like a print. Scratches like a post. Leans on any wall the

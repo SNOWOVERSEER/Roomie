@@ -27,7 +27,7 @@ export default function Nav() {
         <Link href="/house" className={styles.newLink}>
           The House
         </Link>
-        <Link href="/#collection">The shelf</Link>
+        <Link href="/#coming-next">What&rsquo;s next</Link>
         <Link href="/#story">Our idea</Link>
       </nav>
       <button className={styles.cart} aria-label={`Basket, ${count} items`}>

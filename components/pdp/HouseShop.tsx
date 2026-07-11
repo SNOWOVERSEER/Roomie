@@ -6,10 +6,11 @@ import pdp from "./pdp.module.css";
 import styles from "./HouseShop.module.css";
 
 /*
- * 猫屋详情页主舞台（夜幕）：官方宣传片循环 + 编号预订面板。
+ * 猫屋详情页主舞台（夜幕）：产品影片循环 + 编号预订面板。
  * 首批 10 席编号预售 —— 选号是这页的记忆点交互；claimed 来自
  * lib/shopify.ts 的 mock（TODO(Shopify)：接 №01–№10 变体库存）。
  * TODO 文案：AU$189 与预订政策为占位，待用户确认。
+ * 视频已抹除供应商 logo（含 logo 的镜头整段替换为干净镜头 + 静态补丁）。
  */
 
 export default function HouseShop({
@@ -80,14 +81,14 @@ export default function HouseShop({
             )}
           </div>
           <figcaption className={styles.filmTag}>
-            on set — filmed at the GlugGlug studio
+            straight off the set — no actors, just residents
           </figcaption>
         </figure>
 
         {/* ——— 预订面板 ——— */}
         <div className={pdp.panelCol}>
           <div className={pdp.panel}>
-            <p className={pdp.panelKicker}>№ 01-B · limited pre-release</p>
+            <p className={pdp.panelKicker}>Limited pre-release</p>
             <h1 className={pdp.panelTitle}>The Canvas House</h1>
             <p className={pdp.panelTagline}>
               The canvas, folded into a den. Two full scratch-paintings make
@@ -144,7 +145,7 @@ export default function HouseShop({
 
             <ul className={pdp.panelNotes}>
               <li>Ten pieces in the first run, each numbered on the frame.</li>
-              <li>Two swap-able scratch walls — same canvases as 01-A.</li>
+              <li>Two swap-able scratch walls — same canvases as the Scratcher.</li>
               <li>We email your number the same day, and build in order.</li>
             </ul>
           </div>

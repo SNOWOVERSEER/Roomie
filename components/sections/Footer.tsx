@@ -73,7 +73,7 @@ export default function Footer() {
           <h3>Shop</h3>
           <a href="/scratcher">The Canvas Scratcher</a>
           <a href="/house">The Canvas House</a>
-          <a href="/#collection">The shelf</a>
+          <a href="/#coming-next">What&rsquo;s next</a>
         </nav>
 
         <nav className={styles.col} aria-label="Help">

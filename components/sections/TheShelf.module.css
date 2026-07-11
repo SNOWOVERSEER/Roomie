@@ -102,14 +102,6 @@
   gap: 0.15rem;
 }
 
-.featuredNo {
-  font-family: var(--font-display), sans-serif;
-  font-weight: 800;
-  font-size: 0.9rem;
-  letter-spacing: 0.14em;
-  color: color-mix(in srgb, var(--cream) 80%, transparent);
-}
-
 .featuredTitle {
   font-family: var(--font-display), sans-serif;
   font-weight: 800;

@@ -8,7 +8,7 @@ export default function FinalCta() {
     <section className={styles.section}>
       <div className={`shell ${styles.inner}`}>
         <Reveal>
-          <h2 className={styles.heading}>Take № 01 home</h2>
+          <h2 className={styles.heading}>Take one home</h2>
           <p className={styles.sub}>
             The print that scratches, or the den that hides — both wear the
             same swap-able canvas.
@@ -34,8 +34,8 @@ export default function FinalCta() {
         </Reveal>
         <Reveal delay={190}>
           <p className={styles.fine}>
-            Free AU shipping · prints swap in minutes · shelf № 02 is already
-            being sketched
+            Free AU shipping · prints swap in minutes · more pieces on the
+            bench
           </p>
         </Reveal>
       </div>

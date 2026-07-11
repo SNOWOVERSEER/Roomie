@@ -11,7 +11,7 @@ import pdp from "@/components/pdp/pdp.module.css";
 export const metadata: Metadata = {
   title: "The Canvas Scratcher — Roomie",
   description:
-    "A framed loop-pile canvas that leans on your wall like art and scratches like a post. Four swap-able prints. Collection № 01, made with GlugGlug.",
+    "A framed loop-pile canvas that leans on your wall like art and scratches like a post. Solid pine, four swap-able prints, free AU shipping.",
 };
 
 /*
@@ -51,9 +51,9 @@ const CRAFT = [
   },
   {
     src: "/c01/craft-frame.webp",
-    alt: "Macro of the pine frame with an embossed maker's mark",
+    alt: "Macro of the mitred pine frame corner",
     title: "Solid pine, hand-sanded",
-    body: "The maker's mark is embossed, not stickered.",
+    body: "Mitred corners, smooth to the touch, kind to claws.",
   },
   {
     src: "/c01/craft-easel.webp",
@@ -120,7 +120,7 @@ export default function ScratcherPage() {
     <>
       <Nav />
       <main className={pdp.page}>
-        <Crumb piece="01-A The Canvas Scratcher" />
+        <Crumb piece="The Scratcher" />
         <ScratcherShop />
 
         {/* 为什么好用 */}
@@ -209,7 +209,7 @@ export default function ScratcherPage() {
             <div style={{ marginTop: "2rem" }}>
               <Filmstrip
                 slides={SLIDES}
-                ariaLabel="Photos of the Canvas Scratcher at home, shot by the GlugGlug studio"
+                ariaLabel="Photos of the Canvas Scratcher at home"
               />
             </div>
           </Reveal>
@@ -217,7 +217,7 @@ export default function ScratcherPage() {
 
         <CrossSell
           href="/house"
-          kicker="Also in № 01 · first run of 10"
+          kicker="Completes the set · first run of 10"
           title="The Canvas House"
           blurb="The same canvas, folded into a den — two scratch walls and a porthole door."
           image="/c01/house-ontop.webp"

@@ -12,7 +12,7 @@ import shop from "@/components/pdp/HouseShop.module.css";
 export const metadata: Metadata = {
   title: "The Canvas House — Roomie",
   description:
-    "An A-frame cat den wearing two full scratch-paintings, with a porthole door. First run of ten numbered pieces. Collection № 01, made with GlugGlug.",
+    "An A-frame cat den wearing two full scratch-paintings, with a porthole door. First run of ten numbered pieces, built in order.",
 };
 
 /* № 01-B 详情页：夜幕预订舞台 + 剧照 + 预订流程说明。 */
@@ -45,7 +45,7 @@ export default async function HousePage() {
     <>
       <Nav />
       <main className={pdp.page}>
-        <Crumb piece="01-B The Canvas House" />
+        <Crumb piece="The House" />
         <HouseShop total={run.total} claimed={run.claimed} />
 
         {/* 剧照三联 */}
@@ -91,7 +91,7 @@ export default async function HousePage() {
               </Reveal>
               <Reveal as="li" delay={90}>
                 <h3>We build in order</h3>
-                <p>№ 01 leaves the bench first. You'll see yours in progress.</p>
+                <p>№ 01 leaves the bench first — ten houses, one at a time.</p>
               </Reveal>
               <Reveal as="li" delay={180}>
                 <h3>Pay when it ships</h3>
@@ -103,7 +103,7 @@ export default async function HousePage() {
 
         <CrossSell
           href="/scratcher"
-          kicker="Also in № 01 · shipping now"
+          kicker="The original · shipping now"
           title="The Canvas Scratcher"
           blurb="The original leaning print — same canvases, same pine, AU$89."
           image="/c01/scratcher-solo.webp"

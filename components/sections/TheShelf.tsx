@@ -1,77 +1,72 @@
 import Link from "next/link";
 import Reveal from "@/components/Reveal";
-import { getCollections } from "@/lib/shopify";
+import { getProducts } from "@/lib/shopify";
 import WaitlistButton from "./WaitlistButton";
 import styles from "./TheShelf.module.css";
 
 /*
- * 货架区 —— 集合店的结构核心：一次只认真做一个系列。
- * live 系列 = 大幅实拍主位；soon 系列 = 手绘占位（保持现有卡通画风），
- * 视觉上用「图纸感」（虚线边）与主位拉开层级。
+ * What's next 区 —— 小工作室叙事：一件一件做，未上市产品用
+ * 手绘占位（available=false 的 mock 商品）+ waitlist。
  */
 export default async function TheShelf() {
-  const collections = await getCollections();
-  const live = collections.find((c) => c.status === "live");
-  const soon = collections.filter((c) => c.status === "soon");
+  const products = await getProducts();
+  const soon = products.filter((p) => !p.available);
 
   return (
-    <section className={styles.section} id="collection">
+    <section className={styles.section} id="coming-next">
       <div className="shell">
         <Reveal>
-          <p className={styles.eyebrow}>The shelf</p>
-          <h2 className={styles.heading}>One collection at a time</h2>
+          <p className={styles.eyebrow}>In the workshop</p>
+          <h2 className={styles.heading}>The roomful is growing</h2>
           <p className={styles.lede}>
-            Roomie is a collection store: we find one small maker, obsess over
-            one idea together, and put it on the shelf only when it belongs in
-            a living room. Then we start the next.
+            We&rsquo;re a small pet-furniture studio in Melbourne, making the
+            un-ugly version of everything a cat needs — one piece at a time.
+            Here&rsquo;s what&rsquo;s on the bench.
           </p>
         </Reveal>
 
         <div className={styles.grid}>
-          {live && (
-            <Reveal className={styles.featured}>
-              <a className={styles.featuredCard} href="#collection-01">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  src={live.image}
-                  alt="The Canvas Series at home — a framed canvas leaning by a sofa, cat asleep beside it"
-                  loading="lazy"
-                />
-                <span className={styles.nowChip}>Now showing</span>
-                <span className={styles.featuredBody}>
-                  <span className={styles.featuredNo}>№ {live.number}</span>
-                  <span className={styles.featuredTitle}>{live.title}</span>
-                  <span className={styles.featuredMeta}>
-                    made with {live.maker} · from AU${live.priceFrom}
-                  </span>
+          <Reveal className={styles.featured}>
+            <Link className={styles.featuredCard} href="/scratcher">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src="/c01/shelf-featured.webp"
+                alt="The Canvas Scratcher at home — a framed canvas leaning by a sofa, cat asleep beside it"
+                loading="lazy"
+              />
+              <span className={styles.nowChip}>In store now</span>
+              <span className={styles.featuredBody}>
+                <span className={styles.featuredTitle}>The Canvas Series</span>
+                <span className={styles.featuredMeta}>
+                  two pieces, four prints · from AU$89
                 </span>
-              </a>
-              <div className={styles.featuredLinks}>
-                <Link href="/scratcher">
-                  The Scratcher <em>AU$89</em>
-                </Link>
-                <Link href="/house">
-                  The House <em>run of 10</em>
-                </Link>
-              </div>
-            </Reveal>
-          )}
+              </span>
+            </Link>
+            <div className={styles.featuredLinks}>
+              <Link href="/scratcher">
+                The Scratcher <em>AU$89</em>
+              </Link>
+              <Link href="/house">
+                The House <em>run of 10</em>
+              </Link>
+            </div>
+          </Reveal>
 
           <div className={styles.soonCol}>
-            {soon.map((c, i) => (
-              <Reveal key={c.handle} delay={120 + i * 90}>
+            {soon.map((p, i) => (
+              <Reveal key={p.handle} delay={120 + i * 90}>
                 <article className={styles.soonCard}>
                   <div className={styles.soonMedia}>
                     {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img src={c.image} alt="" aria-hidden loading="lazy" />
+                    <img src={p.image} alt="" aria-hidden loading="lazy" />
                   </div>
                   <div className={styles.soonBody}>
                     <p className={styles.soonNo}>
-                      № {c.number} · <em>sketching now</em>
+                      <em>sketching now</em>
                     </p>
-                    <h3>{c.title}</h3>
-                    <p className={styles.soonBlurb}>{c.blurb}</p>
-                    <WaitlistButton title={c.title} />
+                    <h3>{p.title}</h3>
+                    <p className={styles.soonBlurb}>{p.tagline}</p>
+                    <WaitlistButton title={p.title} />
                   </div>
                 </article>
               </Reveal>
