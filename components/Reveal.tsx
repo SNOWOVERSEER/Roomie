@@ -8,7 +8,7 @@ interface Props {
   /** 错峰延迟（ms），同组元素相差 80–120ms */
   delay?: number;
   className?: string;
-  as?: "div" | "section" | "li" | "figure";
+  as?: "div" | "section" | "li" | "figure" | "p";
 }
 
 /** 滚动进入视口时柔和上浮浮现（一次性）。reduced-motion 下直接呈现。 */

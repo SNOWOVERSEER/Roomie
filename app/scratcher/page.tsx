@@ -194,6 +194,10 @@ export default function ScratcherPage() {
                 <p>Same frame, new art — new territory for them.</p>
               </Reveal>
             </ol>
+            <Reveal as="p" className={pdp.sectionCta} delay={240}>
+              Spare prints are AU$35 each, sold on their own —{" "}
+              <a href="#prints">pick a fresh one</a>.
+            </Reveal>
           </div>
         </section>
 

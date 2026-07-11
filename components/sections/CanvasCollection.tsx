@@ -103,7 +103,7 @@ export default function CanvasCollection() {
                 <span className={styles.indexNo}>+</span>
                 <span className={styles.indexName}>Swap-in prints</span>
                 <span className={styles.indexMeta}>
-                  six at launch · seasonal drops
+                  AU$35 each · seasonal drops
                 </span>
               </Link>
             </li>

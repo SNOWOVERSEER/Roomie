@@ -237,6 +237,28 @@
   max-width: 40ch;
 }
 
+/* 章节内文字 CTA（如换画区 → 单画芯购买锚点） */
+.sectionCta {
+  margin-top: 1.8rem;
+  font-size: 0.98rem;
+  color: var(--ink-soft);
+}
+
+.sectionCta a {
+  font-family: var(--font-display), sans-serif;
+  font-weight: 700;
+  color: var(--blue-deep);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  text-decoration-thickness: 2px;
+  text-decoration-color: color-mix(in srgb, var(--orange) 55%, transparent);
+  transition: text-decoration-color var(--dur-fast) var(--ease-out);
+}
+
+.sectionCta a:hover {
+  text-decoration-color: var(--orange);
+}
+
 /* 工艺三联 */
 .craftGrid {
   margin-top: 2rem;

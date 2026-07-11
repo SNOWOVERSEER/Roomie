@@ -49,6 +49,9 @@ export default async function TheShelf() {
               <Link href="/house">
                 The House <em>run of 10</em>
               </Link>
+              <Link href="/scratcher#prints">
+                Swap-in prints <em>AU$35</em>
+              </Link>
             </div>
           </Reveal>
 

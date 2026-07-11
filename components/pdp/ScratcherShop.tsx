@@ -1,17 +1,28 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { ARTWORKS } from "@/lib/heroConfig";
 import { useCart } from "@/components/CartContext";
 import pdp from "./pdp.module.css";
 import styles from "./ScratcherShop.module.css";
 
 /*
- * 抓板详情页主舞台：左图库（主图 + 缩略）+ 右粘性购买面板（画芯选择）。
- * 移动端追加底部粘性购买条，与面板共享同一份选中态。
+ * 抓板详情页主舞台：左图库（主图 + 缩略）+ 右粘性购买面板。
+ *
+ * 联动是单向的（用户明确要求）：右侧选画芯 → 主图跳到该画芯的
+ * 白底框内预览（图库前 6 张，索引与 ARTWORKS 对齐）；左侧手动
+ * 翻图只改 photo，不回写画芯选择。
+ *
+ * 规格两档：整件（框+画）/ 单画芯（换画补充装，单独购买）。
+ * landing 的「Swap-in prints」入口带 #prints，直达单画芯规格。
  */
 
-const PHOTOS = [
+const PRINT_PHOTOS = ARTWORKS.map((a, i) => ({
+  src: `/c01/print-0${i + 1}.webp`,
+  alt: `The ${a.title} print in the pine frame, on white`,
+}));
+
+const LIFE_PHOTOS = [
   {
     src: "/c01/scratcher-solo.webp",
     alt: "The Canvas Scratcher leaning against a wall on a herringbone floor",
@@ -38,14 +49,53 @@ const PHOTOS = [
   },
 ];
 
+const PHOTOS = [...PRINT_PHOTOS, ...LIFE_PHOTOS];
+
+type Format = "full" | "print";
+
+/* TODO(Shopify): 单画芯 AU$35 为占位价，待用户确认 */
+const PRICE: Record<Format, string> = { full: "AU$89", print: "AU$35" };
+
+const NOTES: Record<Format, string[]> = {
+  full: [
+    "Solid pine frame, weighted easel — leans, never topples.",
+    "Loop-pile canvas: satisfying shred, zero confetti.",
+    "Prints swap in minutes — new drops each season.",
+  ],
+  print: [
+    "The print alone — your frame stays on the wall.",
+    "Same loop-pile weave, fresh territory.",
+    "Fits every Canvas Series frame, Scratcher and House.",
+  ],
+};
+
 export default function ScratcherShop() {
   const [photo, setPhoto] = useState(0);
   const [pick, setPick] = useState(0);
+  const [format, setFormat] = useState<Format>("full");
   const { add } = useCart();
   const art = ARTWORKS[pick];
 
+  useEffect(() => {
+    const apply = () => {
+      if (window.location.hash === "#prints") setFormat("print");
+    };
+    apply();
+    window.addEventListener("hashchange", apply);
+    return () => window.removeEventListener("hashchange", apply);
+  }, []);
+
+  const choosePrint = (i: number) => {
+    setPick(i);
+    setPhoto(i); // 单向联动：主图跟到该画芯的框内预览
+  };
+
   const addToBasket = () =>
-    add("canvas-scratcher", `Canvas Scratcher · ${art.title}`);
+    format === "full"
+      ? add("canvas-scratcher", `Canvas Scratcher · ${art.title}`)
+      : add("canvas-print", `Swap-in Print · ${art.title}`, {
+          note: "print only — your frame stays on the wall",
+        });
 
   return (
     <section className={pdp.stage}>
@@ -96,7 +146,37 @@ export default function ScratcherShop() {
             </p>
 
             <p className={pdp.panelLabel} id="prints">
-              Arrives wearing
+              Format
+            </p>
+            <div
+              className={styles.formats}
+              role="radiogroup"
+              aria-label="Choose a format"
+            >
+              <button
+                role="radio"
+                aria-checked={format === "full"}
+                className={`${styles.format} ${format === "full" ? styles.formatOn : ""}`}
+                onClick={() => setFormat("full")}
+              >
+                <strong>Frame + print</strong>
+                <span>the full piece, ready to lean</span>
+                <em>AU$89</em>
+              </button>
+              <button
+                role="radio"
+                aria-checked={format === "print"}
+                className={`${styles.format} ${format === "print" ? styles.formatOn : ""}`}
+                onClick={() => setFormat("print")}
+              >
+                <strong>Print only</strong>
+                <span>a fresh canvas for your frame</span>
+                <em>AU$35</em>
+              </button>
+            </div>
+
+            <p className={pdp.panelLabel}>
+              {format === "full" ? "Arrives wearing" : "Choose your print"}
             </p>
             <div
               className={styles.picks}
@@ -109,7 +189,7 @@ export default function ScratcherShop() {
                   role="radio"
                   aria-checked={pick === i}
                   className={`${styles.pick} ${pick === i ? styles.picked : ""}`}
-                  onClick={() => setPick(i)}
+                  onClick={() => choosePrint(i)}
                   title={a.title}
                 >
                   {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -126,7 +206,7 @@ export default function ScratcherShop() {
 
             <div className={pdp.buyRow}>
               <span className={pdp.price}>
-                AU$89 <em>free AU shipping</em>
+                {PRICE[format]} <em>free AU shipping</em>
               </span>
               <button className="btnPrimary" onClick={addToBasket}>
                 Add to basket
@@ -134,9 +214,9 @@ export default function ScratcherShop() {
             </div>
 
             <ul className={pdp.panelNotes}>
-              <li>Solid pine frame, weighted easel — leans, never topples.</li>
-              <li>Loop-pile canvas: satisfying shred, zero confetti.</li>
-              <li>Prints swap in minutes — new drops each season.</li>
+              {NOTES[format].map((n) => (
+                <li key={n}>{n}</li>
+              ))}
             </ul>
           </div>
         </div>
@@ -145,8 +225,12 @@ export default function ScratcherShop() {
       {/* ——— 移动端粘性购买条 ——— */}
       <div className={pdp.stickyBar}>
         <span className={pdp.stickyInfo}>
-          <span className={pdp.stickyName}>Scratcher · {art.title}</span>
-          <span className={pdp.stickyPrice}>AU$89 · free shipping</span>
+          <span className={pdp.stickyName}>
+            {format === "full" ? "Scratcher" : "Print"} · {art.title}
+          </span>
+          <span className={pdp.stickyPrice}>
+            {PRICE[format]} · free shipping
+          </span>
         </span>
         <button className={pdp.stickyBtn} onClick={addToBasket}>
           Add to basket

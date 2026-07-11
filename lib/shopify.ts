@@ -52,6 +52,16 @@ const MOCK_PRODUCTS: Product[] = [
     available: true, // 预售可下单（编号预留）
   },
   {
+    id: "gid://mock/6",
+    handle: "canvas-print",
+    title: "Swap-in Print",
+    tagline: "A fresh canvas for the frame you already have.",
+    price: 35, // TODO 单画芯定价待用户确认
+    currency: "AUD",
+    image: "/c01/print-01.webp",
+    available: true,
+  },
+  {
     id: "gid://mock/2",
     handle: "nook-house",
     title: "The Nook",

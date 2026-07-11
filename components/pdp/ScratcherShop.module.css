@@ -70,7 +70,7 @@
 }
 
 .thumbs img {
-  width: 76px;
+  width: 64px; /* 12 张（6 框内预览 + 6 实拍）两行放得下 */
   aspect-ratio: 1;
   object-fit: cover;
   border-radius: 9px;
@@ -80,6 +80,58 @@
 .thumbOn {
   border-color: var(--orange) !important;
   opacity: 1 !important;
+}
+
+/* ——— 规格选择（整件 / 单画芯） ——— */
+.formats {
+  margin-top: 0.7rem;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.7rem;
+}
+
+.format {
+  display: grid;
+  gap: 0.12rem;
+  text-align: left;
+  padding: 0.8rem 0.95rem;
+  border-radius: 14px;
+  border: 2.5px solid color-mix(in srgb, var(--ink-soft) 20%, transparent);
+  background: var(--cream);
+  transition:
+    border-color var(--dur-fast) var(--ease-out),
+    background var(--dur-fast) var(--ease-out),
+    transform var(--dur-fast) var(--ease-soft);
+}
+
+.format:hover {
+  transform: translateY(-2px);
+}
+
+.format strong {
+  font-family: var(--font-display), sans-serif;
+  font-weight: 700;
+  font-size: 0.98rem;
+  color: var(--blue-deep);
+}
+
+.format span {
+  font-size: 0.8rem;
+  color: var(--ink-soft);
+}
+
+.format em {
+  font-style: normal;
+  font-family: var(--font-display), sans-serif;
+  font-weight: 800;
+  font-size: 0.92rem;
+  color: var(--ink);
+  margin-top: 0.3rem;
+}
+
+.formatOn {
+  border-color: var(--orange);
+  background: color-mix(in srgb, var(--orange) 7%, var(--paper));
 }
 
 /* ——— 画芯选择器 ——— */
