@@ -38,39 +38,54 @@ export interface Artwork {
 }
 
 /**
- * ARTWORKS[0] 必须与视频落幅帧画框内的画一致（当前为《晴野》）。
+ * ARTWORKS[0] 必须与视频落幅帧画框内的画一致（当前为《晴野》Sunny Field）。
  * 每张图都是「末帧画框区域的完整合成图」：透视、光照、画布纹理
- * 已离线烘焙（脚本：scratchpad/make_artworks.py），浏览器端只做交叉溶解。
- * 上新画作 = 跑一次脚本 + 在这里加一项。
+ * 已离线烘焙（tools/make_artworks.py），浏览器端只做交叉溶解。
+ * 平面稿 flat-0X 由 tools/extract_flats.py 从产品图提取（真实画作）。
+ * 上新画作 = 放入源图 → 两个脚本各跑一次 → 在这里加一项。
  */
 export const ARTWORKS: Artwork[] = [
   {
     id: "art-01",
     src: "/hero/art/art-01.png",
     title: "Sunny Field",
-    alt: "Naive painting of a little white house under a red sun, deep blue sky over a golden field",
+    alt: "A little white house under a red sun, deep blue sky over a golden field",
     caption: "The one it arrives with — a little house, a big noon.",
   },
   {
     id: "art-02",
     src: "/hero/art/art-02.png",
-    title: "Moonlit Night",
-    alt: "Naive painting of an orange cat watching a full moon beside a tiny lit house",
-    caption: "For quiet evenings and 3am zoomies.",
+    title: "Wave Light",
+    alt: "Sun glitter scattered across blue afternoon waves",
+    caption: "The sea, mid-sparkle.",
   },
   {
     id: "art-03",
     src: "/hero/art/art-03.png",
-    title: "Wave Light",
-    alt: "Naive painting of a little boat on a deep blue sea under a red sun",
-    caption: "A small boat on a big nap-time sea.",
+    title: "Leaf Boat",
+    alt: "A tiny boat adrift on a deep indigo sea, seen from above",
+    caption: "One small boat, a very big blue.",
   },
   {
     id: "art-04",
     src: "/hero/art/art-04.png",
     title: "Forest Light",
-    alt: "Naive painting of navy pine trees and a tiny white house against a sunset-orange sky",
-    caption: "Sunset pines, for the wild ones.",
+    alt: "Sunlight pooling through green summer leaves",
+    caption: "Sun through the canopy, for the wild ones.",
+  },
+  {
+    id: "art-05",
+    src: "/hero/art/art-05.png",
+    title: "Window Glow",
+    alt: "Late-afternoon window light and palm shadows in warm orange",
+    caption: "Golden hour, no window required.",
+  },
+  {
+    id: "art-06",
+    src: "/hero/art/art-06.png",
+    title: "Red Fruit",
+    alt: "A deck chair perched on an apple the size of a hill",
+    caption: "Summer, on a very big apple.",
   },
 ];
 

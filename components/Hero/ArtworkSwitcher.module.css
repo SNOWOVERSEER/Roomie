@@ -87,7 +87,6 @@
   top: calc(var(--rack-bottom-y) - var(--mini-w) * 1.46);
   display: flex;
   align-items: flex-end;
-  gap: 9px;
   pointer-events: none;
 }
 
@@ -102,10 +101,16 @@
   transform-origin: 50% 100%;
   opacity: 0;
   translate: 0 12px;
+  /* 六张画芯层叠斜靠（像真的立在墙脚互相搭着），越靠后越在前 */
+  z-index: calc(10 + var(--i));
   transition:
     opacity 560ms var(--ease-out) calc(var(--i) * 95ms + 80ms),
     translate 620ms var(--ease-soft) calc(var(--i) * 95ms + 80ms),
     transform 220ms var(--ease-soft) 0s;
+}
+
+.mini + .mini {
+  margin-left: calc(var(--mini-w) * -0.42);
 }
 
 .mini:nth-child(1) {
@@ -120,6 +125,12 @@
 .mini:nth-child(4) {
   transform: rotate(3.4deg);
 }
+.mini:nth-child(5) {
+  transform: rotate(-2.8deg);
+}
+.mini:nth-child(6) {
+  transform: rotate(2deg);
+}
 
 .rackOn .mini {
   opacity: 1;
@@ -128,6 +139,7 @@
 
 .mini:not(.miniFramed):hover {
   transform: rotate(0deg) translateY(-5px);
+  z-index: 40;
 }
 
 .mini:not(.miniFramed):active {

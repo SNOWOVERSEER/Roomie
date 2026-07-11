@@ -50,7 +50,7 @@ const SLIDES: Slide[] = [
   {
     src: "/c01/gallery-redfruit.webp",
     alt: "A grey cat lying beside the Red Fruit canvas",
-    caption: "Red Fruit — a print from the next seasonal drop.",
+    caption: "Red Fruit — new to the lineup this season.",
     w: 1167,
     h: 1400,
   },
@@ -103,7 +103,7 @@ export default function CanvasCollection() {
                 <span className={styles.indexNo}>+</span>
                 <span className={styles.indexName}>Swap-in prints</span>
                 <span className={styles.indexMeta}>
-                  four at launch · seasonal drops
+                  six at launch · seasonal drops
                 </span>
               </Link>
             </li>
@@ -124,7 +124,7 @@ export default function CanvasCollection() {
         <Reveal delay={60}>
           <PortalCard
             href="/scratcher"
-            kicker="AU$89 · four prints"
+            kicker="AU$89 · six prints"
             title="The Canvas Scratcher"
             blurb="A framed print your cat is allowed to ruin — slowly, and with great ceremony."
             cta="See it properly"

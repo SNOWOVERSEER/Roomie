@@ -179,7 +179,10 @@ export default function ArtworkSwitcher({ rect, active, revealed }: Props) {
           {
             "--pin-left": px(rect.left + (rect.width * FRAME_RECT.pinLeft) / 100),
             "--pin-top": px(rect.top + (rect.height * FRAME_RECT.pinTop) / 100),
-            "--foot-left": px(fLeft + 4 * (miniW + 9) + 10),
+            // 画芯层叠斜靠（重叠 42%）：总宽 = miniW × (1 + (N-1)×0.58)
+            "--foot-left": px(
+              fLeft + miniW * (1 + (ARTWORKS.length - 1) * 0.58) + 16,
+            ),
             "--foot-top": px(fTop + fH + rect.height * 0.03 + 6),
           } as React.CSSProperties
         }

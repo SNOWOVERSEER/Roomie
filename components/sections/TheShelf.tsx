@@ -38,7 +38,7 @@ export default async function TheShelf() {
               <span className={styles.featuredBody}>
                 <span className={styles.featuredTitle}>The Canvas Series</span>
                 <span className={styles.featuredMeta}>
-                  two pieces, four prints · from AU$89
+                  two pieces, six prints · from AU$89
                 </span>
               </span>
             </Link>

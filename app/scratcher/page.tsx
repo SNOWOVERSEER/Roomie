@@ -11,7 +11,7 @@ import pdp from "@/components/pdp/pdp.module.css";
 export const metadata: Metadata = {
   title: "The Canvas Scratcher — Roomie",
   description:
-    "A framed loop-pile canvas that leans on your wall like art and scratches like a post. Solid pine, four swap-able prints, free AU shipping.",
+    "A framed loop-pile canvas that leans on your wall like art and scratches like a post. Solid pine, six swap-able prints, free AU shipping.",
 };
 
 /*
@@ -102,7 +102,7 @@ const SLIDES: Slide[] = [
   {
     src: "/c01/gallery-redfruit.webp",
     alt: "A grey cat lying beside the Red Fruit canvas",
-    caption: "Red Fruit — a print from the next seasonal drop.",
+    caption: "Red Fruit — new to the lineup this season.",
     w: 1167,
     h: 1400,
   },

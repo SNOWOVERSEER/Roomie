@@ -87,6 +87,7 @@
   margin-top: 0.7rem;
   display: flex;
   gap: 0.7rem;
+  flex-wrap: wrap; /* 六张画芯在窄面板换行 */
 }
 
 .pick {
