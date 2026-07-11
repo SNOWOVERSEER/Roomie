@@ -1,0 +1,185 @@
+/* 夜色收束段 —— 画里的深蓝夜空落到页面上 */
+.section {
+  background:
+    radial-gradient(
+      120% 90% at 50% -10%,
+      rgba(58, 91, 199, 0.35),
+      rgba(18, 39, 94, 0) 55%
+    ),
+    var(--navy);
+  padding: clamp(4.5rem, 8vw, 7.5rem) 0 clamp(5rem, 9vw, 8rem);
+}
+
+.inner {
+  display: grid;
+  gap: 3rem;
+  justify-items: center;
+}
+
+.card {
+  width: 100%;
+  display: grid;
+  grid-template-columns: 0.8fr 1.2fr;
+  gap: clamp(1.8rem, 4vw, 3.5rem);
+  background: var(--paper);
+  border-radius: calc(var(--r-media) + 4px);
+  padding: clamp(1.4rem, 3vw, 2.6rem);
+  box-shadow: 0 24px 70px rgba(4, 12, 38, 0.45);
+  align-items: center;
+}
+
+.preview {
+  background: #efeadf;
+  border-radius: var(--r-card);
+  display: grid;
+  place-items: center;
+  padding: 1.6rem;
+}
+
+.previewArt {
+  width: min(200px, 60%);
+  border-radius: 4px;
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.7) inset,
+    var(--shadow-lift);
+  border: 7px solid #e6c99a;
+  animation: artPop 340ms var(--ease-soft) both;
+}
+
+@keyframes artPop {
+  from {
+    opacity: 0;
+    transform: translateY(6px) scale(0.985);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.config h2 {
+  font-size: clamp(1.9rem, 3vw, 2.6rem);
+  font-weight: 800;
+}
+
+.sub {
+  margin-top: 0.55rem;
+  color: var(--ink-soft);
+  max-width: 42ch;
+}
+
+.picks {
+  margin-top: 1.3rem;
+  display: flex;
+  gap: 0.7rem;
+}
+
+.pick {
+  padding: 3px;
+  border-radius: 10px;
+  border: 2.5px solid transparent;
+  transition:
+    border-color var(--dur-fast) var(--ease-out),
+    transform var(--dur-fast) var(--ease-soft);
+}
+
+.pick img {
+  width: 52px;
+  aspect-ratio: 7 / 10;
+  object-fit: cover;
+  border-radius: 6px;
+  display: block;
+}
+
+.pick:hover {
+  transform: translateY(-3px);
+}
+
+.picked {
+  border-color: var(--orange);
+}
+
+.pickName {
+  margin-top: 0.7rem;
+  font-family: var(--font-display), sans-serif;
+  font-weight: 600;
+  color: var(--blue-deep);
+  animation: nameIn 260ms var(--ease-out) both;
+}
+
+@keyframes nameIn {
+  from {
+    opacity: 0;
+    transform: translateX(8px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.buyRow {
+  margin-top: 1.5rem;
+  display: flex;
+  align-items: center;
+  gap: 1.4rem;
+  flex-wrap: wrap;
+}
+
+.price {
+  font-family: var(--font-display), sans-serif;
+  font-weight: 800;
+  font-size: 1.5rem;
+  color: var(--ink);
+}
+
+.price em {
+  font-style: normal;
+  font-weight: 600;
+  font-size: 0.9rem;
+  color: var(--ink-soft);
+}
+
+.shopAll {
+  text-align: center;
+}
+
+.shopLine {
+  color: color-mix(in srgb, var(--cream) 72%, transparent);
+  font-size: 1.02rem;
+}
+
+.ghostCream {
+  margin-top: 1rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55em;
+  border: 2px solid color-mix(in srgb, var(--cream) 55%, transparent);
+  color: var(--cream);
+  font-family: var(--font-display), sans-serif;
+  font-weight: 600;
+  padding: 0.72em 1.6em;
+  border-radius: 999px;
+  transition:
+    transform var(--dur-fast) var(--ease-soft),
+    border-color var(--dur-fast) var(--ease-out),
+    background var(--dur-fast) var(--ease-out);
+}
+
+.ghostCream:hover {
+  transform: translateY(-2px);
+  border-color: var(--cream);
+  background: rgba(237, 234, 227, 0.08);
+}
+
+@media (max-width: 860px) {
+  .card {
+    grid-template-columns: 1fr;
+  }
+  .preview {
+    padding: 1.2rem;
+  }
+  .previewArt {
+    width: min(160px, 46%);
+  }
+}

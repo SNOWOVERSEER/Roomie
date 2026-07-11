@@ -1,0 +1,32 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 600">
+  <rect width="800" height="600" fill="#F1EDE2"/>
+  <!-- soft floor shadow -->
+  <ellipse cx="400" cy="508" rx="240" ry="26" fill="#E0D9C8"/>
+  <!-- side table body -->
+  <rect x="230" y="150" width="340" height="340" rx="34" fill="#E8A25C"/>
+  <rect x="230" y="150" width="340" height="26" rx="13" fill="#D98F45"/>
+  <!-- legs -->
+  <rect x="262" y="490" width="26" height="36" rx="10" fill="#D98F45"/>
+  <rect x="512" y="490" width="26" height="36" rx="10" fill="#D98F45"/>
+  <!-- arched cat door -->
+  <path d="M320 490 L320 330 A80 80 0 0 1 480 330 L480 490 Z" fill="#12275E"/>
+  <!-- peeking cat -->
+  <g fill="#F1EDE2">
+    <path d="M362 470 q0 -34 38 -34 q38 0 38 34 z"/>
+    <path d="M368 442 l-8 -22 l20 10 z"/>
+    <path d="M432 442 l8 -22 l-20 10 z"/>
+  </g>
+  <g fill="#12275E">
+    <circle cx="386" cy="452" r="4.5"/>
+    <circle cx="414" cy="452" r="4.5"/>
+  </g>
+  <!-- plant on top -->
+  <rect x="368" y="96" width="64" height="54" rx="12" fill="#3A5BC7"/>
+  <g stroke="#2F7A4D" stroke-width="12" stroke-linecap="round" fill="none">
+    <path d="M400 98 Q400 56 386 40"/>
+    <path d="M400 98 Q408 58 428 48"/>
+    <path d="M400 98 Q384 66 362 60"/>
+  </g>
+  <!-- red ball -->
+  <circle cx="590" cy="486" r="22" fill="#C43D14"/>
+</svg>

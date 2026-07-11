@@ -1,0 +1,345 @@
+/* ---------- 画框图层 ----------
+   与视频末帧像素对齐的矩形。透视、光照、纹理、逐像素蒙版裁切
+   已离线烘焙进图片；这里只负责「盖住接缝的溶解」：新画淡入 +
+   极轻位移滑入，旧画全程垫底，杜绝闪白与露底。 */
+
+.frame {
+  position: absolute;
+  overflow: hidden;
+  z-index: 4;
+  pointer-events: none;
+  /* 关键 1：视频播放期间整层隐身（画作会遮住走到画前的猫），
+     定格瞬间才现身 —— art-01 与末帧像素一致，切换不可察觉。
+     用 opacity 而非 display，保证图片提前解码。 */
+  opacity: 0;
+  /* 关键 2：羽化蒙版裁掉画布之外的一切 —— 木框与墙面由活视频
+     原生呈现，覆盖图的矩形外沿不可能产生接缝色差。 */
+  -webkit-mask-image: url("/hero/art/frame-mask.png");
+  mask-image: url("/hero/art/frame-mask.png");
+  -webkit-mask-size: 100% 100%;
+  mask-size: 100% 100%;
+}
+
+.frameActive {
+  opacity: 1;
+  pointer-events: auto;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.art {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: fill;
+  opacity: 0;
+  z-index: 0;
+  user-select: none;
+  will-change: transform, opacity;
+}
+
+.artPrev {
+  opacity: 1;
+  z-index: 1;
+}
+
+.artCurrent {
+  opacity: 1;
+  z-index: 2;
+}
+
+.artInR {
+  animation: artInR 300ms var(--ease-out) both;
+}
+.artInL {
+  animation: artInL 300ms var(--ease-out) both;
+}
+
+@keyframes artInR {
+  from {
+    opacity: 0;
+    transform: translateX(9px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes artInL {
+  from {
+    opacity: 0;
+    transform: translateX(-9px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+/* ---------- 备用画芯架：靠墙立在地板上的迷你画布 ---------- */
+
+.rack {
+  position: absolute;
+  z-index: 5;
+  left: var(--rack-left);
+  top: calc(var(--rack-bottom-y) - var(--mini-w) * 1.46);
+  display: flex;
+  align-items: flex-end;
+  gap: 9px;
+  pointer-events: none;
+}
+
+.rackOn {
+  pointer-events: auto;
+}
+
+.mini {
+  position: relative;
+  width: var(--mini-w);
+  aspect-ratio: 7 / 10;
+  transform-origin: 50% 100%;
+  opacity: 0;
+  translate: 0 12px;
+  transition:
+    opacity 560ms var(--ease-out) calc(var(--i) * 95ms + 80ms),
+    translate 620ms var(--ease-soft) calc(var(--i) * 95ms + 80ms),
+    transform 220ms var(--ease-soft) 0s;
+}
+
+.mini:nth-child(1) {
+  transform: rotate(-4deg);
+}
+.mini:nth-child(2) {
+  transform: rotate(2.6deg);
+}
+.mini:nth-child(3) {
+  transform: rotate(-2.2deg);
+}
+.mini:nth-child(4) {
+  transform: rotate(3.4deg);
+}
+
+.rackOn .mini {
+  opacity: 1;
+  translate: 0 0;
+}
+
+.mini:not(.miniFramed):hover {
+  transform: rotate(0deg) translateY(-5px);
+}
+
+.mini:not(.miniFramed):active {
+  transform: scale(0.93);
+  transition-duration: 80ms;
+}
+
+/* 地面接触阴影 */
+.mini::after {
+  content: "";
+  position: absolute;
+  left: 6%;
+  right: 6%;
+  bottom: -5px;
+  height: 9px;
+  background: radial-gradient(
+    closest-side,
+    rgba(58, 34, 8, 0.42),
+    rgba(58, 34, 8, 0) 78%
+  );
+  filter: blur(1.5px);
+  z-index: -1;
+}
+
+.miniInner {
+  position: absolute;
+  inset: 0;
+  display: block;
+  border: 2px solid #d9b47c;
+  border-radius: 2.5px;
+  overflow: hidden;
+  background: #e8e2d2;
+  box-shadow:
+    inset 0 0 0 1px rgba(120, 82, 34, 0.35),
+    0 6px 12px -4px rgba(70, 40, 10, 0.45);
+}
+
+.miniFace {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  opacity: 1;
+  transition: opacity 240ms var(--ease-out);
+}
+
+/* 画布背面：木质十字撑条 */
+.miniBack {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(155deg, #efe9da 0%, #ddd4bf 100%);
+  opacity: 0;
+  transition: opacity 240ms var(--ease-out);
+}
+
+.miniBack span {
+  position: absolute;
+  background: linear-gradient(90deg, #d9be93, #cba86f);
+  box-shadow: 0 1px 2px rgba(90, 60, 20, 0.25);
+}
+
+.miniBack span:first-child {
+  left: 6%;
+  right: 6%;
+  top: calc(50% - 9%);
+  height: 18%;
+}
+
+.miniBack span:last-child {
+  top: 5%;
+  bottom: 5%;
+  left: calc(50% - 9%);
+  width: 18%;
+  background: linear-gradient(180deg, #d9be93, #cba86f);
+}
+
+/* 当前在框中的画芯：翻面亮出背架，不可点 */
+.miniFramed {
+  cursor: default;
+}
+
+.miniFramed .miniFace {
+  opacity: 0;
+}
+
+.miniFramed .miniBack {
+  opacity: 1;
+}
+
+/* ---------- 纸质吊牌 ---------- */
+
+.tag {
+  position: absolute;
+  z-index: 5;
+  left: var(--pin-left);
+  top: var(--pin-top);
+  width: clamp(120px, 10.5vw, 156px);
+  /* 桌面端：钉点在画框左上角，卡片荡向左侧墙面 */
+  transform: translateX(-100%) translateY(-10px);
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  pointer-events: none;
+  opacity: 0;
+  transition:
+    opacity 560ms var(--ease-out),
+    transform 560ms var(--ease-soft);
+}
+
+.tagOn {
+  opacity: 1;
+  transform: translateX(-100%) translateY(0);
+}
+
+.tagString {
+  display: block;
+  width: 26px;
+  margin-right: 2px;
+}
+
+.tagCard {
+  display: flex;
+  flex-direction: column;
+  gap: 0.14rem;
+  width: 100%;
+  background: linear-gradient(168deg, #faf7ef 0%, #f1ecdf 100%);
+  border-radius: 9px;
+  padding: 0.6rem 0.75rem 0.66rem;
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.8) inset,
+    0 8px 22px rgba(74, 48, 16, 0.28);
+  transform-origin: calc(100% - 12px) -18px; /* 摆动圆心 ≈ 挂绳钉点 */
+  rotate: 2.2deg;
+  animation: tagSettle 700ms var(--ease-out) both;
+}
+
+/* 换画时吊牌被"碰了一下"：小幅摆动后停回 */
+@keyframes tagSettle {
+  0% {
+    transform: rotate(-3.2deg);
+    opacity: 0.35;
+  }
+  38% {
+    transform: rotate(1.6deg);
+    opacity: 1;
+  }
+  70% {
+    transform: rotate(-0.7deg);
+  }
+  100% {
+    transform: rotate(0deg);
+  }
+}
+
+.tagNo {
+  font-family: var(--font-display), sans-serif;
+  font-weight: 700;
+  font-size: 0.72rem;
+  letter-spacing: 0.06em;
+  color: var(--orange-deep);
+}
+
+.tagNo em {
+  font-style: normal;
+  color: color-mix(in srgb, var(--orange-deep) 45%, transparent);
+}
+
+.tagTitle {
+  font-family: var(--font-display), sans-serif;
+  font-weight: 600;
+  font-size: 0.92rem;
+  line-height: 1.3;
+  color: var(--blue-deep);
+}
+
+.tagCaption {
+  font-size: 0.72rem;
+  line-height: 1.45;
+  color: var(--ink-soft);
+}
+
+@media (max-width: 760px) {
+  /* 移动端：画芯架与吊牌并排落在画框脚下 */
+  .rack {
+    left: var(--rack-m-left);
+    top: var(--rack-m-top);
+  }
+  .tag {
+    left: var(--foot-left);
+    top: var(--foot-top);
+    width: clamp(118px, 33vw, 140px);
+    transform: translateY(8px);
+    align-items: flex-start;
+  }
+  .tagOn {
+    transform: translateY(0);
+  }
+  .tagString {
+    display: none;
+  }
+  .tagCard {
+    rotate: -1.2deg;
+    transform-origin: 50% 50%;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tagCard {
+    animation: none;
+  }
+  .mini {
+    transition-delay: 0s;
+  }
+}

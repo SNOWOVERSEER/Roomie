@@ -1,0 +1,90 @@
+.footer {
+  background: var(--navy);
+  color: var(--cream);
+  padding: clamp(3.5rem, 6vw, 5rem) 0 2rem;
+  border-top: 1px solid rgba(237, 234, 227, 0.08);
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: 1.4fr 0.8fr 0.8fr;
+  gap: clamp(2rem, 5vw, 4rem);
+}
+
+.brand p {
+  margin-top: 1.1rem;
+  font-size: 0.95rem;
+  line-height: 1.7;
+  color: color-mix(in srgb, var(--cream) 72%, transparent);
+}
+
+.social {
+  margin-top: 1.3rem;
+  display: flex;
+  gap: 0.7rem;
+}
+
+.social a {
+  display: grid;
+  place-items: center;
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  border: 1.5px solid rgba(237, 234, 227, 0.3);
+  color: var(--cream);
+  transition:
+    transform var(--dur-fast) var(--ease-soft),
+    border-color var(--dur-fast) var(--ease-out),
+    color var(--dur-fast) var(--ease-out);
+}
+
+.social a:hover {
+  transform: translateY(-3px);
+  border-color: var(--orange);
+  color: var(--orange);
+}
+
+.col {
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+}
+
+.col h3 {
+  color: var(--cream);
+  font-size: 1.05rem;
+  margin-bottom: 0.4rem;
+}
+
+.col a {
+  font-size: 0.95rem;
+  color: color-mix(in srgb, var(--cream) 70%, transparent);
+  transition: color var(--dur-fast) var(--ease-out);
+  width: fit-content;
+}
+
+.col a:hover {
+  color: var(--orange);
+}
+
+.fine {
+  margin-top: 3.2rem;
+  padding-top: 1.4rem;
+  border-top: 1px solid rgba(237, 234, 227, 0.12);
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+  font-size: 0.84rem;
+  color: color-mix(in srgb, var(--cream) 55%, transparent);
+}
+
+.demo {
+  font-style: italic;
+}
+
+@media (max-width: 760px) {
+  .grid {
+    grid-template-columns: 1fr;
+  }
+}

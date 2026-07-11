@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 600">
+  <rect width="800" height="600" fill="#F1EDE2"/>
+  <!-- mat -->
+  <rect x="150" y="360" width="500" height="150" rx="26" fill="#E3DCCB"/>
+  <!-- bowl 1 (navy) -->
+  <path d="M230 400 L410 400 Q404 490 320 490 Q236 490 230 400 Z" fill="#3A5BC7"/>
+  <path d="M230 400 L410 400 L404 424 L236 424 Z" fill="#2B4497"/>
+  <ellipse cx="320" cy="400" rx="90" ry="16" fill="#12275E"/>
+  <!-- kibble -->
+  <circle cx="296" cy="398" r="9" fill="#E8863C"/>
+  <circle cx="326" cy="402" r="9" fill="#D98F45"/>
+  <circle cx="352" cy="397" r="9" fill="#E8A25C"/>
+  <!-- bowl 2 (orange, water) -->
+  <path d="M430 420 L580 420 Q575 494 505 494 Q435 494 430 420 Z" fill="#E8863C"/>
+  <ellipse cx="505" cy="420" rx="75" ry="13" fill="#BFD3E8"/>
+  <!-- fish dream -->
+  <g fill="#C43D14">
+    <path d="M470 260 Q505 232 540 260 Q505 288 470 260 Z"/>
+    <path d="M540 260 l26 -18 l-6 18 l6 18 z"/>
+  </g>
+  <circle cx="496" cy="256" r="4" fill="#F1EDE2"/>
+  <!-- bubbles -->
+  <circle cx="452" cy="310" r="7" fill="#BFD3E8"/>
+  <circle cx="470" cy="290" r="5" fill="#BFD3E8"/>
+</svg>

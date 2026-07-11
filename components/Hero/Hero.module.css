@@ -1,0 +1,284 @@
+/* ---------- 舞台 ---------- */
+
+.hero {
+  position: relative;
+  height: 100svh;
+  min-height: 560px;
+  background: var(--cream);
+  overflow: hidden;
+}
+
+.stage {
+  position: absolute;
+  inset: 0;
+}
+
+.media {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* ---------- 活着的静止：光斑呼吸 ----------
+   定格后整幅画面叠一层极缓、极轻的暖光，8.5s 一次呼吸。
+   幅度小到几乎察觉不到 —— 只为让画面不像卡住。 */
+.breath {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0;
+  background:
+    radial-gradient(
+      58% 64% at 67% 28%,
+      rgba(255, 213, 148, 0.5),
+      rgba(255, 213, 148, 0) 70%
+    ),
+    radial-gradient(
+      40% 46% at 24% 74%,
+      rgba(255, 190, 120, 0.22),
+      rgba(255, 190, 120, 0) 72%
+    );
+  mix-blend-mode: soft-light;
+  transition: opacity 2400ms var(--ease-out);
+}
+
+.breathOn {
+  opacity: 0.55;
+  animation: breathe 8.5s ease-in-out 2.4s infinite alternate;
+}
+
+@keyframes breathe {
+  from {
+    opacity: 0.34;
+  }
+  to {
+    opacity: 0.78;
+  }
+}
+
+/* ---------- 文字可读性蒙版（桌面） ---------- */
+.textGlow {
+  position: absolute;
+  left: 42%;
+  top: 0;
+  width: 58%;
+  height: 62%;
+  pointer-events: none;
+  background: radial-gradient(
+    54% 50% at 55% 36%,
+    rgba(248, 240, 222, 0.78),
+    rgba(248, 240, 222, 0) 74%
+  );
+  opacity: 0;
+  transition: opacity 1400ms var(--ease-out);
+}
+
+.glowOn {
+  opacity: 1;
+}
+
+/* ---------- 文案层 ---------- */
+
+.copyLayer {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.copy {
+  position: absolute;
+  left: 51.5%;
+  top: 13.5%;
+  width: min(41%, 620px);
+  transition: transform 380ms var(--ease-out);
+}
+
+/* 定格瞬间：文字轻轻上移收拢，给 CTA 让出呼吸位 */
+.copySettled {
+  transform: translateY(-14px);
+}
+
+.title {
+  font-size: clamp(2.5rem, 4.4vw, 4.05rem);
+  font-weight: 800;
+  color: var(--blue);
+  text-wrap: balance;
+  text-shadow: 0 0 22px rgba(248, 240, 222, 0.75);
+  opacity: 0;
+  transform: translateY(16px);
+  transition:
+    opacity 1050ms var(--ease-out),
+    transform 1050ms var(--ease-out);
+}
+
+.subtitle {
+  margin-top: 1.05rem;
+  max-width: 30ch;
+  font-size: 1.13rem;
+  line-height: 1.6;
+  font-weight: 600;
+  color: var(--ink);
+  text-shadow:
+    0 0 14px rgba(248, 240, 222, 0.95),
+    0 0 5px rgba(248, 240, 222, 0.9);
+  opacity: 0;
+  transform: translateY(18px);
+  transition:
+    opacity 780ms var(--ease-out),
+    transform 780ms var(--ease-out);
+}
+
+.ctaRow {
+  margin-top: 1.7rem;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.7rem;
+  pointer-events: auto;
+  opacity: 0;
+  transform: translateY(16px) scale(0.985);
+  transition:
+    opacity 560ms var(--ease-out),
+    transform 560ms var(--ease-soft);
+}
+
+.ctaNote {
+  font-size: 0.86rem;
+  font-weight: 700;
+  letter-spacing: 0.015em;
+  color: var(--ink-soft);
+  padding-left: 0.35rem;
+  text-shadow:
+    0 0 12px rgba(248, 240, 222, 0.95),
+    0 0 4px rgba(248, 240, 222, 0.9);
+}
+
+.on {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+}
+
+/* ---------- 滚动提示 ---------- */
+
+.cue {
+  position: absolute;
+  left: 50%;
+  bottom: 3.6vh;
+  transform: translateX(-50%);
+  color: rgba(58, 91, 199, 0.6);
+  opacity: 0;
+  transition: opacity 1100ms var(--ease-out);
+}
+
+.cueOn {
+  opacity: 1;
+}
+
+.cueOn svg {
+  animation: cueBob 2.8s ease-in-out infinite;
+}
+
+.pawA,
+.pawB {
+  opacity: 0;
+}
+
+.cueOn .pawA {
+  animation: pawStep 2.8s ease-in-out infinite;
+}
+.cueOn .pawB {
+  animation: pawStep 2.8s ease-in-out 1.4s infinite;
+}
+
+@keyframes pawStep {
+  0%,
+  12% {
+    opacity: 0;
+  }
+  22%,
+  58% {
+    opacity: 1;
+  }
+  72%,
+  100% {
+    opacity: 0;
+  }
+}
+
+@keyframes cueBob {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(4px);
+  }
+}
+
+/* ---------- 移动端：上图下文 ---------- */
+
+@media (max-width: 760px) {
+  .hero {
+    display: flex;
+    flex-direction: column;
+    min-height: 100svh;
+    height: auto;
+  }
+
+  .stage {
+    position: relative;
+    inset: auto;
+    height: 58svh;
+    flex: none;
+  }
+
+  .textGlow,
+  .cue {
+    display: none;
+  }
+
+  .copyLayer {
+    position: relative;
+    inset: auto;
+    flex: 1;
+    pointer-events: auto;
+    background: var(--cream);
+  }
+
+  .copy {
+    position: relative;
+    left: auto;
+    top: auto;
+    width: auto;
+    padding: 1.9rem clamp(1.3rem, 6vw, 2.2rem) 2.4rem;
+  }
+
+  .title {
+    font-size: clamp(2.05rem, 8.6vw, 2.6rem);
+  }
+
+  .subtitle {
+    font-size: 1.02rem;
+    max-width: none;
+  }
+
+  .copySettled {
+    transform: none;
+  }
+}
+
+/* reduced-motion：全局规则已把过渡压到 0，这里再关掉循环动画 */
+@media (prefers-reduced-motion: reduce) {
+  .breathOn,
+  .cueOn svg,
+  .cueOn .pawA,
+  .cueOn .pawB {
+    animation: none;
+  }
+  .pawA,
+  .pawB {
+    opacity: 1;
+  }
+}

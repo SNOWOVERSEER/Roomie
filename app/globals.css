@@ -1,0 +1,163 @@
+/* ---------- Roomie design tokens ---------- */
+:root {
+  /* brand */
+  --orange: #e8863c;
+  --orange-deep: #d4702a;
+  --blue: #3a5bc7;
+  --blue-deep: #2b4497;
+  --navy: #12275e; /* footer / night, sampled from the canvas sky */
+  --cream: #edeae3;
+  --cream-warm: #f6f2e9;
+  --paper: #f8f6f0;
+  --ink: #2e2e33;
+  --ink-soft: #5c5a55;
+
+  /* motion — soft, slow, weighted */
+  --ease-out: cubic-bezier(0.22, 0.61, 0.21, 1);
+  --ease-soft: cubic-bezier(0.34, 1.2, 0.64, 1); /* gentle overshoot */
+  --dur-fast: 240ms;
+  --dur-mid: 420ms;
+  --dur-slow: 640ms;
+
+  /* shape */
+  --r-ctrl: 10px;
+  --r-card: 14px;
+  --r-media: 22px;
+
+  --shadow-soft: 0 10px 30px rgba(94, 62, 24, 0.12);
+  --shadow-lift: 0 16px 44px rgba(94, 62, 24, 0.18);
+
+  --w-page: 1140px;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  background: var(--cream);
+  color: var(--ink);
+  font-family: var(--font-body), "Avenir Next", sans-serif;
+  font-size: 1.0625rem;
+  line-height: 1.65;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+h1,
+h2,
+h3 {
+  font-family: var(--font-display), var(--font-body), sans-serif;
+  color: var(--blue);
+  line-height: 1.12;
+  font-weight: 700;
+  letter-spacing: 0.005em;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+button {
+  font-family: inherit;
+  cursor: pointer;
+  border: none;
+  background: none;
+  color: inherit;
+}
+
+img,
+video {
+  display: block;
+  max-width: 100%;
+}
+
+::selection {
+  background: rgba(232, 134, 60, 0.32);
+}
+
+/* shared page gutter */
+.shell {
+  width: min(var(--w-page), 100% - clamp(2.5rem, 7vw, 6rem));
+  margin-inline: auto;
+}
+
+/* primary CTA — the single orange per view */
+.btnPrimary {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6em;
+  background: var(--orange);
+  color: #fff8ee;
+  font-family: var(--font-display), sans-serif;
+  font-weight: 600;
+  font-size: 1.06rem;
+  letter-spacing: 0.01em;
+  padding: 0.86em 1.7em;
+  border-radius: 999px;
+  box-shadow: 0 6px 20px rgba(212, 112, 42, 0.35);
+  transition:
+    transform var(--dur-fast) var(--ease-soft),
+    box-shadow var(--dur-fast) var(--ease-out),
+    background var(--dur-fast) var(--ease-out);
+}
+.btnPrimary:hover {
+  transform: translateY(-2px);
+  background: var(--orange-deep);
+  box-shadow: 0 10px 26px rgba(212, 112, 42, 0.42);
+}
+.btnPrimary:active {
+  transform: translateY(0) scale(0.98);
+  transition-duration: 90ms;
+}
+
+/* secondary — quiet outline */
+.btnGhost {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55em;
+  border: 2px solid currentColor;
+  color: var(--blue);
+  font-family: var(--font-display), sans-serif;
+  font-weight: 600;
+  font-size: 1.02rem;
+  padding: 0.72em 1.5em;
+  border-radius: 999px;
+  transition:
+    transform var(--dur-fast) var(--ease-soft),
+    background var(--dur-fast) var(--ease-out),
+    color var(--dur-fast) var(--ease-out);
+}
+.btnGhost:hover {
+  transform: translateY(-2px);
+  background: rgba(58, 91, 199, 0.08);
+}
+.btnGhost:active {
+  transform: scale(0.98);
+}
+
+:focus-visible {
+  outline: 3px solid rgba(58, 91, 199, 0.55);
+  outline-offset: 2px;
+  border-radius: 6px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}

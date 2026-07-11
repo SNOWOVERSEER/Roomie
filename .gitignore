@@ -1,0 +1,53 @@
+# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
+
+# dependencies
+/node_modules
+/.pnp
+.pnp.*
+.yarn/*
+
+# testing
+/coverage
+
+# next.js
+/.next/
+/out/
+
+# production
+/build
+
+# misc
+.DS_Store
+*.pem
+
+# debug
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+
+# env files
+.env
+.env*.local
+
+# vercel
+.vercel
+
+# typescript
+*.tsbuildinfo
+next-env.d.ts
+
+# ---------------------------------------------------------------------------
+# Roomie specifics
+# ---------------------------------------------------------------------------
+
+# Supplier working files — internal only, must never be published
+/GlugGlug30天发文计划/
+/Glug视频/
+
+# Asset-pipeline scratch renders + intermediates.
+# These are regenerated on every `tools/make_artworks.py` run; only the
+# scripts and the source frame (last-frame.png) belong in version control.
+/tools/*.png
+/tools/*.npy
+!/tools/last-frame.png

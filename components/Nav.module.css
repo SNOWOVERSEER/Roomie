@@ -1,0 +1,102 @@
+.nav {
+  position: fixed;
+  inset: 0 0 auto 0;
+  z-index: 60;
+  display: flex;
+  align-items: center;
+  gap: 2.2rem;
+  padding: 0.9rem clamp(1.2rem, 3.5vw, 2.6rem);
+  transition:
+    background var(--dur-slow) var(--ease-out),
+    box-shadow var(--dur-slow) var(--ease-out),
+    padding var(--dur-slow) var(--ease-out);
+}
+
+.solid {
+  background: color-mix(in srgb, var(--cream) 88%, transparent);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  box-shadow: 0 1px 0 rgba(94, 62, 24, 0.08);
+  padding-block: 0.55rem;
+}
+
+.logo {
+  display: block;
+  margin-right: auto;
+  transition: transform var(--dur-fast) var(--ease-soft);
+}
+.logo:hover {
+  transform: translateY(-1px) rotate(-1deg);
+}
+
+.links {
+  display: flex;
+  gap: 1.7rem;
+  font-family: var(--font-display), sans-serif;
+  font-weight: 600;
+  font-size: 0.98rem;
+  color: var(--blue-deep);
+}
+.links a {
+  position: relative;
+  padding: 0.2rem 0;
+}
+.links a::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 100%;
+  bottom: -1px;
+  height: 2.5px;
+  border-radius: 2px;
+  background: var(--orange);
+  transition: right var(--dur-fast) var(--ease-out);
+}
+.links a:hover::after {
+  right: 0;
+}
+
+.cart {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  color: var(--blue-deep);
+  background: color-mix(in srgb, var(--paper) 82%, transparent);
+  border: 2px solid color-mix(in srgb, var(--blue) 26%, transparent);
+  border-radius: 999px;
+  padding: 0.42rem 0.85rem;
+  transition:
+    transform var(--dur-fast) var(--ease-soft),
+    border-color var(--dur-fast) var(--ease-out);
+}
+.cart:hover {
+  transform: translateY(-2px);
+  border-color: var(--blue);
+}
+
+.count {
+  font-family: var(--font-display), sans-serif;
+  font-weight: 700;
+  font-size: 0.95rem;
+  min-width: 1.1em;
+  text-align: center;
+  animation: pop var(--dur-mid) var(--ease-soft);
+}
+
+@keyframes pop {
+  0% {
+    transform: scale(1);
+  }
+  40% {
+    transform: scale(1.45);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+@media (max-width: 720px) {
+  .links {
+    display: none;
+  }
+}
