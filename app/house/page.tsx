@@ -5,17 +5,16 @@ import Reveal from "@/components/Reveal";
 import Crumb from "@/components/pdp/Crumb";
 import CrossSell from "@/components/pdp/CrossSell";
 import HouseShop from "@/components/pdp/HouseShop";
-import { getHouseRun } from "@/lib/shopify";
 import pdp from "@/components/pdp/pdp.module.css";
 import shop from "@/components/pdp/HouseShop.module.css";
 
 export const metadata: Metadata = {
   title: "The Canvas House — Roomie",
   description:
-    "An A-frame cat den wearing two full scratch-paintings, with a porthole door. First run of ten numbered pieces, built in order.",
+    "An A-frame cat den wearing two full scratch-paintings, with a porthole door. First run of ten numbered pieces — join the waitlist for first pick.",
 };
 
-/* № 01-B 详情页：夜幕预订舞台 + 剧照 + 预订流程说明。 */
+/* 猫屋详情页：夜幕舞台（候补）+ 剧照 + 首批流程说明。 */
 
 const STILLS = [
   {
@@ -38,15 +37,13 @@ const STILLS = [
   },
 ];
 
-export default async function HousePage() {
-  const run = await getHouseRun();
-
+export default function HousePage() {
   return (
     <>
       <Nav />
       <main className={pdp.page}>
         <Crumb piece="The House" />
-        <HouseShop total={run.total} claimed={run.claimed} />
+        <HouseShop />
 
         {/* 剧照三联 */}
         <section className={pdp.section}>
@@ -83,19 +80,18 @@ export default async function HousePage() {
                 Ten pieces, built in order.
               </h2>
             </Reveal>
-            {/* TODO 文案：预订政策细节待用户确认 */}
             <ol className={pdp.steps}>
               <Reveal as="li">
-                <h3>Reserve a number</h3>
-                <p>Pick the number you want — it's stamped on the frame.</p>
+                <h3>Join the waitlist</h3>
+                <p>Leave your email — no charge, no commitment.</p>
               </Reveal>
               <Reveal as="li" delay={90}>
                 <h3>We build in order</h3>
                 <p>№ 01 leaves the bench first — ten houses, one at a time.</p>
               </Reveal>
               <Reveal as="li" delay={180}>
-                <h3>Pay when it ships</h3>
-                <p>Nothing is charged until your house is on its way.</p>
+                <h3>First pick, first served</h3>
+                <p>The waitlist hears first and chooses their number first.</p>
               </Reveal>
             </ol>
           </div>

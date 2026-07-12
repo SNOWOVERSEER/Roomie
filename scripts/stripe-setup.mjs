@@ -39,14 +39,8 @@ const SKUS = [
     unitAmount: 3500, // TODO 占位价，与 lib/catalog.ts 同步改
     image: `${SITE}/c01/print-02.webp`,
   },
-  {
-    handle: "canvas-house",
-    name: "The Canvas House",
-    description:
-      "The canvas folded into a den — two scratch walls, a porthole door. First run of ten, numbered on the frame.",
-    unitAmount: 18900, // TODO 占位价，与 lib/catalog.ts 同步改
-    image: `${SITE}/c01/house-poster.jpg`,
-  },
+  // canvas-house：首批走 waitlist 不可购（2026-07-12）。开售时把 SKU 加回
+  // 这里 + lib/catalog.ts（Stripe 侧 product/price 已存在，脚本幂等复用）。
 ];
 
 async function ensureProduct(sku) {

@@ -8,7 +8,7 @@ import styles from "./Nav.module.css";
 
 export default function Nav() {
   const [solid, setSolid] = useState(false);
-  const { count, bump } = useCart();
+  const { count, bump, openDrawer } = useCart();
 
   useEffect(() => {
     const onScroll = () => setSolid(window.scrollY > window.innerHeight * 0.7);
@@ -30,10 +30,12 @@ export default function Nav() {
         <Link href="/#coming-next">What&rsquo;s next</Link>
         <Link href="/#story">Our idea</Link>
       </nav>
-      <Link
-        href="/cart"
+      <button
+        type="button"
         className={styles.cart}
+        onClick={openDrawer}
         aria-label={`Basket, ${count} items`}
+        aria-haspopup="dialog"
       >
         <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden>
           <path
@@ -54,7 +56,7 @@ export default function Nav() {
         <span className={styles.count} key={bump}>
           {count}
         </span>
-      </Link>
+      </button>
     </header>
   );
 }

@@ -4,10 +4,9 @@
  * P2 架构（见 Roomie_第二阶段技术架构规格.md）：真实交易走
  * lib/catalog.ts（可购 SKU + Stripe Price）→ /api/checkout → Stripe
  * 托管结算 → /api/webhook 写 Supabase orders。
- * 本文件仅剩两个职责：
- *   1. getProducts() —— What's next 区的占位商品（available=false）
- *   2. getHouseRun() —— 猫屋首批总数的 mock 基础值
- *      （真实已占编号由 /api/house-run 聚合订单得出）
+ * 本文件仅剩一个职责：
+ *   getProducts() —— What's next 区的占位商品（available=false，
+ *   候补登记走 /api/waitlist）
  */
 
 export interface Product {
@@ -94,17 +93,6 @@ const MOCK_PRODUCTS: Product[] = [
 export async function getProducts(): Promise<Product[]> {
   // TODO(Shopify): 换成 Storefront API products query
   return MOCK_PRODUCTS;
-}
-
-/**
- * 猫屋首批编号预售的余量。claimed = 已被预留的编号。
- * TODO(Shopify): 用 10 个变体（№01–№10）的库存映射，此处 mock 为全部可选。
- */
-export async function getHouseRun(): Promise<{
-  total: number;
-  claimed: number[];
-}> {
-  return { total: 10, claimed: [] };
 }
 
 export async function getProduct(handle: string): Promise<Product | undefined> {

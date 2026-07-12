@@ -6,7 +6,7 @@
  * stripePriceId 由 `npm run stripe:setup` 幂等生成（当前为 test mode）。
  * 上 live：换 live key 重跑脚本，把打印出的新 Price ID 回填到这里。
  */
-export type CatalogHandle = "canvas-scratcher" | "canvas-print" | "canvas-house";
+export type CatalogHandle = "canvas-scratcher" | "canvas-print";
 
 export interface CatalogItem {
   handle: CatalogHandle;
@@ -14,10 +14,15 @@ export interface CatalogItem {
   priceCents: number;
   image: string;
   stripePriceId: string;
-  /** house：编号件，购物车中一号一行、数量恒 1 */
+  /** 编号件：购物车中一号一行、数量恒 1（当前无在售编号件） */
   numbered?: boolean;
 }
 
+/*
+ * 猫屋（canvas-house）不在这里：首批改为 waitlist（2026-07-12 决策），
+ * 不可购 —— 开售时把它加回来即可（Stripe 侧 product/price 已建好：
+ * price_1TsHxqDzmUuzRpRKebu6oZDS，AU$189 占位）。
+ */
 export const CATALOG: Record<CatalogHandle, CatalogItem> = {
   "canvas-scratcher": {
     handle: "canvas-scratcher",
@@ -32,14 +37,6 @@ export const CATALOG: Record<CatalogHandle, CatalogItem> = {
     priceCents: 3500, // TODO 占位价待确认（改这里 + 重跑 stripe:setup）
     image: "/c01/print-02.webp",
     stripePriceId: "price_1TsHxpDzmUuzRpRKRnGBcpHp",
-  },
-  "canvas-house": {
-    handle: "canvas-house",
-    title: "The Canvas House",
-    priceCents: 18900, // TODO 占位价待确认
-    image: "/c01/house-poster.jpg",
-    stripePriceId: "price_1TsHxqDzmUuzRpRKebu6oZDS",
-    numbered: true,
   },
 };
 

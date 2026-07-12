@@ -9,6 +9,7 @@ import {
   useState,
 } from "react";
 import { CATALOG, type CatalogHandle } from "@/lib/catalog";
+import CartDrawer from "./cart/CartDrawer";
 import styles from "./CartContext.module.css";
 
 /*
@@ -47,6 +48,9 @@ interface CartState {
   setQty: (key: string, qty: number) => void;
   remove: (key: string) => void;
   clear: () => void;
+  /** 侧滑抽屉（Nav 篮子入口；/cart 整页仍保留作深链） */
+  openDrawer: () => void;
+  closeDrawer: () => void;
 }
 
 const Ctx = createContext<CartState>({
@@ -58,6 +62,8 @@ const Ctx = createContext<CartState>({
   setQty: () => {},
   remove: () => {},
   clear: () => {},
+  openDrawer: () => {},
+  closeDrawer: () => {},
 });
 
 export const useCart = () => useContext(Ctx);
@@ -87,6 +93,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   const [lines, setLines] = useState<CartLine[]>([]);
   const [hydrated, setHydrated] = useState(false);
   const [bump, setBump] = useState(0);
+  const [drawerOpen, setDrawerOpen] = useState(false);
   const [toast, setToast] = useState<{
     title: string;
     line: string;
@@ -171,6 +178,8 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   );
 
   const clear = useCallback(() => setLines([]), []);
+  const openDrawer = useCallback(() => setDrawerOpen(true), []);
+  const closeDrawer = useCallback(() => setDrawerOpen(false), []);
 
   useEffect(
     () => () => {
@@ -187,9 +196,29 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
 
   return (
     <Ctx.Provider
-      value={{ lines, count, subtotalCents, bump, add, setQty, remove, clear }}
+      value={{
+        lines,
+        count,
+        subtotalCents,
+        bump,
+        add,
+        setQty,
+        remove,
+        clear,
+        openDrawer,
+        closeDrawer,
+      }}
     >
       {children}
+      <CartDrawer
+        open={drawerOpen}
+        onClose={closeDrawer}
+        lines={lines}
+        count={count}
+        subtotalCents={subtotalCents}
+        setQty={setQty}
+        remove={remove}
+      />
       <div aria-live="polite">
         {toast && (
           <div className={styles.toast} key={toast.key}>

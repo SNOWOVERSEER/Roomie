@@ -94,7 +94,7 @@ export default function CanvasCollection() {
                 <span className={styles.indexNo}>B</span>
                 <span className={styles.indexName}>The Canvas House</span>
                 <span className={`${styles.indexMeta} ${styles.indexNew}`}>
-                  new · first run of 10
+                  coming soon · waitlist open
                 </span>
               </Link>
             </li>
@@ -150,11 +150,11 @@ export default function CanvasCollection() {
         <Reveal delay={160}>
           <PortalCard
             href="/house"
-            kicker="AU$189 · pre-release"
+            kicker="Coming soon · run of ten"
             title="The Canvas House"
             blurb="The canvas folded into a den — two scratch walls, a porthole door, ten numbered pieces."
             cta="Meet the House"
-            tag="First run of 10"
+            tag="Waitlist open"
             media={{
               kind: "video",
               src: "/c01/house-loop.mp4",

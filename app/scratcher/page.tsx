@@ -221,7 +221,7 @@ export default function ScratcherPage() {
 
         <CrossSell
           href="/house"
-          kicker="Completes the set · first run of 10"
+          kicker="Completes the set · waitlist open"
           title="The Canvas House"
           blurb="The same canvas, folded into a den — two scratch walls and a porthole door."
           image="/c01/house-ontop.webp"

@@ -22,6 +22,10 @@
   → POST /api/shipping（Bearer ADMIN_SECRET）
       ├─ 订单状态 paid → shipped（或 delivered）
       └─ Resend 发「发货邮件」（含追踪链接）
+
+未上市产品（含猫屋首批）
+  → 页面内 Join the waitlist（问邮箱 + 格式校验）
+  → POST /api/waitlist → Supabase waitlist 表（同邮箱同产品幂等）
 ```
 
 ## 环境变量（Vercel → Settings → Environment Variables，Production 作用域）
@@ -68,6 +72,26 @@ Supabase Dashboard → Table Editor → `orders`。
 - 优惠券：Stripe Dashboard → Product catalog → Coupons → 建 Coupon + Promotion Code；
   结算页已开 `allow_promotion_codes`，顾客直接输码。
 
+### 看候补名单 / 导出邮箱
+
+Supabase Dashboard → Table Editor → `waitlist`（`product_handle` 区分产品：
+`canvas-house` / `nook-house` / `cloud-perch` / `wave-bowls`）。
+SQL Editor 导出某产品全部邮箱：
+
+```sql
+select email from waitlist where product_handle = 'canvas-house' order by created_at;
+```
+
+### 猫屋开售（把它从 waitlist 切回可购）
+
+首批猫屋当前**不可购**（2026-07-12 决策：选号预售撤销，改候补）。开售时：
+
+1. `lib/catalog.ts` 把 canvas-house 加回（Stripe price 已存在：
+   `price_1TsHxqDzmUuzRpRKebu6oZDS`，AU$189 占位）+ `scripts/stripe-setup.mjs` 的 SKUS 同步；
+2. HouseShop 面板把 WaitlistForm 换回购买按钮（git 历史里有选号版本可参考，
+   commit `4ca870b` 之前）；
+3. 给 waitlist 里的人发邮件（导出邮箱 → Resend 群发或手动）。
+
 ### 上新 SKU
 
 1. `lib/catalog.ts` 加一项（价格分）；
@@ -108,11 +132,12 @@ Supabase Dashboard → Table Editor → `orders`。
 | 付款成功但 success 页一直「fetching order number」 | Stripe Dashboard → Webhooks → endpoint 的投递记录；常见是 `STRIPE_WEBHOOK_SECRET` 不匹配（签名 400） |
 | 订单入库但没邮件 | Vercel 函数日志搜 `[email]`；Resend Dashboard → Emails；域名未验证时只有账户本人邮箱能收 |
 | `/api/shipping` 401 | `Authorization: Bearer` 与 Vercel 的 `ADMIN_SECRET` 是否一致 |
-| 猫屋编号没变灰 | `/api/house-run` 直接访问看 JSON；它聚合 `orders.items` 里的 `№ XX` |
+| waitlist 提交转圈失败 | Vercel 函数日志搜 `[waitlist]`；表在 Supabase → `waitlist` |
 | 本地 webhook 收不到 | `stripe listen --api-key … --forward-to localhost:3000/api/webhook`，把它打印的 `whsec_…` 放进 `.env.local` 后重启 dev |
 
 ## 已知边界（MVP 刻意不做，规格确认）
 
-- 猫屋编号无并发锁：两人同时付同一编号理论上可能（首批 10 件，风险极小，人工兜底）。
 - 无顾客订单查询页 / AusPost 自动回调 / 库存管理 / CMS。
 - 购物车在浏览器本地（localStorage），换设备不同步。
+- waitlist 不发确认邮件、无退订链接（开售通知属一次性交易性邮件；
+  若以后做营销邮件再补合规退订）。

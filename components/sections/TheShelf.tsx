@@ -1,7 +1,7 @@
 import Link from "next/link";
 import Reveal from "@/components/Reveal";
 import { getProducts } from "@/lib/shopify";
-import WaitlistButton from "./WaitlistButton";
+import WaitlistForm from "@/components/WaitlistForm";
 import styles from "./TheShelf.module.css";
 
 /*
@@ -47,7 +47,7 @@ export default async function TheShelf() {
                 The Scratcher <em>AU$89</em>
               </Link>
               <Link href="/house">
-                The House <em>run of 10</em>
+                The House <em>waitlist open</em>
               </Link>
               <Link href="/scratcher#prints">
                 Swap-in prints <em>AU$35</em>
@@ -69,7 +69,7 @@ export default async function TheShelf() {
                     </p>
                     <h3>{p.title}</h3>
                     <p className={styles.soonBlurb}>{p.tagline}</p>
-                    <WaitlistButton title={p.title} />
+                    <WaitlistForm compact handle={p.handle} title={p.title} />
                   </div>
                 </article>
               </Reveal>

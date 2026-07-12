@@ -1,56 +1,21 @@
 "use client";
 
-import { useState } from "react";
 import Link from "next/link";
-import { useCart, type CartLine } from "@/components/CartContext";
+import { useCart } from "@/components/CartContext";
 import { CATALOG, formatCents } from "@/lib/catalog";
-import { ARTWORKS } from "@/lib/heroConfig";
+import { useCheckout } from "./useCheckout";
+import { lineImage } from "./lineImage";
 import styles from "./CartView.module.css";
 
 /*
- * 购物篮页：行卡片 + 粘性结算面板。
+ * 购物篮整页（Nav 走抽屉，这页负责深链/Stripe cancel_url 回退）。
  * 「Checkout securely」→ POST /api/checkout（服务端按 CATALOG 定价
  * 建 Stripe Checkout Session）→ 跳 Stripe 托管结算页。
  */
 
-/** 画芯类行用对应画作平面稿当缩略图；编号件用产品图 */
-function lineImage(line: CartLine): string {
-  const item = CATALOG[line.handle];
-  if (line.handle === "canvas-house" || !line.variant) return item.image;
-  const i = ARTWORKS.findIndex((a) => a.title === line.variant);
-  return i >= 0 ? `/hero/art/flat-0${i + 1}.png` : item.image;
-}
-
 export default function CartView() {
   const { lines, count, subtotalCents, setQty, remove } = useCart();
-  const [busy, setBusy] = useState(false);
-  const [err, setErr] = useState<string | null>(null);
-
-  const checkout = async () => {
-    setBusy(true);
-    setErr(null);
-    try {
-      const res = await fetch("/api/checkout", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          lines: lines.map((l) => ({
-            handle: l.handle,
-            variant: l.variant,
-            qty: l.qty,
-          })),
-        }),
-      });
-      const data = (await res.json()) as { url?: string; error?: string };
-      if (!res.ok || !data.url) throw new Error(data.error ?? "no url");
-      window.location.assign(data.url);
-    } catch {
-      setErr("Couldn't open the checkout — give it another go in a moment.");
-      setBusy(false);
-    }
-  };
-
-  const hasHouse = lines.some((l) => l.handle === "canvas-house");
+  const { busy, err, checkout } = useCheckout(lines);
 
   if (lines.length === 0) {
     return (
@@ -179,12 +144,6 @@ export default function CartView() {
                 Payments handled by Stripe — card details never touch our
                 servers.
               </p>
-              {hasHouse && (
-                <p className={styles.houseNote}>
-                  Your House number is held in the basket and stamped on the
-                  frame once paid — we build the run in order.
-                </p>
-              )}
             </div>
             <Link className={styles.keepLink} href="/#canvas">
               ← keep browsing

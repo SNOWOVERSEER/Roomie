@@ -36,94 +36,14 @@
   box-shadow: var(--shadow-soft);
 }
 
-/* ——— 编号选择器：十张纸吊牌 ——— */
-.numbers {
-  margin-top: 0.8rem;
-  display: grid;
-  grid-template-columns: repeat(5, 1fr);
-  gap: 0.55rem;
-}
-
-.numTag {
-  position: relative;
-  font-family: var(--font-display), sans-serif;
-  font-weight: 800;
-  font-size: 1.05rem;
-  color: var(--blue-deep);
-  background: var(--cream-warm);
-  border: 2px solid color-mix(in srgb, var(--blue) 22%, transparent);
-  border-radius: 10px;
-  padding: 0.62em 0;
-  text-align: center;
-  transition:
-    transform var(--dur-fast) var(--ease-soft),
-    border-color var(--dur-fast) var(--ease-out),
-    background var(--dur-fast) var(--ease-out),
-    box-shadow var(--dur-fast) var(--ease-out);
-}
-
-/* 吊牌孔 */
-.numTag::before {
-  content: "";
-  position: absolute;
-  top: 4px;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 5px;
-  height: 5px;
-  border-radius: 50%;
-  background: color-mix(in srgb, var(--blue) 24%, transparent);
-}
-
-.numTag:nth-child(odd) {
-  rotate: -1.6deg;
-}
-.numTag:nth-child(even) {
-  rotate: 1.4deg;
-}
-
-.numTag:hover:not(:disabled) {
-  transform: translateY(-3px);
-  border-color: var(--blue);
-}
-
-.numOn {
-  background: var(--orange);
-  border-color: var(--orange-deep);
-  color: #fff8ee;
-  box-shadow: 0 8px 20px rgba(212, 112, 42, 0.4);
-  rotate: 0deg !important;
-  transform: scale(1.06);
-}
-.numOn::before {
-  background: rgba(255, 248, 238, 0.6);
-}
-
-.numTag:disabled {
-  opacity: 0.38;
-  text-decoration: line-through;
-  cursor: default;
-}
-
-.numHint {
-  margin-top: 0.75rem;
-  font-size: 0.88rem;
+/* ——— 首批说明 ——— */
+.runBlurb {
+  margin-top: 0.7rem;
+  font-size: 0.95rem;
+  line-height: 1.6;
   color: var(--ink-soft);
-  min-height: 1.3em;
-  animation: hintIn 240ms var(--ease-out) both;
+  max-width: 40ch;
 }
-
-@keyframes hintIn {
-  from {
-    opacity: 0;
-    transform: translateY(4px);
-  }
-  to {
-    opacity: 1;
-    transform: none;
-  }
-}
-
 /* ——— 三张剧照 ——— */
 .stills {
   margin-top: 2rem;

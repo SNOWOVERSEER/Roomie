@@ -79,7 +79,7 @@ app/
     webhook/            Stripe events → Supabase order + confirmation email
     shipping/           internal fulfilment endpoint (Bearer ADMIN_SECRET)
     order/              order summary for the success page
-    house-run/          claimed house numbers, aggregated from real orders
+    waitlist/           email capture for unreleased pieces (incl. the House)
 components/
   Hero/                 hero state machine, artwork switcher, video-rect math
   pdp/                  product-page stage: gallery, buy panels, cross-sell
@@ -91,7 +91,7 @@ lib/
   stripe.ts supabase-admin.ts email.ts orders.ts env.ts
   shopify.ts            display-only leftovers (What's-next placeholders)
 scripts/                db-migrate.mjs · stripe-setup.mjs
-supabase/migrations/    orders table DDL
+supabase/migrations/    orders + waitlist DDL
 public/hero|c01|story   film, composited artworks, de-branded product shots
 tools/                  offline asset pipeline (see below)
 ```
@@ -164,10 +164,11 @@ Design decisions worth knowing:
 - **Webhook is idempotent** — `orders.stripe_session_id` is unique; Stripe
   retries never double-write or double-email. DB failure → 500 (Stripe retries);
   email failure → logged, never blocks the order.
-- **The `orders` table has RLS on with no policies** — only the server-side
-  secret key can touch it.
-- **House numbers are real**: `/api/house-run` aggregates claimed numbers from
-  actual orders, so a sold № greys out on the product page.
+- **The `orders` and `waitlist` tables have RLS on with no policies** — only
+  the server-side secret key can touch them.
+- **The House is waitlist-only for now**: no number pre-sale; `WaitlistForm`
+  (email + validation) posts to `/api/waitlist`, idempotent per
+  email × product. The same form powers the What's-next cards.
 - Missing env keys degrade gracefully (emails skip with a log; checkout 502s
   with a friendly client message) so preview deploys never crash.
 
@@ -182,7 +183,8 @@ Afterpay, Resend domain verification, and swapping to live keys.
 
 ## Roadmap
 
-- [ ] Prices are placeholders (`TODO` in `lib/catalog.ts`): print AU$35, house AU$189
+- [ ] Print price is a placeholder (`TODO` in `lib/catalog.ts`, AU$35)
+- [ ] Open the Canvas House run (waitlist-only today — see the runbook's 猫屋开售 section)
 - [ ] Enable Stripe Tax + Afterpay in the Stripe Dashboard, then set `STRIPE_TAX_ENABLED=1`
 - [ ] Verify `roomiepaw.com.au` in Resend and switch `RESEND_FROM`
 - [ ] Customer order-lookup page & Australia Post callbacks (explicitly out of MVP scope)

@@ -1,0 +1,114 @@
+/* ——— 候补登记表单（compact=卡片内 / 常开=面板内） ——— */
+
+.opener {
+  margin-top: 0.65rem;
+  font-family: var(--font-display), sans-serif;
+  font-weight: 600;
+  font-size: 0.88rem;
+  color: var(--blue-deep);
+  border: 2px solid color-mix(in srgb, var(--blue) 32%, transparent);
+  border-radius: 999px;
+  padding: 0.38em 1em;
+  transition:
+    transform var(--dur-fast) var(--ease-soft),
+    border-color var(--dur-fast) var(--ease-out);
+}
+.opener:hover {
+  transform: translateY(-2px);
+  border-color: var(--blue);
+}
+
+.form {
+  margin-top: 0.8rem;
+}
+
+.formCompact {
+  margin-top: 0.65rem;
+  animation: formIn 260ms var(--ease-out) both;
+}
+
+@keyframes formIn {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.row {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.row input {
+  flex: 1 1 12rem;
+  min-width: 0;
+  font: inherit;
+  font-size: 0.95rem;
+  color: var(--ink);
+  background: var(--cream);
+  border: 2px solid color-mix(in srgb, var(--ink-soft) 22%, transparent);
+  border-radius: 999px;
+  padding: 0.62em 1.1em;
+  transition:
+    border-color var(--dur-fast) var(--ease-out),
+    background var(--dur-fast) var(--ease-out);
+}
+
+.row input::placeholder {
+  color: color-mix(in srgb, var(--ink-soft) 70%, transparent);
+}
+
+.row input:focus-visible {
+  outline: none;
+  border-color: var(--blue);
+  background: var(--paper);
+}
+
+.row input[aria-invalid="true"] {
+  border-color: #c25a2a;
+}
+
+.join {
+  font-family: var(--font-display), sans-serif;
+  font-weight: 700;
+  font-size: 0.92rem;
+  color: #fff8ee;
+  background: var(--blue);
+  border-radius: 999px;
+  padding: 0.62em 1.25em;
+  white-space: nowrap;
+  transition:
+    transform var(--dur-fast) var(--ease-soft),
+    background var(--dur-fast) var(--ease-out),
+    opacity var(--dur-fast) var(--ease-out);
+}
+.join:hover:not(:disabled) {
+  transform: translateY(-2px);
+  background: var(--blue-deep);
+}
+.join:disabled {
+  opacity: 0.65;
+}
+
+.err {
+  margin-top: 0.5rem;
+  font-size: 0.85rem;
+  color: #b3471d;
+}
+
+.done {
+  margin-top: 0.8rem;
+  display: flex;
+  align-items: baseline;
+  gap: 0.5em;
+  font-family: var(--font-display), sans-serif;
+  font-weight: 600;
+  font-size: 0.95rem;
+  color: #2c6e49;
+  animation: formIn 300ms var(--ease-out) both;
+}

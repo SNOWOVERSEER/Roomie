@@ -1,46 +1,24 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { useCart } from "@/components/CartContext";
+import WaitlistForm from "@/components/WaitlistForm";
 import pdp from "./pdp.module.css";
 import styles from "./HouseShop.module.css";
 
 /*
- * 猫屋详情页主舞台（夜幕）：产品影片循环 + 编号预订面板。
- * 首批 10 席编号预售 —— 选号是这页的记忆点交互；claimed 来自
- * lib/shopify.ts 的 mock（TODO(Shopify)：接 №01–№10 变体库存）。
- * TODO 文案：AU$189 与预订政策为占位，待用户确认。
+ * 猫屋详情页主舞台（夜幕）：产品影片循环 + 候补面板。
+ * 首批 10 件编号仍是产品叙事，但不再选号/预售（用户决策 2026-07-12）——
+ * 统一走 waitlist：留邮箱，开售时候补名单优先。
  * 视频已抹除供应商 logo（含 logo 的镜头整段替换为干净镜头 + 静态补丁）。
  */
 
-export default function HouseShop({
-  total,
-  claimed: claimedInitial,
-}: {
-  total: number;
-  claimed: number[];
-}) {
+export default function HouseShop() {
   const videoRef = useRef<HTMLVideoElement>(null);
+  const emailRef = useRef<HTMLInputElement | null>(null);
   const [reduced, setReduced] = useState<boolean | null>(null);
-  const [picked, setPicked] = useState<number | null>(null);
-  const [claimed, setClaimed] = useState(claimedInitial);
-  const { add } = useCart();
 
   useEffect(() => {
     setReduced(window.matchMedia("(prefers-reduced-motion: reduce)").matches);
-  }, []);
-
-  // 已被真实订单占用的编号（页面保持静态，编号占用客户端刷新）
-  useEffect(() => {
-    fetch("/api/house-run")
-      .then((r) => (r.ok ? r.json() : null))
-      .then((d: { claimed?: number[] } | null) => {
-        if (d?.claimed) {
-          setClaimed(d.claimed);
-          setPicked((p) => (p != null && d.claimed!.includes(p) ? null : p));
-        }
-      })
-      .catch(() => {});
   }, []);
 
   // 进入视口才播放；滚走暂停
@@ -59,14 +37,9 @@ export default function HouseShop({
     return () => io.disconnect();
   }, [reduced]);
 
-  const nn = (n: number) => String(n).padStart(2, "0");
-
-  const reserve = () => {
-    if (picked == null) return;
-    add("canvas-house", `№ ${nn(picked)}`, {
-      line: "— your number is held",
-      note: "first run of ten · charged at checkout, built in order",
-    });
+  const jumpToForm = () => {
+    emailRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+    setTimeout(() => emailRef.current?.focus({ preventScroll: true }), 450);
   };
 
   return (
@@ -99,10 +72,10 @@ export default function HouseShop({
           </figcaption>
         </figure>
 
-        {/* ——— 预订面板 ——— */}
+        {/* ——— 候补面板 ——— */}
         <div className={pdp.panelCol}>
           <div className={pdp.panel}>
-            <p className={pdp.panelKicker}>Limited pre-release</p>
+            <p className={pdp.panelKicker}>First run of ten · coming soon</p>
             <h1 className={pdp.panelTitle}>The Canvas House</h1>
             <p className={pdp.panelTagline}>
               The canvas, folded into a den. Two full scratch-paintings make
@@ -110,80 +83,45 @@ export default function HouseShop({
               room in the house.
             </p>
 
-            <p className={pdp.panelLabel}>
-              Pick your number — we build in order
-            </p>
-            <div
-              className={styles.numbers}
-              role="radiogroup"
-              aria-label={`Choose one of ${total} numbered pieces`}
-            >
-              {Array.from({ length: total }, (_, i) => i + 1).map((n) => {
-                const gone = claimed.includes(n);
-                return (
-                  <button
-                    key={n}
-                    role="radio"
-                    aria-checked={picked === n}
-                    disabled={gone}
-                    className={`${styles.numTag} ${picked === n ? styles.numOn : ""}`}
-                    onClick={() => setPicked(n)}
-                    aria-label={
-                      gone ? `Number ${nn(n)}, taken` : `Number ${nn(n)}`
-                    }
-                  >
-                    {nn(n)}
-                  </button>
-                );
-              })}
-            </div>
-            <p className={styles.numHint} key={picked ?? "none"}>
-              {picked == null
-                ? `All ${total - claimed.length} of ${total} still on the shelf.`
-                : `№ ${nn(picked)} — built ${picked === 1 ? "first" : `${nn(picked)} in line`}, stamped on the frame.`}
+            <p className={pdp.panelLabel}>The run</p>
+            <p className={styles.runBlurb}>
+              Ten numbered houses, built one at a time on our Melbourne bench.
+              When the run opens, the waitlist hears first — and gets first
+              pick of the numbers.
             </p>
 
             <div className={pdp.buyRow}>
               <span className={pdp.price}>
-                AU$189 <em>free AU shipping · built in order</em>
+                AU$189 <em>expected · no charge to join</em>
               </span>
-              <button
-                className="btnPrimary"
-                onClick={reserve}
-                disabled={picked == null}
-                style={picked == null ? { opacity: 0.55 } : undefined}
-              >
-                {picked == null ? "Pick a number" : `Reserve № ${nn(picked)}`}
-              </button>
             </div>
+
+            <p className={pdp.panelLabel}>Get first pick</p>
+            <WaitlistForm
+              handle="canvas-house"
+              title="The Canvas House"
+              inputRef={emailRef}
+            />
 
             <ul className={pdp.panelNotes}>
               <li>Ten pieces in the first run, each numbered on the frame.</li>
-              <li>Two swap-able scratch walls — same canvases as the Scratcher.</li>
               <li>
-                Paid at checkout; we confirm your number the same day and
-                build in order.
+                Two swap-able scratch walls — same prints as the Scratcher.
               </li>
+              <li>Waitlist is first in line when the run opens. That's all.</li>
             </ul>
           </div>
         </div>
       </div>
 
-      {/* ——— 移动端粘性预订条 ——— */}
+      {/* ——— 移动端粘性候补条 ——— */}
       <div className={pdp.stickyBar}>
         <span className={pdp.stickyInfo}>
-          <span className={pdp.stickyName}>
-            {picked == null ? "The Canvas House" : `House · № ${nn(picked)}`}
-          </span>
-          <span className={pdp.stickyPrice}>AU$189 · run of {total}</span>
+          <span className={pdp.stickyName}>The Canvas House</span>
+          <span className={pdp.stickyPrice}>run of ten · coming soon</span>
         </span>
-        <button
-          className={pdp.stickyBtn}
-          onClick={reserve}
-          disabled={picked == null}
-          style={picked == null ? { opacity: 0.55 } : undefined}
-        >
-          {picked == null ? "Pick a number" : "Reserve it"}
+        <button className={pdp.stickyBtn} onClick={jumpToForm}>
+          Join the waitlist
         </button>
       </div>
     </section>

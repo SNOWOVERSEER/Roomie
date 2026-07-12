@@ -204,32 +204,6 @@
   color: var(--ink-soft);
 }
 
-.wait {
-  margin-top: 0.65rem;
-  font-family: var(--font-display), sans-serif;
-  font-weight: 600;
-  font-size: 0.88rem;
-  color: var(--blue-deep);
-  border: 2px solid color-mix(in srgb, var(--blue) 32%, transparent);
-  border-radius: 999px;
-  padding: 0.38em 1em;
-  transition:
-    transform var(--dur-fast) var(--ease-soft),
-    border-color var(--dur-fast) var(--ease-out),
-    background var(--dur-fast) var(--ease-out),
-    color var(--dur-fast) var(--ease-out);
-}
-.wait:hover:not(:disabled) {
-  transform: translateY(-2px);
-  border-color: var(--blue);
-}
-.waitDone {
-  cursor: default;
-  color: #2c6e49;
-  border-color: color-mix(in srgb, #2c6e49 40%, transparent);
-  background: color-mix(in srgb, #2c6e49 8%, transparent);
-}
-
 @media (max-width: 900px) {
   .grid {
     grid-template-columns: 1fr;
