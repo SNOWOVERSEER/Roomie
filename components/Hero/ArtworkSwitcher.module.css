@@ -8,10 +8,12 @@
   overflow: hidden;
   z-index: 4;
   pointer-events: none;
-  /* 关键 1：视频播放期间整层隐身（画作会遮住走到画前的猫），
-     定格瞬间才现身 —— art-01 与末帧像素一致，切换不可察觉。
+  /* 关键 1：视频播放期间整层隐身（画作会遮住走到画前的猫）。
+     art-01 也是真画合成（视频帧色调 ≠ 实物），定格后用一段慢溶解
+     把真色画作盖上去 —— 突变会跳，溶解读作「光线定下来」。
      用 opacity 而非 display，保证图片提前解码。 */
   opacity: 0;
+  transition: opacity 1200ms var(--ease-out) 240ms;
   /* 关键 2：羽化蒙版裁掉画布之外的一切 —— 木框与墙面由活视频
      原生呈现，覆盖图的矩形外沿不可能产生接缝色差。 */
   -webkit-mask-image: url("/hero/art/frame-mask.png");

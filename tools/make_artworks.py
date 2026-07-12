@@ -121,7 +121,8 @@ im = np.asarray(base).astype(float)
 matte = matte_full[Y0:Y1, X0:X1]
 Image.fromarray((matte * 255).astype(np.uint8)).save(SP + '/matte_raw.png')
 
-# art-01 = 原样裁剪（校色后；2x 版本在光照/纹理计算后输出）
+# 注：art-01 不再输出视频裁剪版（2026-07-13 起与 02–06 同走真画合成，
+# 视频帧色调 ≠ 实物，定格后由前端 1.2s 溶解盖上真色画作）
 
 # ---------------- 3. 变形目标四边形：蒙版边缘拟合 + 向外过扫 ----------------
 rowsL, rowsR, colsT, colsB = [], [], [], []
@@ -394,9 +395,6 @@ coeffs2 = find_coeffs(quad2,
                       [(0, 0), (FA_W, 0), (FA_W, FA_H), (0, FA_H)])
 lightmap2 = up_field(lightmap)
 grain2 = up_field(grain)
-# art-01 = 2x 裁剪（浏览器缩放行为与视频一致，定格交接依旧无缝）
-Image.fromarray(np.clip(im2 + CALIB, 0, 255).astype(np.uint8)).save(OUT + '/art-01.png')
-
 def composite(flat_img, name):
     warped = flat_img.transform((BW2, BH2), Image.PERSPECTIVE, coeffs2, Image.BICUBIC)
     wa = np.asarray(warped).astype(float)
@@ -408,11 +406,12 @@ def composite(flat_img, name):
 
 # ---------------- 6. 真实画作平面稿 → 合成 ----------------
 # 平面稿由 tools/extract_flats.py 从供应商产品图提取（1400×2000 = FA_W×FA_H）。
-# art-01（晴野）= 视频末帧原样裁剪（上方已输出）；02–06 走透视+光照+纹理合成。
+# 全部 6 张（含 art-01 晴野）走透视+光照+纹理合成 —— 视频帧色调与实物
+# 有偏差，定格后前端用溶解把真色画作盖上（用户反馈 2026-07-13）。
 # 注：平面稿自带真实圈绒纹理，视频烘焙的 grain 叠加系数在 composite 内为 0.85，
 # 若观感过密可在此处对 flat 轻微高斯（0.6）预柔化。
 FLAT_DIR = ROOT / 'public' / 'hero' / 'art'
-for _i in range(2, 7):
+for _i in range(1, 7):
     _flat = Image.open(str(FLAT_DIR / f'flat-0{_i}.png')).convert('RGB')
     if _flat.size != (FA_W, FA_H):
         _flat = _flat.resize((FA_W, FA_H), Image.LANCZOS)
