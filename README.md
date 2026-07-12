@@ -40,16 +40,27 @@ secretly a scratcher, and the print is swappable.*
 | Styling | CSS Modules + CSS custom properties |
 | Motion | Native `<video>` events + CSS transitions (no animation lib) |
 | Fonts | Baloo 2 (display) · Nunito Sans (body) — via `next/font` |
-| Commerce | Shopify Storefront API — currently mocked (see below) |
-| Deploy target | Vercel |
+| Payments | Stripe Checkout (hosted) — cards, Afterpay, promo codes, GST |
+| Orders | Supabase (PostgreSQL) — written by the Stripe webhook |
+| Email | Resend — order confirmation + shipping notice |
+| Deploy target | Vercel (region `syd1`), GitHub CI/CD |
 
 ## Getting started
 
 ```bash
 npm install
-npm run dev      # http://localhost:3000
-npm run build    # production build
-npm start        # serve the production build
+cp .env.example .env.local   # fill in keys (see docs/phase2-runbook.md)
+npm run db:migrate           # apply supabase/migrations/*.sql
+npm run stripe:setup         # idempotent: Stripe products/prices/webhook
+npm run dev                  # http://localhost:3000
+npm run build                # production build
+```
+
+To exercise the full purchase flow locally, forward Stripe webhooks:
+
+```bash
+stripe listen --api-key $STRIPE_SECRET_KEY --forward-to localhost:3000/api/webhook
+# put the printed whsec_… into .env.local as STRIPE_WEBHOOK_SECRET
 ```
 
 Node 18+ recommended.
@@ -59,21 +70,29 @@ Node 18+ recommended.
 ```
 app/
   layout.tsx            fonts, metadata, CartProvider
-  page.tsx              assembles the sections
+  page.tsx              landing (hero + Canvas Series + What's next + story)
+  scratcher/ house/     product detail pages
+  cart/                 basket page
+  checkout/success/     post-payment page (polls /api/order)
+  api/
+    checkout/           creates the Stripe Checkout Session
+    webhook/            Stripe events → Supabase order + confirmation email
+    shipping/           internal fulfilment endpoint (Bearer ADMIN_SECRET)
+    order/              order summary for the success page
+    house-run/          claimed house numbers, aggregated from real orders
 components/
-  Hero/
-    Hero.tsx            hero state machine (play → freeze → reveal)
-    HeroCopy.tsx        headline / subhead / CTA, timed to the film
-    ArtworkSwitcher.tsx frame overlay + spare-print rack + paper tag
-    useVideoRect.ts     maps overlay coords into object-fit:cover video space
-  sections/             ProductIntro · CollectionGrid · BrandStory · Conversion · Footer
-  Nav · ProductCard · Reveal · CartContext · RoomieLogo
+  Hero/                 hero state machine, artwork switcher, video-rect math
+  pdp/                  product-page stage: gallery, buy panels, cross-sell
+  cart/ checkout/       basket page + success view
+  sections/             landing sections · Nav · Reveal · CartContext
 lib/
-  heroConfig.ts         ★ all tunables: artworks, copy, timings
-  frame-rect.json       frame geometry + tag pin, emitted by the pipeline
-  shopify.ts            commerce interface layer (mock → real)
-public/hero/            the film, poster/still frames, composited artworks, mask
-public/story|collection editorial stills + brand-style illustrations
+  heroConfig.ts         ★ hero tunables: artworks, copy, timings
+  catalog.ts            ★ purchasable SKUs (prices, Stripe Price IDs)
+  stripe.ts supabase-admin.ts email.ts orders.ts env.ts
+  shopify.ts            display-only leftovers (What's-next placeholders)
+scripts/                db-migrate.mjs · stripe-setup.mjs
+supabase/migrations/    orders table DDL
+public/hero|c01|story   film, composited artworks, de-branded product shots
 tools/                  offline asset pipeline (see below)
 ```
 
@@ -110,9 +129,10 @@ On the client, the frame overlay is hidden during playback (so it never covers
 the cat) and masked with an exported alpha PNG so that **only the canvas is ever
 drawn** — the wall, wood, and cat are always the live video, and there's no seam.
 
-**Adding a print:** draw a new 700×1000 flat in `make_artworks.py`, run
-`python3 tools/make_artworks.py` and `make_flats.py`, then add one entry to
-`ARTWORKS` in `lib/heroConfig.ts`.
+**Adding a print:** drop the supplier mockup into the source folder, extend
+`tools/extract_flats.py` (it cuts the flat artwork out of the mockup), run it
+plus `tools/make_artworks.py`, then add one entry to `ARTWORKS` in
+`lib/heroConfig.ts`.
 
 ## Motion language
 
@@ -125,32 +145,47 @@ stuck. All of it collapses to simple fades — with full functionality intact �
 under `prefers-reduced-motion`. On mobile the hero degrades to the still frame
 plus the full swap interaction (no autoplay video).
 
-## Shopify integration
+## Commerce backend
 
-Commerce is abstracted behind [`lib/shopify.ts`](lib/shopify.ts) and currently
-runs on **mock data** so the full UI and add-to-cart flow work end to end. When
-the store is ready:
+Architecture spec: [`Roomie_第二阶段技术架构规格.md`](Roomie_第二阶段技术架构规格.md) ·
+Ops manual: [`docs/phase2-runbook.md`](docs/phase2-runbook.md)
 
-1. Fill `.env.local`:
-   ```
-   NEXT_PUBLIC_SHOPIFY_STORE_DOMAIN=your-store.myshopify.com
-   NEXT_PUBLIC_SHOPIFY_STOREFRONT_TOKEN=your-token
-   ```
-2. `npm i @shopify/hydrogen-react`, wrap the root layout in
-   `<ShopifyProvider>` + `<CartProvider>`.
-3. Swap the mock functions in `lib/shopify.ts` for real Storefront API calls.
-   Checkout hands off to Shopify's hosted checkout. **The UI doesn't change.**
+```
+basket (localStorage) → POST /api/checkout → Stripe hosted checkout
+        → Stripe webhook → /api/webhook → Supabase `orders` + Resend email
+manual fulfilment      → POST /api/shipping (Bearer ADMIN_SECRET)
+        → status paid → shipped → delivered + tracking email
+```
+
+Design decisions worth knowing:
+
+- **Prices live in [`lib/catalog.ts`](lib/catalog.ts)** — the server re-derives
+  every checkout from it; the client is only trusted about *what* and *how many*.
+- **Webhook is idempotent** — `orders.stripe_session_id` is unique; Stripe
+  retries never double-write or double-email. DB failure → 500 (Stripe retries);
+  email failure → logged, never blocks the order.
+- **The `orders` table has RLS on with no policies** — only the server-side
+  secret key can touch it.
+- **House numbers are real**: `/api/house-run` aggregates claimed numbers from
+  actual orders, so a sold № greys out on the product page.
+- Missing env keys degrade gracefully (emails skip with a log; checkout 502s
+  with a friendly client message) so preview deploys never crash.
 
 ## Deployment
 
-Deploy on Vercel (zero-config for Next.js). Point a subdomain (e.g.
-`hello.roomiepaw.com.au`) at the project and set the two Shopify env vars in the
-Vercel dashboard when the store goes live.
+`main` auto-deploys to production via GitHub → Vercel
+([roomiepaw.vercel.app](https://roomiepaw.vercel.app)); other branches get
+Preview URLs. Function region is pinned to `syd1` in `vercel.json`. Set the
+environment variables from `.env.example` in the Vercel dashboard (Production
+scope) — the go-live checklist in `docs/phase2-runbook.md` covers Stripe Tax,
+Afterpay, Resend domain verification, and swapping to live keys.
 
 ## Roadmap
 
-- [ ] Connect the live Shopify store (currently mocked)
-- [ ] Final pricing & CTA copy (placeholders marked `TODO` in `heroConfig.ts`)
+- [ ] Prices are placeholders (`TODO` in `lib/catalog.ts`): print AU$35, house AU$189
+- [ ] Enable Stripe Tax + Afterpay in the Stripe Dashboard, then set `STRIPE_TAX_ENABLED=1`
+- [ ] Verify `roomiepaw.com.au` in Resend and switch `RESEND_FROM`
+- [ ] Customer order-lookup page & Australia Post callbacks (explicitly out of MVP scope)
 - [ ] Official logo file (currently an SVG rebuild in `RoomieLogo.tsx`)
 - [ ] Portrait hero video for mobile (currently the still-frame fallback)
 

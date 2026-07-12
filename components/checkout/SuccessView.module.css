@@ -1,0 +1,169 @@
+/* ——— 付款成功页 ——— */
+
+.wrap {
+  padding: 8rem 0 clamp(4rem, 7vw, 6rem);
+  background:
+    radial-gradient(
+      90% 60% at 85% 0%,
+      color-mix(in srgb, var(--orange) 14%, transparent),
+      transparent 70%
+    ),
+    var(--cream);
+  min-height: 76vh;
+}
+
+.card {
+  background: var(--paper);
+  border-radius: calc(var(--r-media) + 2px);
+  box-shadow: var(--shadow-lift);
+  padding: clamp(2rem, 4.5vw, 3.4rem);
+  max-width: 46rem;
+}
+
+.kicker {
+  font-family: var(--font-display), sans-serif;
+  font-weight: 800;
+  font-size: 0.88rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--orange-deep);
+}
+
+.heading {
+  margin-top: 0.6rem;
+  font-size: clamp(2.2rem, 4.4vw, 3.4rem);
+  font-weight: 800;
+  color: var(--blue-deep);
+  line-height: 1.05;
+}
+
+.lede {
+  margin-top: 0.9rem;
+  color: var(--ink-soft);
+  font-size: 1.05rem;
+  max-width: 46ch;
+}
+
+/* ——— 订单摘要 ——— */
+.summary {
+  margin-top: 1.6rem;
+  background: var(--cream);
+  border-radius: var(--r-card);
+  padding: 1.2rem 1.3rem;
+}
+
+.items {
+  list-style: none;
+  display: grid;
+  gap: 0.55rem;
+}
+
+.items li {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  font-size: 0.96rem;
+  color: var(--ink);
+}
+
+.items em {
+  font-style: normal;
+  color: var(--ink-soft);
+}
+
+.items b {
+  font-family: var(--font-display), sans-serif;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.totalRow {
+  margin-top: 0.9rem;
+  padding-top: 0.9rem;
+  border-top: 1.5px dashed color-mix(in srgb, var(--ink-soft) 30%, transparent);
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  font-family: var(--font-display), sans-serif;
+}
+
+.totalRow span {
+  font-weight: 700;
+  font-size: 0.92rem;
+  color: var(--ink-soft);
+}
+
+.totalRow strong {
+  font-weight: 800;
+  font-size: 1.35rem;
+  color: var(--ink);
+}
+
+.houseNote {
+  margin-top: 0.9rem;
+  font-size: 0.88rem;
+  color: var(--ink);
+  background: var(--paper);
+  border-radius: 12px;
+  padding: 0.7rem 0.9rem;
+}
+
+/* ——— 三步预告 ——— */
+.steps {
+  list-style: none;
+  margin-top: 2rem;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1.4rem;
+  counter-reset: step;
+}
+
+.steps li {
+  counter-increment: step;
+}
+
+.steps li::before {
+  content: counter(step, decimal-leading-zero);
+  font-family: var(--font-display), sans-serif;
+  font-weight: 800;
+  font-size: 1.5rem;
+  color: color-mix(in srgb, var(--orange) 60%, transparent);
+  display: block;
+  margin-bottom: 0.3rem;
+}
+
+.steps h3 {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--ink);
+}
+
+.steps p {
+  margin-top: 0.25rem;
+  font-size: 0.86rem;
+  color: var(--ink-soft);
+}
+
+.ctas {
+  margin-top: 2.2rem;
+  display: flex;
+  align-items: center;
+  gap: 1.4rem;
+  flex-wrap: wrap;
+}
+
+.ghostLink {
+  font-family: var(--font-display), sans-serif;
+  font-weight: 700;
+  color: var(--blue-deep);
+}
+
+@media (max-width: 700px) {
+  .wrap {
+    padding-top: 6.4rem;
+  }
+  .steps {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+}

@@ -92,8 +92,8 @@ export default function ScratcherShop() {
 
   const addToBasket = () =>
     format === "full"
-      ? add("canvas-scratcher", `Canvas Scratcher · ${art.title}`)
-      : add("canvas-print", `Swap-in Print · ${art.title}`, {
+      ? add("canvas-scratcher", art.title)
+      : add("canvas-print", art.title, {
           note: "print only — your frame stays on the wall",
         });
 

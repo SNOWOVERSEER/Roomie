@@ -21,6 +21,9 @@ const body = Nunito_Sans({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL(
+    process.env.NEXT_PUBLIC_URL || "https://roomiepaw.vercel.app",
+  ),
   title: "Roomie — the art your cat can scratch",
   description:
     "The Canvas Scratcher by Roomie: a framed canvas print for your wall that's secretly your cat's favourite thing. Pet furniture that feels like part of home. Melbourne, AU.",

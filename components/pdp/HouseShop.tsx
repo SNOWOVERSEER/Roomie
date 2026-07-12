@@ -15,7 +15,7 @@ import styles from "./HouseShop.module.css";
 
 export default function HouseShop({
   total,
-  claimed,
+  claimed: claimedInitial,
 }: {
   total: number;
   claimed: number[];
@@ -23,10 +23,24 @@ export default function HouseShop({
   const videoRef = useRef<HTMLVideoElement>(null);
   const [reduced, setReduced] = useState<boolean | null>(null);
   const [picked, setPicked] = useState<number | null>(null);
+  const [claimed, setClaimed] = useState(claimedInitial);
   const { add } = useCart();
 
   useEffect(() => {
     setReduced(window.matchMedia("(prefers-reduced-motion: reduce)").matches);
+  }, []);
+
+  // 已被真实订单占用的编号（页面保持静态，编号占用客户端刷新）
+  useEffect(() => {
+    fetch("/api/house-run")
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d: { claimed?: number[] } | null) => {
+        if (d?.claimed) {
+          setClaimed(d.claimed);
+          setPicked((p) => (p != null && d.claimed!.includes(p) ? null : p));
+        }
+      })
+      .catch(() => {});
   }, []);
 
   // 进入视口才播放；滚走暂停
@@ -49,9 +63,9 @@ export default function HouseShop({
 
   const reserve = () => {
     if (picked == null) return;
-    add("canvas-house", `The Canvas House · № ${nn(picked)}`, {
+    add("canvas-house", `№ ${nn(picked)}`, {
       line: "— your number is held",
-      note: "first run of ten · nothing charged until it ships",
+      note: "first run of ten · charged at checkout, built in order",
     });
   };
 
@@ -131,7 +145,7 @@ export default function HouseShop({
 
             <div className={pdp.buyRow}>
               <span className={pdp.price}>
-                AU$189 <em>nothing charged until it ships</em>
+                AU$189 <em>free AU shipping · built in order</em>
               </span>
               <button
                 className="btnPrimary"
@@ -146,7 +160,10 @@ export default function HouseShop({
             <ul className={pdp.panelNotes}>
               <li>Ten pieces in the first run, each numbered on the frame.</li>
               <li>Two swap-able scratch walls — same canvases as the Scratcher.</li>
-              <li>We email your number the same day, and build in order.</li>
+              <li>
+                Paid at checkout; we confirm your number the same day and
+                build in order.
+              </li>
             </ul>
           </div>
         </div>

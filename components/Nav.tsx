@@ -30,7 +30,11 @@ export default function Nav() {
         <Link href="/#coming-next">What&rsquo;s next</Link>
         <Link href="/#story">Our idea</Link>
       </nav>
-      <button className={styles.cart} aria-label={`Basket, ${count} items`}>
+      <Link
+        href="/cart"
+        className={styles.cart}
+        aria-label={`Basket, ${count} items`}
+      >
         <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden>
           <path
             d="M4 9h16l-1.4 9.2a2.4 2.4 0 0 1-2.4 2H7.8a2.4 2.4 0 0 1-2.4-2L4 9Z"
@@ -50,7 +54,7 @@ export default function Nav() {
         <span className={styles.count} key={bump}>
           {count}
         </span>
-      </button>
+      </Link>
     </header>
   );
 }

@@ -87,7 +87,7 @@ export default function Footer() {
       <div className={`shell ${styles.fine}`}>
         <span>© 2026 Roomie · Melbourne, AU</span>
         <span className={styles.demo}>
-          demo build — checkout connects when our Shopify store goes live
+          secure checkout by Stripe · GST included · free AU shipping
         </span>
       </div>
     </footer>

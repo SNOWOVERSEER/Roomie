@@ -1,15 +1,13 @@
 /*
- * Shopify 接口层（当前为 mock 降级实现）。
+ * 展示层商品数据（P2 起不再是交易入口）。
  *
- * store 就绪后的接入方式（UI 不需要改动）：
- * 1. `.env.local` 填入：
- *      NEXT_PUBLIC_SHOPIFY_STORE_DOMAIN=TODO.myshopify.com
- *      NEXT_PUBLIC_SHOPIFY_STOREFRONT_TOKEN=TODO
- * 2. `npm i @shopify/hydrogen-react`，在 app/layout.tsx 挂
- *    <ShopifyProvider storeDomain=... storefrontToken=... countryIsoCode="AU">
- *    与 <CartProvider>。
- * 3. 把下面的 mock 函数体换成 Storefront API (GraphQL) 调用，
- *    checkout 跳 Shopify 托管页（cart.checkoutUrl）。
+ * P2 架构（见 Roomie_第二阶段技术架构规格.md）：真实交易走
+ * lib/catalog.ts（可购 SKU + Stripe Price）→ /api/checkout → Stripe
+ * 托管结算 → /api/webhook 写 Supabase orders。
+ * 本文件仅剩两个职责：
+ *   1. getProducts() —— What's next 区的占位商品（available=false）
+ *   2. getHouseRun() —— 猫屋首批总数的 mock 基础值
+ *      （真实已占编号由 /api/house-run 聚合订单得出）
  */
 
 export interface Product {
@@ -111,13 +109,6 @@ export async function getHouseRun(): Promise<{
 
 export async function getProduct(handle: string): Promise<Product | undefined> {
   return MOCK_PRODUCTS.find((p) => p.handle === handle);
-}
-
-export async function addToCartMock(handle: string): Promise<{ ok: true }> {
-  // TODO(Shopify): 换成 hydrogen-react useCart().linesAdd
-  await new Promise((r) => setTimeout(r, 220));
-  void handle;
-  return { ok: true };
 }
 
 export function formatPrice(p: Product): string {

@@ -1,0 +1,345 @@
+/* ——— 购物篮页（design tokens 见 globals.css） ——— */
+
+.wrap {
+  padding: 7.5rem 0 clamp(4rem, 7vw, 6rem);
+  background: var(--cream);
+  min-height: 72vh;
+}
+
+.eyebrow {
+  font-family: var(--font-display), sans-serif;
+  font-weight: 800;
+  font-size: 0.9rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--orange-deep);
+}
+
+.heading {
+  margin-top: 0.5rem;
+  font-size: clamp(1.9rem, 3.4vw, 2.7rem);
+  font-weight: 800;
+  color: var(--ink);
+  max-width: 24ch;
+}
+
+.grid {
+  margin-top: clamp(1.6rem, 3vw, 2.6rem);
+  display: grid;
+  grid-template-columns: 1.08fr 0.92fr;
+  gap: clamp(1.6rem, 4vw, 3.4rem);
+  align-items: start;
+}
+
+/* ——— 行卡片 ——— */
+.lines {
+  list-style: none;
+  display: grid;
+  gap: 0.9rem;
+}
+
+.line {
+  display: grid;
+  grid-template-columns: 84px 1fr auto;
+  gap: 1.1rem;
+  align-items: center;
+  background: var(--paper);
+  border-radius: var(--r-card);
+  box-shadow: var(--shadow-soft);
+  padding: 0.95rem 1.15rem 0.95rem 0.95rem;
+}
+
+.thumb {
+  border-radius: 10px;
+  overflow: hidden;
+  background: var(--cream);
+}
+
+.thumb img {
+  width: 84px;
+  height: 108px;
+  object-fit: cover;
+  display: block;
+}
+
+.lineTitle {
+  font-family: var(--font-display), sans-serif;
+  font-weight: 700;
+  font-size: 1.05rem;
+  color: var(--blue-deep);
+}
+
+.lineVariant {
+  margin-top: 0.1rem;
+  font-size: 0.9rem;
+  color: var(--ink);
+}
+
+.lineUnit {
+  margin-top: 0.25rem;
+  font-size: 0.82rem;
+  color: var(--ink-soft);
+}
+
+.lineEnd {
+  display: grid;
+  justify-items: end;
+  gap: 0.4rem;
+}
+
+.stepper {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.15rem;
+  background: var(--cream);
+  border-radius: 999px;
+  padding: 0.2rem;
+}
+
+.stepper button {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  font-weight: 800;
+  font-size: 1rem;
+  line-height: 1;
+  color: var(--blue-deep);
+  transition:
+    background var(--dur-fast) var(--ease-out),
+    transform var(--dur-fast) var(--ease-soft);
+}
+
+.stepper button:hover:not(:disabled) {
+  background: var(--paper);
+}
+.stepper button:active:not(:disabled) {
+  transform: scale(0.92);
+}
+.stepper button:disabled {
+  opacity: 0.35;
+}
+
+.stepper b {
+  min-width: 1.6em;
+  text-align: center;
+  font-family: var(--font-display), sans-serif;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.oneOfTen {
+  font-family: var(--font-display), sans-serif;
+  font-weight: 700;
+  font-size: 0.78rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--orange-deep);
+  background: color-mix(in srgb, var(--orange) 12%, transparent);
+  border-radius: 999px;
+  padding: 0.3rem 0.7rem;
+}
+
+.lineTotal {
+  font-family: var(--font-display), sans-serif;
+  font-weight: 800;
+  font-size: 1.05rem;
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
+}
+
+.remove {
+  font-size: 0.8rem;
+  color: var(--ink-soft);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  transition: color var(--dur-fast) var(--ease-out);
+}
+.remove:hover {
+  color: var(--orange-deep);
+}
+
+/* ——— 结算面板 ——— */
+.summaryCol {
+  position: sticky;
+  top: 5.5rem;
+  display: grid;
+  gap: 0.9rem;
+  justify-items: start;
+}
+
+.summary {
+  width: 100%;
+  background: var(--paper);
+  border-radius: calc(var(--r-media) + 2px);
+  box-shadow: var(--shadow-lift);
+  padding: clamp(1.4rem, 2.4vw, 2rem);
+}
+
+.summaryLabel {
+  font-family: var(--font-display), sans-serif;
+  font-weight: 700;
+  font-size: 0.85rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+}
+
+.rows {
+  margin-top: 1rem;
+  display: grid;
+  gap: 0.45rem;
+}
+
+.rows div {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.95rem;
+  color: var(--ink);
+}
+
+.rows dt {
+  color: var(--ink-soft);
+}
+
+.taxNote {
+  margin-top: 0.6rem;
+  font-size: 0.82rem;
+  color: var(--ink-soft);
+}
+
+.totalRow {
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1.5px dashed color-mix(in srgb, var(--ink-soft) 26%, transparent);
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  font-family: var(--font-display), sans-serif;
+}
+
+.totalRow span {
+  font-weight: 700;
+  color: var(--ink-soft);
+}
+
+.totalRow strong {
+  font-weight: 800;
+  font-size: 1.5rem;
+  color: var(--ink);
+}
+
+.checkoutBtn {
+  margin-top: 1.2rem;
+  width: 100%;
+  text-align: center;
+}
+
+.checkoutBtn:disabled {
+  opacity: 0.6;
+}
+
+.err {
+  margin-top: 0.7rem;
+  font-size: 0.88rem;
+  color: #b3471d;
+}
+
+.secureNote {
+  margin-top: 0.8rem;
+  font-size: 0.8rem;
+  color: var(--ink-soft);
+}
+
+.houseNote {
+  margin-top: 0.8rem;
+  padding: 0.7rem 0.85rem;
+  background: var(--cream);
+  border-radius: 12px;
+  font-size: 0.84rem;
+  color: var(--ink);
+}
+
+.keepLink {
+  font-family: var(--font-display), sans-serif;
+  font-weight: 600;
+  font-size: 0.92rem;
+  color: var(--blue-deep);
+  transition: transform var(--dur-fast) var(--ease-soft);
+  display: inline-block;
+}
+.keepLink:hover {
+  transform: translateX(-3px);
+}
+
+/* ——— 空态 ——— */
+.emptyBox {
+  text-align: left;
+  background: var(--paper);
+  border-radius: calc(var(--r-media) + 2px);
+  box-shadow: var(--shadow-soft);
+  padding: clamp(2.2rem, 5vw, 3.6rem);
+}
+
+.emptyHeading {
+  margin-top: 0.5rem;
+  font-size: clamp(2rem, 3.6vw, 2.9rem);
+  font-weight: 800;
+  color: var(--blue-deep);
+}
+
+.emptyLede {
+  margin-top: 0.8rem;
+  color: var(--ink-soft);
+  max-width: 44ch;
+  font-size: 1.02rem;
+}
+
+.emptyCtas {
+  margin-top: 1.8rem;
+  display: flex;
+  align-items: center;
+  gap: 1.4rem;
+  flex-wrap: wrap;
+}
+
+.ghostLink {
+  font-family: var(--font-display), sans-serif;
+  font-weight: 700;
+  color: var(--blue-deep);
+}
+
+@media (max-width: 900px) {
+  .wrap {
+    padding-top: 6.2rem;
+  }
+  .grid {
+    grid-template-columns: 1fr;
+  }
+  .summaryCol {
+    position: static;
+  }
+  .line {
+    grid-template-columns: 64px 1fr;
+    grid-template-areas:
+      "thumb body"
+      "thumb end";
+    row-gap: 0.5rem;
+  }
+  .thumb {
+    grid-area: thumb;
+  }
+  .thumb img {
+    width: 64px;
+    height: 84px;
+  }
+  .lineBody {
+    grid-area: body;
+  }
+  .lineEnd {
+    grid-area: end;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+  }
+}
