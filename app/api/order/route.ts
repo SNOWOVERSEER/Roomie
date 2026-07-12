@@ -20,10 +20,11 @@ export async function GET(req: NextRequest) {
       return NextResponse.json(
         {
           order: {
-            order_number: order.order_number,
+            order_ref: order.order_ref,
             email: order.email,
             items: order.items,
             amount_total: order.amount_total,
+            shipping_cents: order.shipping_cents,
             currency: order.currency,
             status: order.status,
             created_at: order.created_at,

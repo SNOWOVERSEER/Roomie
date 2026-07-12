@@ -63,12 +63,12 @@ export default function HouseShop() {
               // eslint-disable-next-line @next/next/no-img-element
               <img
                 src="/c01/house-poster.jpg"
-                alt="The Canvas House — a pine A-frame wearing a framed wave canvas, with a round doorway"
+                alt="The Canvas House, a pine A-frame wearing a framed wave canvas, with a round doorway"
               />
             )}
           </div>
           <figcaption className={styles.filmTag}>
-            straight off the set — no actors, just residents
+            straight off the set: no actors, just residents
           </figcaption>
         </figure>
 
@@ -79,14 +79,14 @@ export default function HouseShop() {
             <h1 className={pdp.panelTitle}>The Canvas House</h1>
             <p className={pdp.panelTagline}>
               The canvas, folded into a den. Two full scratch-paintings make
-              the roof, a porthole makes the door — and inside is the quietest
+              the roof, a porthole makes the door, and inside is the quietest
               room in the house.
             </p>
 
             <p className={pdp.panelLabel}>The run</p>
             <p className={styles.runBlurb}>
               Ten numbered houses, built one at a time on our Melbourne bench.
-              When the run opens, the waitlist hears first — and gets first
+              When the run opens, the waitlist hears first and gets first
               pick of the numbers.
             </p>
 
@@ -106,7 +106,7 @@ export default function HouseShop() {
             <ul className={pdp.panelNotes}>
               <li>Ten pieces in the first run, each numbered on the frame.</li>
               <li>
-                Two swap-able scratch walls — same prints as the Scratcher.
+                Two swap-able scratch walls, same prints as the Scratcher.
               </li>
               <li>Waitlist is first in line when the run opens. That's all.</li>
             </ul>

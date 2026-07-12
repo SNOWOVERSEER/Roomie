@@ -32,7 +32,7 @@ const MOCK_PRODUCTS: Product[] = [
     id: "gid://mock/1",
     handle: "canvas-scratcher",
     title: "The Canvas Scratcher",
-    tagline: "A framed print your cat is allowed to ruin — slowly.",
+    tagline: "A framed print your cat is allowed to ruin. Slowly.",
     price: 89,
     currency: "AUD",
     image: "/story/still-sit.jpg",

@@ -207,6 +207,18 @@
   color: var(--ink-soft);
 }
 
+/* 距免邮差额提示 */
+.freeHint {
+  margin-top: 0.6rem;
+  font-family: var(--font-display), sans-serif;
+  font-weight: 600;
+  font-size: 0.85rem;
+  color: var(--orange-deep);
+  background: color-mix(in srgb, var(--orange) 10%, transparent);
+  border-radius: 10px;
+  padding: 0.5rem 0.75rem;
+}
+
 .totalRow {
   margin-top: 1rem;
   padding-top: 1rem;

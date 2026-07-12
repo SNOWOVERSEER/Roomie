@@ -4,9 +4,9 @@ import Footer from "@/components/sections/Footer";
 import CartView from "@/components/cart/CartView";
 
 export const metadata: Metadata = {
-  title: "Your basket — Roomie",
+  title: "Your basket · RoomiePaw",
   description:
-    "Review your Canvas Series pieces and check out securely with Stripe. Free shipping across Australia.",
+    "Review your Canvas Series pieces and check out securely with Stripe. Ships Australia-wide, free over AU$188.",
 };
 
 export default function CartPage() {

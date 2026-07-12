@@ -17,6 +17,8 @@ export interface OrderItem {
 export interface OrderRow {
   id: string;
   order_number: number;
+  /** 客户可见订单号（RP-XXXXX，随机非顺序，不暴露销量） */
+  order_ref: string;
   stripe_session_id: string;
   stripe_payment_intent_id: string | null;
   email: string;
@@ -24,6 +26,7 @@ export interface OrderRow {
   shipping_address: Record<string, unknown> | null;
   items: OrderItem[];
   amount_total: number;
+  shipping_cents: number;
   currency: string;
   status: "paid" | "shipped" | "delivered";
   tracking_number: string | null;

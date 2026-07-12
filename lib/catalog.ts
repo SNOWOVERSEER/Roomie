@@ -42,3 +42,15 @@ export const CATALOG: Record<CatalogHandle, CatalogItem> = {
 
 export const formatCents = (cents: number) =>
   `AU$${(cents / 100).toFixed(cents % 100 === 0 ? 0 : 2)}`;
+
+/*
+ * 运费规则（单一事实源；购物车/抽屉/结算/文档都从这里读）：
+ * 只发澳洲；统一 AU$26，商品小计满 AU$188 免运。
+ */
+export const SHIPPING = {
+  flatCents: 2600,
+  freeOverCents: 18800,
+} as const;
+
+export const shippingCentsFor = (subtotalCents: number): number =>
+  subtotalCents >= SHIPPING.freeOverCents ? 0 : SHIPPING.flatCents;

@@ -133,7 +133,7 @@ export default function ArtworkSwitcher({ rect, active, revealed }: Props) {
         className={`${styles.rack} ${revealed ? styles.rackOn : ""}`}
         style={rackVars}
         role="radiogroup"
-        aria-label="Spare prints — pick one for the frame"
+        aria-label="Spare prints. Pick one for the frame"
       >
         {ARTWORKS.map((a, i) => {
           const isFramed = i === index;

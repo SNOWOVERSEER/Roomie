@@ -1,43 +1,68 @@
 import { Resend } from "resend";
 import { env } from "./env";
-import { formatCents } from "./catalog";
-import type { OrderRow } from "./supabase-admin";
+import { CATALOG, formatCents, type CatalogHandle } from "./catalog";
+import { ARTWORKS } from "./heroConfig";
+import type { OrderItem, OrderRow } from "./supabase-admin";
 
 /*
- * 交易邮件（Resend）。无 RESEND_API_KEY 时静默降级：只记日志不发送，
- * 下单/发货主流程不受影响 —— key 补上即自动生效。
+ * 交易邮件（Resend）。设计与站点 design system 同源：
+ * cream 底 / paper 圆角卡 / 橙 kicker / 深蓝标题 / 虚线分隔 / 橙胶囊按钮，
+ * 字体栈 Baloo 2 渐进增强（Apple Mail 等支持 webfont 的客户端生效，
+ * 其余回落 Trebuchet MS）。logo 用 public/brand/email-logo.png（站点字标渲染）。
  *
- * TODO(上线)：在 Resend 验证 roomiepaw.com.au 后把 RESEND_FROM 换成
- * 正式发件人；域名验证前 onboarding@resend.dev 只能发给账户本人邮箱。
+ * 无 RESEND_API_KEY 时静默降级：只记日志不发送，主流程不受影响。
+ * TODO(上线)：Resend 验证 roomiepaw.com.au 后把 RESEND_FROM 换正式发件人；
+ * 验证前 onboarding@resend.dev 只能发给账户本人邮箱。
  */
 
-const BRAND = {
-  orange: "#E8863C",
+const C = {
+  orange: "#e8863c",
+  orangeDeep: "#d4702a",
+  blue: "#3a5bc7",
+  blueDeep: "#2b4497",
   navy: "#12275e",
-  blue: "#3A5BC7",
-  cream: "#EDEAE3",
-  paper: "#FBF9F4",
-  ink: "#2b2620",
-  inkSoft: "#6f6a61",
+  cream: "#edeae3",
+  creamWarm: "#f6f2e9",
+  paper: "#f8f6f0",
+  ink: "#2e2e33",
+  inkSoft: "#5c5a55",
 };
 
-function shell(title: string, body: string): string {
+const DISPLAY = `'Baloo 2','Trebuchet MS','Segoe UI',Verdana,sans-serif`;
+const BODY = `'Nunito Sans','Trebuchet MS','Segoe UI',Verdana,sans-serif`;
+
+const base = () => env.publicUrl || "https://roomiepaw.vercel.app";
+
+/** 行缩略图（绝对 URL）：画芯 variant 对应画作平面稿，其余用商品图 */
+function itemThumb(it: OrderItem): string | null {
+  const i = ARTWORKS.findIndex((a) => a.title === it.variant);
+  if (i >= 0) return `${base()}/hero/art/flat-0${i + 1}.png`;
+  if (it.handle === "canvas-house") return `${base()}/c01/house-poster.jpg`;
+  const cat = CATALOG[it.handle as CatalogHandle];
+  return cat ? `${base()}${cat.image}` : null;
+}
+
+function shell(preheader: string, body: string): string {
   return `<!doctype html>
-<html><body style="margin:0;padding:0;background:${BRAND.cream};">
-<div style="display:none;max-height:0;overflow:hidden;">${title}</div>
-<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:${BRAND.cream};padding:32px 12px;">
+<html lang="en"><head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width">
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@700;800&family=Nunito+Sans:wght@400;700&display=swap" rel="stylesheet">
+</head>
+<body style="margin:0;padding:0;background:${C.cream};">
+<div style="display:none;max-height:0;overflow:hidden;mso-hide:all;">${preheader}</div>
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:${C.cream};padding:36px 14px 30px;">
 <tr><td align="center">
-<table role="presentation" width="560" cellpadding="0" cellspacing="0" style="max-width:560px;width:100%;">
-  <tr><td style="padding:0 8px 18px;">
-    <span style="font:800 22px/1 'Trebuchet MS',Verdana,sans-serif;color:${BRAND.orange};letter-spacing:.5px;">Roomie</span>
-    <span style="font:700 11px/1 'Trebuchet MS',Verdana,sans-serif;color:${BRAND.inkSoft};letter-spacing:.14em;text-transform:uppercase;">&nbsp;&nbsp;pet things that feel like home</span>
+<table role="presentation" width="600" cellpadding="0" cellspacing="0" style="max-width:600px;width:100%;">
+  <tr><td style="padding:0 10px 20px;">
+    <img src="${base()}/brand/email-logo.png" alt="RoomiePaw" height="40" style="height:40px;width:auto;border:0;display:block;">
   </td></tr>
-  <tr><td style="background:${BRAND.paper};border-radius:18px;padding:32px 30px;box-shadow:0 10px 30px rgba(18,39,94,.08);">
+  <tr><td style="background:${C.paper};border-radius:22px;padding:38px 36px 34px;">
     ${body}
   </td></tr>
-  <tr><td style="padding:16px 8px 0;font:400 12px/1.6 'Trebuchet MS',Verdana,sans-serif;color:${BRAND.inkSoft};">
-    Roomie · Melbourne · furniture you share with the cat<br>
-    Questions? Just reply to this email.
+  <tr><td style="padding:20px 10px 0;font:400 12.5px/1.7 ${BODY};color:${C.inkSoft};">
+    <span style="color:${C.orange};font-weight:700;">RoomiePaw</span> · Melbourne, AU · furniture you share with the cat<br>
+    Questions about your order? Just reply to this email.
   </td></tr>
 </table>
 </td></tr>
@@ -45,43 +70,82 @@ function shell(title: string, body: string): string {
 </body></html>`;
 }
 
-function itemRows(order: OrderRow): string {
-  return order.items
-    .map(
-      (it) => `
+const kicker = (text: string) =>
+  `<p style="margin:0;font:800 12px/1 ${DISPLAY};color:${C.orangeDeep};letter-spacing:.16em;text-transform:uppercase;">${text}</p>`;
+
+const heading = (text: string) =>
+  `<h1 style="margin:12px 0 0;font:800 30px/1.12 ${DISPLAY};color:${C.blueDeep};">${text}</h1>`;
+
+const para = (text: string) =>
+  `<p style="margin:14px 0 0;font:400 14.5px/1.65 ${BODY};color:${C.inkSoft};">${text}</p>`;
+
+function itemsTable(order: OrderRow): string {
+  const rows = order.items
+    .map((it) => {
+      const thumb = itemThumb(it);
+      return `
   <tr>
-    <td style="padding:10px 0;font:600 14px/1.4 'Trebuchet MS',Verdana,sans-serif;color:${BRAND.ink};border-bottom:1px dashed #d9d4c9;">
-      ${it.title}${it.variant ? `<span style="color:${BRAND.inkSoft};font-weight:400;"> · ${it.variant}</span>` : ""}
-      <span style="color:${BRAND.inkSoft};font-weight:400;">× ${it.qty}</span>
+    <td width="56" style="padding:12px 14px 12px 0;">
+      ${thumb ? `<img src="${thumb}" alt="" width="48" style="width:48px;height:64px;object-fit:cover;border-radius:9px;border:0;display:block;background:${C.cream};">` : ""}
     </td>
-    <td align="right" style="padding:10px 0;font:600 14px/1.4 'Trebuchet MS',Verdana,sans-serif;color:${BRAND.ink};border-bottom:1px dashed #d9d4c9;white-space:nowrap;">
+    <td style="padding:12px 10px 12px 0;">
+      <span style="font:700 14.5px/1.3 ${DISPLAY};color:${C.ink};">${it.title}</span><br>
+      <span style="font:400 13px/1.5 ${BODY};color:${C.inkSoft};">${it.variant ? `${it.variant} · ` : ""}qty ${it.qty}</span>
+    </td>
+    <td align="right" style="padding:12px 0;font:700 14.5px/1.3 ${DISPLAY};color:${C.ink};white-space:nowrap;">
       ${formatCents(it.unit_cents * it.qty)}
     </td>
-  </tr>`,
-    )
+  </tr>
+  <tr><td colspan="3" style="border-bottom:1.5px dashed #d9d4c9;font-size:0;line-height:0;">&nbsp;</td></tr>`;
+    })
     .join("");
+
+  const shipLabel =
+    order.shipping_cents === 0 ? "Free" : formatCents(order.shipping_cents);
+
+  return `
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-top:22px;">
+  ${rows}
+  <tr>
+    <td colspan="2" style="padding:14px 0 0;font:400 13.5px/1.4 ${BODY};color:${C.inkSoft};">Shipping · Australia-wide</td>
+    <td align="right" style="padding:14px 0 0;font:700 13.5px/1.4 ${DISPLAY};color:${C.ink};white-space:nowrap;">${shipLabel}</td>
+  </tr>
+  <tr>
+    <td colspan="2" style="padding:10px 0 0;font:800 16px/1.3 ${DISPLAY};color:${C.ink};">Total · GST included</td>
+    <td align="right" style="padding:10px 0 0;font:800 16px/1.3 ${DISPLAY};color:${C.ink};white-space:nowrap;">${formatCents(order.amount_total)}</td>
+  </tr>
+</table>`;
 }
 
 function addressBlock(order: OrderRow): string {
   const a = (order.shipping_address ?? {}) as {
-    line1?: string; line2?: string; city?: string;
+    name?: string; line1?: string; line2?: string; city?: string;
     state?: string; postal_code?: string; country?: string;
   };
-  const lines = [a.line1, a.line2, [a.city, a.state, a.postal_code].filter(Boolean).join(" "), a.country]
+  const lines = [
+    a.name,
+    a.line1,
+    a.line2,
+    [a.city, a.state, a.postal_code].filter(Boolean).join(" "),
+    a.country,
+  ]
     .filter(Boolean)
     .join("<br>");
   if (!lines) return "";
   return `
-  <p style="margin:22px 0 0;font:700 11px/1 'Trebuchet MS',Verdana,sans-serif;color:${BRAND.inkSoft};letter-spacing:.14em;text-transform:uppercase;">Shipping to</p>
-  <p style="margin:6px 0 0;font:400 14px/1.6 'Trebuchet MS',Verdana,sans-serif;color:${BRAND.ink};">${lines}</p>`;
+  <p style="margin:26px 0 0;font:800 11px/1 ${DISPLAY};color:${C.inkSoft};letter-spacing:.16em;text-transform:uppercase;">Shipping to</p>
+  <p style="margin:8px 0 0;font:400 14px/1.65 ${BODY};color:${C.ink};">${lines}</p>`;
 }
 
 const houseNote = (order: OrderRow) =>
   order.items.some((it) => it.handle === "canvas-house")
-    ? `<p style="margin:18px 0 0;padding:12px 14px;background:${BRAND.cream};border-radius:12px;font:400 13px/1.6 'Trebuchet MS',Verdana,sans-serif;color:${BRAND.ink};">
-        Your Canvas House number is stamped on the frame — we build the run in order and email you the moment yours is on the bench.
+    ? `<p style="margin:20px 0 0;padding:13px 16px;background:${C.creamWarm};border-radius:14px;font:400 13.5px/1.6 ${BODY};color:${C.ink};">
+        Your Canvas House number is stamped on the frame. We build the run in order and will email you the moment yours is on the bench.
       </p>`
     : "";
+
+const button = (href: string, label: string) =>
+  `<a href="${href}" style="display:inline-block;margin-top:22px;background:${C.orange};color:#fff8ee;font:700 15px/1 ${DISPLAY};text-decoration:none;border-radius:999px;padding:14px 28px;">${label}</a>`;
 
 async function deliver(to: string, subject: string, html: string) {
   if (!env.resendApiKey) {
@@ -96,7 +160,7 @@ async function deliver(to: string, subject: string, html: string) {
     html,
   });
   if (error) {
-    // 邮件失败不应让订单流程失败 —— 记日志由人工补发
+    // 邮件失败不让订单流程失败，记日志由人工补发
     console.error(`[email] 发送失败「${subject}」→ ${to}:`, error.message);
     return { skipped: false as const, error: error.message };
   }
@@ -104,46 +168,39 @@ async function deliver(to: string, subject: string, html: string) {
 }
 
 export function orderConfirmationEmail(order: OrderRow) {
-  const subject = `Order № ${order.order_number} confirmed — it's yours`;
+  const subject = `Order ${order.order_ref} confirmed. It's theirs now.`;
+  const first = order.customer_name?.split(" ")[0];
   const body = `
-    <p style="margin:0;font:700 12px/1 'Trebuchet MS',Verdana,sans-serif;color:${BRAND.orange};letter-spacing:.16em;text-transform:uppercase;">Order № ${order.order_number} · confirmed</p>
-    <h1 style="margin:10px 0 0;font:800 26px/1.15 'Trebuchet MS',Verdana,sans-serif;color:${BRAND.blue};">It's yours${order.customer_name ? `, ${order.customer_name.split(" ")[0]}` : ""}.</h1>
-    <p style="margin:12px 0 0;font:400 14px/1.6 'Trebuchet MS',Verdana,sans-serif;color:${BRAND.inkSoft};">
-      Payment received — the room is being prepared. We'll email again the moment it ships, tracking included.
-    </p>
-    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-top:20px;">
-      ${itemRows(order)}
-      <tr>
-        <td style="padding:12px 0 0;font:800 15px/1 'Trebuchet MS',Verdana,sans-serif;color:${BRAND.ink};">Total · free AU shipping</td>
-        <td align="right" style="padding:12px 0 0;font:800 15px/1 'Trebuchet MS',Verdana,sans-serif;color:${BRAND.ink};white-space:nowrap;">${formatCents(order.amount_total)}</td>
-      </tr>
-    </table>
+    ${kicker(`Order ${order.order_ref} · confirmed`)}
+    ${heading(`It's theirs now${first ? `, ${first}` : ""}.`)}
+    ${para(
+      "Payment received, and the room is being prepared. We'll email again the day it ships, tracking included.",
+    )}
+    ${itemsTable(order)}
     ${houseNote(order)}
     ${addressBlock(order)}`;
-  return { subject, html: shell(subject, body) };
+  return {
+    subject,
+    html: shell("Payment received. The room is being prepared.", body),
+  };
 }
 
 export function shippingNoticeEmail(order: OrderRow) {
-  const subject = `Order № ${order.order_number} is on the way`;
-  const trackBtn = order.tracking_url
-    ? `<a href="${order.tracking_url}" style="display:inline-block;margin-top:18px;background:${BRAND.orange};color:#fff8ee;font:700 15px/1 'Trebuchet MS',Verdana,sans-serif;text-decoration:none;border-radius:999px;padding:13px 26px;">Track the parcel →</a>`
-    : "";
+  const subject = `Order ${order.order_ref} is on the way`;
+  const carrierLine = order.carrier
+    ? `${order.carrier === "auspost" ? "Australia Post" : order.carrier === "sendle" ? "Sendle" : order.carrier} has it now.`
+    : "The parcel is with the carrier.";
   const body = `
-    <p style="margin:0;font:700 12px/1 'Trebuchet MS',Verdana,sans-serif;color:${BRAND.orange};letter-spacing:.16em;text-transform:uppercase;">Order № ${order.order_number} · shipped</p>
-    <h1 style="margin:10px 0 0;font:800 26px/1.15 'Trebuchet MS',Verdana,sans-serif;color:${BRAND.blue};">It's on the way.</h1>
-    <p style="margin:12px 0 0;font:400 14px/1.6 'Trebuchet MS',Verdana,sans-serif;color:${BRAND.inkSoft};">
-      ${order.carrier ? `${order.carrier} has it now.` : "The parcel is with the carrier."}
-      ${order.tracking_number ? `Tracking number: <strong style="color:${BRAND.ink};">${order.tracking_number}</strong>` : ""}
-    </p>
-    ${trackBtn}
-    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-top:20px;">
-      ${itemRows(order)}
-    </table>
+    ${kicker(`Order ${order.order_ref} · shipped`)}
+    ${heading("It's on the way.")}
+    ${para(
+      `${carrierLine}${order.tracking_number ? ` Tracking number: <strong style="color:${C.ink};">${order.tracking_number}</strong>` : ""}`,
+    )}
+    ${order.tracking_url ? button(order.tracking_url, "Track the parcel") : ""}
+    ${itemsTable(order)}
     ${addressBlock(order)}
-    <p style="margin:18px 0 0;font:400 13px/1.6 'Trebuchet MS',Verdana,sans-serif;color:${BRAND.inkSoft};">
-      Clear a patch of wall — someone's about to claim it.
-    </p>`;
-  return { subject, html: shell(subject, body) };
+    ${para("Clear a patch of wall. Somebody is about to claim it.")}`;
+  return { subject, html: shell("Tracking inside. Claws at the ready.", body) };
 }
 
 export async function sendOrderConfirmation(order: OrderRow) {

@@ -15,7 +15,7 @@ const SLIDES: Slide[] = [
   {
     src: "/c01/gallery-swap.webp",
     alt: "A framed red-fruit canvas leaning on a sofa, two spare canvases lying flat on the rug",
-    caption: "Spare canvases live by the wall — swap one in, the frame stays.",
+    caption: "Spare canvases live by the wall. Swap one in, the frame stays.",
     w: 1080,
     h: 1296,
   },
@@ -42,7 +42,7 @@ const SLIDES: Slide[] = [
   },
   {
     src: "/c01/gallery-moonlit.webp",
-    alt: "A white cat inspecting the Wave Light print — a tiny boat on a deep blue sea",
+    alt: "A white cat inspecting the Wave Light print, a tiny boat on a deep blue sea",
     caption: "Wave Light, under close supervision.",
     w: 1104,
     h: 1176,
@@ -50,7 +50,7 @@ const SLIDES: Slide[] = [
   {
     src: "/c01/gallery-redfruit.webp",
     alt: "A grey cat lying beside the Red Fruit canvas",
-    caption: "Red Fruit — new to the lineup this season.",
+    caption: "Red Fruit, new to the lineup this season.",
     w: 1167,
     h: 1400,
   },
@@ -72,8 +72,8 @@ export default function CanvasCollection() {
           <p className={styles.eyebrow}>The Canvas Series</p>
           <h2 className={styles.heading}>One canvas, two pieces.</h2>
           <p className={styles.lede}>
-            Our signature scratch-canvas — a loop-pile painting cats are meant
-            to ruin — comes two ways: a framed print that leans on your wall,
+            Our signature scratch-canvas is a loop-pile painting cats are meant
+            to ruin. It comes two ways: a framed print that leans on your wall,
             and a little house that hides your cat. Art on the outside,
             territory underneath.
           </p>
@@ -126,7 +126,7 @@ export default function CanvasCollection() {
             href="/scratcher"
             kicker="AU$89 · six prints"
             title="The Canvas Scratcher"
-            blurb="A framed print your cat is allowed to ruin — slowly, and with great ceremony."
+            blurb="A framed print your cat is allowed to ruin. Slowly, and with great ceremony."
             cta="See it properly"
             media={{
               kind: "cycle",
@@ -152,14 +152,14 @@ export default function CanvasCollection() {
             href="/house"
             kicker="Coming soon · run of ten"
             title="The Canvas House"
-            blurb="The canvas folded into a den — two scratch walls, a porthole door, ten numbered pieces."
+            blurb="The canvas folded into a den: two scratch walls, a porthole door, ten numbered pieces."
             cta="Meet the House"
             tag="Waitlist open"
             media={{
               kind: "video",
               src: "/c01/house-loop.mp4",
               poster: "/c01/house-poster.jpg",
-              alt: "The Canvas House film — a cat slips through the porthole and lounges on top",
+              alt: "The Canvas House film: a cat slips through the porthole and lounges on top",
             }}
           />
         </Reveal>

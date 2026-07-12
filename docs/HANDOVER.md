@@ -66,7 +66,16 @@ https://roomiepaw.vercel.app 。本地一笔沙盒订单（№ 1001）已全流�
   - "straight off the set — no actors, just residents"
   - 空购物篮："The wall is still bare — and somebody has claws."
 - 计数/编号用 `№`（№ 01 / 06），全站统一。
-- 价格写法 `AU$89`，运费话术固定 "free AU shipping"，税话术 "GST included"。
+- 价格写法 `AU$89`；税话术 "GST included"；运费话术围绕
+  「AU$26 flat · free over AU$188 · Australia only」展开（常量见
+  `lib/catalog.ts` SHIPPING，对客页面 /shipping-returns）。
+- **官方名称是 RoomiePaw**（2026-07-12 用户明确）：metadata、aria、
+  页脚版权、邮件发件人一律 RoomiePaw；logo 图形仍是 "Roomie" 字标 +
+  爪印（那是视觉资产，不是名称）。
+- **文案禁用长破折号 "—"**（用户：AI 味太浓伤信任）：标题分隔用 `·`，
+  句内改用句号/逗号/冒号重组。中文代码注释里的 "——" 不受限。
+- 顾客可见订单号是 `order_ref`（RP-XXXXX 随机 5 位，不暴露销量）；
+  内部自增 `order_number` 只用于对账。
 
 ---
 
@@ -159,6 +168,9 @@ a11y 基线：radiogroup/radio + aria-checked 做选择器；dialog + aria-modal
 /house               猫屋 PDP：夜幕影片 + waitlist 面板 + 剧照 + 流程 + CrossSell
 /cart                购物篮整页（Nav 走抽屉；此页兼任 Stripe cancel_url）
 /checkout/success    付款成功页（轮询 /api/order 拿订单号；进页即清空购物篮）
+/shipping-returns    运费与退货政策（26/188 规则、30 天退货、ACL 声明）
+/care                养护指南 · /privacy 隐私 · /terms 销售条款
+                     （共享 components/policy/PolicyPage 布局；Footer Help 栏入口）
 ```
 
 关键交互约定：

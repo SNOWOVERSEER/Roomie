@@ -1,5 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
-import { CATALOG, type CatalogHandle } from "@/lib/catalog";
+import {
+  CATALOG,
+  shippingCentsFor,
+  type CatalogHandle,
+} from "@/lib/catalog";
 import { getStripe } from "@/lib/stripe";
 import { env } from "@/lib/env";
 
@@ -49,6 +53,13 @@ export async function POST(req: NextRequest) {
   );
   const cartMeta = snapshot.length <= 500 ? snapshot : "";
 
+  // 运费：小计满 AU$188 免运，否则统一 AU$26（只发澳洲；规则见 lib/catalog SHIPPING）
+  const subtotalCents = lines.reduce(
+    (s, l) => s + CATALOG[l.handle].priceCents * l.qty,
+    0,
+  );
+  const shipCents = shippingCentsFor(subtotalCents);
+
   try {
     const session = await getStripe().checkout.sessions.create({
       mode: "payment",
@@ -57,6 +68,20 @@ export async function POST(req: NextRequest) {
         quantity: l.qty,
       })),
       shipping_address_collection: { allowed_countries: ["AU"] },
+      shipping_options: [
+        {
+          shipping_rate_data: {
+            type: "fixed_amount",
+            display_name:
+              shipCents === 0 ? "Free shipping" : "Standard shipping (AU)",
+            fixed_amount: { amount: shipCents, currency: "aud" },
+            delivery_estimate: {
+              minimum: { unit: "business_day", value: 2 },
+              maximum: { unit: "business_day", value: 8 },
+            },
+          },
+        },
+      ],
       allow_promotion_codes: true, // 优惠券在 Stripe Dashboard 建（规格决策）
       ...(env.stripeTaxEnabled ? { automatic_tax: { enabled: true } } : {}),
       metadata: { cart: cartMeta },

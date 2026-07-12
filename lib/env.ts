@@ -10,7 +10,7 @@ export const env = {
   supabaseUrl: process.env.SUPABASE_URL ?? "",
   supabaseSecretKey: process.env.SUPABASE_SECRET_KEY ?? "",
   resendApiKey: process.env.RESEND_API_KEY ?? "",
-  resendFrom: process.env.RESEND_FROM ?? "Roomie <onboarding@resend.dev>",
+  resendFrom: process.env.RESEND_FROM ?? "RoomiePaw <onboarding@resend.dev>",
   adminSecret: process.env.ADMIN_SECRET ?? "",
   publicUrl: process.env.NEXT_PUBLIC_URL ?? "",
 };

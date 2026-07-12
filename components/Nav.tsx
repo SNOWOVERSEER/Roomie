@@ -21,7 +21,7 @@ export default function Nav() {
 
   return (
     <header className={`${styles.nav} ${solid ? styles.solid : ""}`}>
-      <Link href="/" aria-label="Roomie — home" className={styles.logo}>
+      <Link href="/" aria-label="RoomiePaw home" className={styles.logo}>
         <RoomieLogo height={38} />
       </Link>
       <nav className={styles.links}>

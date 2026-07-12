@@ -9,9 +9,9 @@ import pdp from "@/components/pdp/pdp.module.css";
 import shop from "@/components/pdp/HouseShop.module.css";
 
 export const metadata: Metadata = {
-  title: "The Canvas House — Roomie",
+  title: "The Canvas House · RoomiePaw",
   description:
-    "An A-frame cat den wearing two full scratch-paintings, with a porthole door. First run of ten numbered pieces — join the waitlist for first pick.",
+    "An A-frame cat den wearing two full scratch-paintings, with a porthole door. First run of ten numbered pieces. Join the waitlist for first pick.",
 };
 
 /* 猫屋详情页：夜幕舞台（候补）+ 剧照 + 首批流程说明。 */
@@ -33,7 +33,7 @@ const STILLS = [
     src: "/c01/house-paw.webp",
     alt: "A tabby paw resting on the deep blue boat canvas",
     title: "Two walls, claw-rated",
-    body: "Both faces are full scratch-canvases — shred away.",
+    body: "Both faces are full scratch-canvases. Shred away.",
   },
 ];
 
@@ -83,11 +83,11 @@ export default function HousePage() {
             <ol className={pdp.steps}>
               <Reveal as="li">
                 <h3>Join the waitlist</h3>
-                <p>Leave your email — no charge, no commitment.</p>
+                <p>Leave your email. No charge, no commitment.</p>
               </Reveal>
               <Reveal as="li" delay={90}>
                 <h3>We build in order</h3>
-                <p>№ 01 leaves the bench first — ten houses, one at a time.</p>
+                <p>№ 01 leaves the bench first: ten houses, one at a time.</p>
               </Reveal>
               <Reveal as="li" delay={180}>
                 <h3>First pick, first served</h3>
@@ -101,7 +101,7 @@ export default function HousePage() {
           href="/scratcher"
           kicker="The original · shipping now"
           title="The Canvas Scratcher"
-          blurb="The original leaning print — same canvases, same pine, AU$89."
+          blurb="The original leaning print. Same canvases, same pine, AU$89."
           image="/c01/scratcher-solo.webp"
           imageAlt="The Canvas Scratcher leaning against a wall"
           cta="Meet the Scratcher"

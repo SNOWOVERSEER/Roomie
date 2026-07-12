@@ -156,7 +156,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
       showToast(
         title,
         opts?.line ?? "is in your basket",
-        opts?.note ?? "checkout when you're ready — payments by Stripe",
+        opts?.note ?? "checkout when you're ready. Payments by Stripe",
       );
     },
     [lines, showToast],

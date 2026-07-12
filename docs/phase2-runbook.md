@@ -53,17 +53,32 @@
 curl -X POST https://roomiepaw.vercel.app/api/shipping \
   -H "Authorization: Bearer $ADMIN_SECRET" \
   -H "Content-Type: application/json" \
-  -d '{"order_number":1001,"tracking_number":"XX1234567890","carrier":"auspost"}'
+  -d '{"order_ref":"RP-48291","tracking_number":"XX1234567890","carrier":"auspost"}'
 ```
 
 - `carrier` 支持 `auspost` / `sendle`（自动生成追踪链接），其他承运商传 `tracking_url`。
 - 自动：状态 → `shipped`、记 `shipped_at`、给顾客发「发货邮件」。
-- 送达后（可选）：`-d '{"order_number":1001,"status":"delivered"}'`。
+- 送达后（可选）：`-d '{"order_ref":"RP-48291","status":"delivered"}'`。
+- 也接受 `order_number`（内部自增号）或 `session_id`。
+
+### 订单号说明
+
+顾客看到的订单号是 **`order_ref`（RP-XXXXX，随机 5 位）** ——邮件、
+成功页、客服沟通都用它。设计原因：顺序号（Shopify 式 #1001 起）会让
+顾客推算出总销量和增速；随机引用号是小品牌通行做法。内部排序/对账
+仍有自增 `order_number`（Supabase 表里两列都在）。
+
+### 运费规则（改动处：`lib/catalog.ts` 的 `SHIPPING`）
+
+只发澳洲；统一 **AU$26**，商品小计满 **AU$188 免运**。购物车/抽屉的
+运费行与免邮差额提示、Stripe 结算页的运费项、订单表 `shipping_cents`、
+邮件的 Shipping 行全部由这一处常量驱动。对客说明页：`/shipping-returns`。
 
 ### 查订单
 
 Supabase Dashboard → Table Editor → `orders`。
-字段：`order_number`（从 1001 起）、客户/地址、`items`（含画芯名与猫屋编号）、
+字段：`order_ref`（顾客可见 RP-XXXXX）、`order_number`（内部自增）、
+客户/地址、`items`、`amount_total`/`shipping_cents`（分）、
 `status`（paid/shipped/delivered）、追踪号、各时间戳。
 
 ### 退款 / 优惠券（零代码，规格决策）
@@ -138,6 +153,8 @@ select email from waitlist where product_handle = 'canvas-house' order by create
 ## 已知边界（MVP 刻意不做，规格确认）
 
 - 无顾客订单查询页 / AusPost 自动回调 / 库存管理 / CMS。
+- Policy 页（/shipping-returns /care /privacy /terms）为平实英语版，
+  发货时效、退货窗口等默认值上线前请店主复核（代码里标了 TODO）。
 - 购物车在浏览器本地（localStorage），换设备不同步。
 - waitlist 不发确认邮件、无退订链接（开售通知属一次性交易性邮件；
   若以后做营销邮件再补合规退订）。

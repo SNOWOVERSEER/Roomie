@@ -7,7 +7,7 @@ export default function Crumb({ piece }: { piece: string }) {
     <div className={styles.crumb}>
       <div className={`shell ${styles.crumbRow}`}>
         <p className={styles.crumbTrail}>
-          The Canvas Series — <strong>{piece}</strong>
+          The Canvas Series · <strong>{piece}</strong>
         </p>
         <Link className={styles.crumbBack} href="/#canvas">
           <svg viewBox="0 0 20 20" width="15" aria-hidden>

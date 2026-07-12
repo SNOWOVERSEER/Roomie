@@ -1,3 +1,4 @@
+import { randomInt } from "node:crypto";
 import { NextRequest, NextResponse } from "next/server";
 import type Stripe from "stripe";
 import { getStripe } from "@/lib/stripe";
@@ -54,40 +55,55 @@ export async function POST(req: NextRequest) {
   return NextResponse.json({ received: true });
 }
 
+/** 客户可见订单号：RP + 5 位随机。非顺序 = 不暴露销量/增速（内部仍有自增 order_number） */
+const newOrderRef = () => `RP-${randomInt(10000, 100000)}`;
+
 async function recordOrder(session: Stripe.Checkout.Session) {
   const items = await itemsFromSession(session);
   const shipping = session.collected_information?.shipping_details ?? null;
 
-  const { data, error } = await getSupabaseAdmin()
-    .from("orders")
-    .upsert(
-      {
-        stripe_session_id: session.id,
-        stripe_payment_intent_id:
-          typeof session.payment_intent === "string"
-            ? session.payment_intent
-            : (session.payment_intent?.id ?? null),
-        email: session.customer_details?.email ?? "unknown",
-        customer_name: session.customer_details?.name ?? null,
-        shipping_address: shipping
-          ? { name: shipping.name, ...shipping.address }
-          : null,
-        items,
-        amount_total: session.amount_total ?? 0,
-        currency: session.currency ?? "aud",
-        status: "paid",
-      },
-      { onConflict: "stripe_session_id", ignoreDuplicates: true },
-    )
-    .select();
+  const row = {
+    stripe_session_id: session.id,
+    stripe_payment_intent_id:
+      typeof session.payment_intent === "string"
+        ? session.payment_intent
+        : (session.payment_intent?.id ?? null),
+    email: session.customer_details?.email ?? "unknown",
+    customer_name: session.customer_details?.name ?? null,
+    shipping_address: shipping
+      ? { name: shipping.name, ...shipping.address }
+      : null,
+    items,
+    amount_total: session.amount_total ?? 0,
+    shipping_cents: session.shipping_cost?.amount_total ?? 0,
+    currency: session.currency ?? "aud",
+    status: "paid" as const,
+  };
 
-  if (error) throw new Error(`orders 写入失败: ${error.message}`);
+  // order_ref 随机 5 位，撞唯一约束就换号重试（90k 空间，MVP 量级足够）
+  for (let attempt = 0; ; attempt++) {
+    const { data, error } = await getSupabaseAdmin()
+      .from("orders")
+      .upsert(
+        { ...row, order_ref: newOrderRef() },
+        { onConflict: "stripe_session_id", ignoreDuplicates: true },
+      )
+      .select();
 
-  const inserted = (data ?? [])[0] as OrderRow | undefined;
-  if (inserted) {
-    await sendOrderConfirmation(inserted); // 内部吞错——邮件不阻断订单
-  } else {
-    console.log("[webhook] 重复事件，订单已存在:", session.id);
+    if (!error) {
+      const inserted = (data ?? [])[0] as OrderRow | undefined;
+      if (inserted) {
+        await sendOrderConfirmation(inserted); // 内部吞错，邮件不阻断订单
+      } else {
+        console.log("[webhook] 重复事件，订单已存在:", session.id);
+      }
+      return;
+    }
+    const refCollision =
+      error.code === "23505" && error.message.includes("order_ref");
+    if (!refCollision || attempt >= 4) {
+      throw new Error(`orders 写入失败: ${error.message}`);
+    }
   }
 }
 

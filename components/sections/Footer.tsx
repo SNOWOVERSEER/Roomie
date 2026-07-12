@@ -78,16 +78,19 @@ export default function Footer() {
 
         <nav className={styles.col} aria-label="Help">
           <h3>Help</h3>
-          <a href="#">Shipping &amp; returns</a>
-          <a href="#">Care guide</a>
+          <a href="/shipping-returns">Shipping &amp; returns</a>
+          <a href="/care">Care guide</a>
+          <a href="/privacy">Privacy</a>
+          <a href="/terms">Terms</a>
           <a href="mailto:hello@roomiepaw.com.au">hello@roomiepaw.com.au</a>
         </nav>
       </div>
 
       <div className={`shell ${styles.fine}`}>
-        <span>© 2026 Roomie · Melbourne, AU</span>
+        <span>© 2026 RoomiePaw · Melbourne, AU</span>
         <span className={styles.demo}>
-          secure checkout by Stripe · GST included · free AU shipping
+          secure checkout by Stripe · GST included · free AU shipping over
+          AU$188
         </span>
       </div>
     </footer>

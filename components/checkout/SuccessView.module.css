@@ -77,6 +77,21 @@
   white-space: nowrap;
 }
 
+.shipRow {
+  margin-top: 0.8rem;
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.92rem;
+  color: var(--ink-soft);
+}
+
+.shipRow b {
+  font-family: var(--font-display), sans-serif;
+  font-weight: 700;
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
+}
+
 .totalRow {
   margin-top: 0.9rem;
   padding-top: 0.9rem;

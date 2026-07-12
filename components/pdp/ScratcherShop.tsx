@@ -58,12 +58,12 @@ const PRICE: Record<Format, string> = { full: "AU$89", print: "AU$35" };
 
 const NOTES: Record<Format, string[]> = {
   full: [
-    "Solid pine frame, weighted easel — leans, never topples.",
+    "Solid pine frame, weighted easel. Leans, never topples.",
     "Loop-pile canvas: satisfying shred, zero confetti.",
-    "Prints swap in minutes — new drops each season.",
+    "Prints swap in minutes, new drops each season.",
   ],
   print: [
-    "The print alone — your frame stays on the wall.",
+    "The print alone. Your frame stays on the wall.",
     "Same loop-pile weave, fresh territory.",
     "Fits every Canvas Series frame, Scratcher and House.",
   ],
@@ -94,7 +94,7 @@ export default function ScratcherShop() {
     format === "full"
       ? add("canvas-scratcher", art.title)
       : add("canvas-print", art.title, {
-          note: "print only — your frame stays on the wall",
+          note: "print only, your frame stays on the wall",
         });
 
   return (
@@ -138,7 +138,9 @@ export default function ScratcherShop() {
         {/* ——— 购买面板 ——— */}
         <div className={pdp.panelCol}>
           <div className={pdp.panel}>
-            <p className={pdp.panelKicker}>Shipping now · free AU shipping</p>
+            <p className={pdp.panelKicker}>
+              Shipping now · Australia-wide
+            </p>
             <h1 className={pdp.panelTitle}>The Canvas Scratcher</h1>
             <p className={pdp.panelTagline}>
               Looks like a print. Scratches like a post. Leans on any wall the
@@ -206,7 +208,7 @@ export default function ScratcherShop() {
 
             <div className={pdp.buyRow}>
               <span className={pdp.price}>
-                {PRICE[format]} <em>free AU shipping</em>
+                {PRICE[format]} <em>free shipping over AU$188</em>
               </span>
               <button className="btnPrimary" onClick={addToBasket}>
                 Add to basket
@@ -229,7 +231,7 @@ export default function ScratcherShop() {
             {format === "full" ? "Scratcher" : "Print"} · {art.title}
           </span>
           <span className={pdp.stickyPrice}>
-            {PRICE[format]} · free shipping
+            {PRICE[format]} · ships AU-wide
           </span>
         </span>
         <button className={pdp.stickyBtn} onClick={addToBasket}>

@@ -1,0 +1,137 @@
+/* ——— Policy / 指南页 ——— */
+
+.wrap {
+  padding: 7.5rem 0 clamp(4rem, 7vw, 6rem);
+  background: var(--cream);
+}
+
+.eyebrow {
+  font-family: var(--font-display), sans-serif;
+  font-weight: 800;
+  font-size: 0.9rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--orange-deep);
+}
+
+.title {
+  margin-top: 0.5rem;
+  font-size: clamp(2rem, 3.6vw, 2.9rem);
+  font-weight: 800;
+}
+
+.lede {
+  margin-top: 0.8rem;
+  color: var(--ink-soft);
+  font-size: 1.05rem;
+  max-width: 52ch;
+}
+
+.updated {
+  margin-top: 0.9rem;
+  font-size: 0.82rem;
+  color: var(--ink-soft);
+}
+
+.bodyShell {
+  margin-top: clamp(1.6rem, 3vw, 2.4rem);
+}
+
+.body {
+  background: var(--paper);
+  border-radius: calc(var(--r-media) + 2px);
+  box-shadow: var(--shadow-soft);
+  padding: clamp(1.8rem, 4vw, 3rem);
+  max-width: 50rem;
+}
+
+/* ——— prose ——— */
+.body h2 {
+  font-size: 1.35rem;
+  font-weight: 800;
+  color: var(--blue-deep);
+  margin-top: 2.2rem;
+}
+
+.body h2:first-child {
+  margin-top: 0;
+}
+
+.body h3 {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--ink);
+  margin-top: 1.4rem;
+}
+
+.body p {
+  margin-top: 0.8rem;
+  color: var(--ink-soft);
+  font-size: 0.98rem;
+  max-width: 68ch;
+}
+
+.body ul {
+  margin-top: 0.8rem;
+  padding-left: 0;
+  list-style: none;
+  display: grid;
+  gap: 0.5rem;
+}
+
+.body ul li {
+  position: relative;
+  padding-left: 1.15rem;
+  color: var(--ink-soft);
+  font-size: 0.98rem;
+  max-width: 66ch;
+}
+
+.body ul li::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0.55em;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--orange);
+}
+
+.body strong {
+  color: var(--ink);
+  font-weight: 700;
+}
+
+.body a {
+  color: var(--blue-deep);
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  text-decoration-thickness: 2px;
+  text-decoration-color: color-mix(in srgb, var(--orange) 55%, transparent);
+  transition: text-decoration-color var(--dur-fast) var(--ease-out);
+}
+
+.body a:hover {
+  text-decoration-color: var(--orange);
+}
+
+/* 重点框（如运费规则） */
+.callout {
+  margin-top: 1.2rem;
+  background: var(--cream-warm);
+  border-radius: var(--r-card);
+  padding: 1rem 1.2rem;
+  font-family: var(--font-display), sans-serif;
+  font-weight: 700;
+  color: var(--ink);
+  font-size: 1rem;
+  max-width: 100%;
+}
+
+@media (max-width: 700px) {
+  .wrap {
+    padding-top: 6.2rem;
+  }
+}

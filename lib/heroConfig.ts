@@ -50,7 +50,7 @@ export const ARTWORKS: Artwork[] = [
     src: "/hero/art/art-01.png",
     title: "Sunny Field",
     alt: "A little white house under a red sun, deep blue sky over a golden field",
-    caption: "The one it arrives with — a little house, a big noon.",
+    caption: "The one it arrives with: a little house, a big noon.",
   },
   {
     id: "art-02",
@@ -105,8 +105,8 @@ export const HERO_TIMINGS = {
 export const HERO_COPY = {
   title: ["The art your cat", "can scratch"],
   subtitle:
-    "A framed canvas for your wall that's secretly a scratcher — pet things that feel like part of home.",
+    "A framed canvas for your wall that's secretly a scratcher. Pet things that feel like part of home.",
   cta: "Shop the Canvas Scratcher", // TODO 最终文案待定
-  ctaNote: "AU$89 · free AU shipping · swappable prints", // TODO 价格占位
-  tagHint: "spare prints by the wall — tap one to swap",
+  ctaNote: "AU$89 · swappable prints · ships AU-wide", // TODO 价格占位
+  tagHint: "spare prints by the wall, tap one to swap",
 };

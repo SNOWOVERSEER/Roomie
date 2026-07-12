@@ -41,7 +41,7 @@ export default function WaitlistForm({
     e.preventDefault();
     const value = email.trim();
     if (!EMAIL_RE.test(value)) {
-      setErr("That email doesn't look right — mind checking it?");
+      setErr("That email doesn't look right. Mind checking it?");
       ref.current?.focus();
       return;
     }
@@ -57,7 +57,7 @@ export default function WaitlistForm({
       if (!res.ok || !data.ok) throw new Error("failed");
       setDone(data.already ? "already" : "new");
     } catch {
-      setErr("Couldn't save that just now — try again in a moment.");
+      setErr("Couldn't save that just now. Try again in a moment.");
       setBusy(false);
     }
   };
@@ -67,8 +67,8 @@ export default function WaitlistForm({
       <p className={styles.done} role="status">
         <span aria-hidden>✓</span>
         {done === "new"
-          ? "You're on the list — first word goes to your inbox."
-          : "Already on it — you're set."}
+          ? "You're on the list. First word goes to your inbox."
+          : "Already on it. You're set."}
       </p>
     );
   }

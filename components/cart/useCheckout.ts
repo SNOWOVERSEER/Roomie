@@ -28,7 +28,7 @@ export function useCheckout(lines: CartLine[]) {
       if (!res.ok || !data.url) throw new Error(data.error ?? "no url");
       window.location.assign(data.url);
     } catch {
-      setErr("Couldn't open the checkout — give it another go in a moment.");
+      setErr("Couldn't open the checkout. Give it another go in a moment.");
       setBusy(false);
     }
   };

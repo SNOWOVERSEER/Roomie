@@ -9,9 +9,9 @@ import ScratcherShop from "@/components/pdp/ScratcherShop";
 import pdp from "@/components/pdp/pdp.module.css";
 
 export const metadata: Metadata = {
-  title: "The Canvas Scratcher — Roomie",
+  title: "The Canvas Scratcher · RoomiePaw",
   description:
-    "A framed loop-pile canvas that leans on your wall like art and scratches like a post. Solid pine, six swap-able prints, free AU shipping.",
+    "A framed loop-pile canvas that leans on your wall like art and scratches like a post. Solid pine, six swap-able prints, free AU shipping over AU$188.",
 };
 
 /*
@@ -28,7 +28,7 @@ const POINTS = [
   {
     n: "02",
     title: "A scratcher underneath",
-    body: "Tight loop-pile weave that satisfies the daily shred — without the confetti of cardboard crumbs.",
+    body: "Tight loop-pile weave that satisfies the daily shred, minus the confetti of cardboard crumbs.",
   },
   {
     n: "03",
@@ -67,7 +67,7 @@ const SLIDES: Slide[] = [
   {
     src: "/c01/gallery-swap.webp",
     alt: "A framed red-fruit canvas leaning on a sofa, two spare canvases lying flat on the rug",
-    caption: "Spare canvases live by the wall — swap one in, the frame stays.",
+    caption: "Spare canvases live by the wall. Swap one in, the frame stays.",
     w: 1080,
     h: 1296,
   },
@@ -94,7 +94,7 @@ const SLIDES: Slide[] = [
   },
   {
     src: "/c01/gallery-moonlit.webp",
-    alt: "A white cat inspecting the Wave Light print — a tiny boat on a deep blue sea",
+    alt: "A white cat inspecting the Wave Light print, a tiny boat on a deep blue sea",
     caption: "Wave Light, under close supervision.",
     w: 1104,
     h: 1176,
@@ -102,7 +102,7 @@ const SLIDES: Slide[] = [
   {
     src: "/c01/gallery-redfruit.webp",
     alt: "A grey cat lying beside the Red Fruit canvas",
-    caption: "Red Fruit — new to the lineup this season.",
+    caption: "Red Fruit, new to the lineup this season.",
     w: 1167,
     h: 1400,
   },
@@ -183,7 +183,7 @@ export default function ScratcherPage() {
             <ol className={pdp.steps}>
               <Reveal as="li">
                 <h3>Unclip the back rail</h3>
-                <p>The frame opens without tools — two clips, done.</p>
+                <p>The frame opens without tools. Two clips, done.</p>
               </Reveal>
               <Reveal as="li" delay={90}>
                 <h3>Slide the canvas out</h3>
@@ -191,12 +191,12 @@ export default function ScratcherPage() {
               </Reveal>
               <Reveal as="li" delay={180}>
                 <h3>Lean it back</h3>
-                <p>Same frame, new art — new territory for them.</p>
+                <p>Same frame, new art. New territory for them.</p>
               </Reveal>
             </ol>
             <Reveal as="p" className={pdp.sectionCta} delay={240}>
-              Spare prints are AU$35 each, sold on their own —{" "}
-              <a href="#prints">pick a fresh one</a>.
+              Spare prints are AU$35 each, sold on their own.{" "}
+              <a href="#prints">Pick a fresh one</a>.
             </Reveal>
           </div>
         </section>
@@ -223,7 +223,7 @@ export default function ScratcherPage() {
           href="/house"
           kicker="Completes the set · waitlist open"
           title="The Canvas House"
-          blurb="The same canvas, folded into a den — two scratch walls and a porthole door."
+          blurb="The same canvas, folded into a den: two scratch walls and a porthole door."
           image="/c01/house-ontop.webp"
           imageAlt="A cat lounging on top of the Canvas House"
           cta="Meet the House"

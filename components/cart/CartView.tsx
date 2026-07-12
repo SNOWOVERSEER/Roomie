@@ -2,7 +2,12 @@
 
 import Link from "next/link";
 import { useCart } from "@/components/CartContext";
-import { CATALOG, formatCents } from "@/lib/catalog";
+import {
+  CATALOG,
+  formatCents,
+  SHIPPING,
+  shippingCentsFor,
+} from "@/lib/catalog";
 import { useCheckout } from "./useCheckout";
 import { lineImage } from "./lineImage";
 import styles from "./CartView.module.css";
@@ -16,6 +21,8 @@ import styles from "./CartView.module.css";
 export default function CartView() {
   const { lines, count, subtotalCents, setQty, remove } = useCart();
   const { busy, err, checkout } = useCheckout(lines);
+  const shipCents = shippingCentsFor(subtotalCents);
+  const totalCents = subtotalCents + shipCents;
 
   if (lines.length === 0) {
     return (
@@ -121,16 +128,22 @@ export default function CartView() {
                   <dd>{formatCents(subtotalCents)}</dd>
                 </div>
                 <div>
-                  <dt>Shipping</dt>
-                  <dd>Free · AU</dd>
+                  <dt>Shipping · AU only</dt>
+                  <dd>{shipCents === 0 ? "Free" : formatCents(shipCents)}</dd>
                 </div>
               </dl>
+              {shipCents > 0 && (
+                <p className={styles.freeHint}>
+                  {formatCents(SHIPPING.freeOverCents - subtotalCents)} more
+                  and shipping is on us.
+                </p>
+              )}
               <p className={styles.taxNote}>
                 GST included. Cards &amp; Afterpay at checkout.
               </p>
               <div className={styles.totalRow}>
                 <span>Total</span>
-                <strong>{formatCents(subtotalCents)}</strong>
+                <strong>{formatCents(totalCents)}</strong>
               </div>
               <button
                 className={`btnPrimary ${styles.checkoutBtn}`}

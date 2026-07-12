@@ -9,7 +9,7 @@ import { sendShippingNotice } from "@/lib/email";
  *
  *   curl -X POST https://roomiepaw.vercel.app/api/shipping \
  *     -H "Authorization: Bearer $ADMIN_SECRET" -H "Content-Type: application/json" \
- *     -d '{"order_number":1001,"tracking_number":"XX123","carrier":"auspost"}'
+ *     -d '{"order_ref":"RP-48291","tracking_number":"XX123","carrier":"auspost"}'
  */
 
 const TRACK_URL: Record<string, (n: string) => string> = {
@@ -18,7 +18,8 @@ const TRACK_URL: Record<string, (n: string) => string> = {
 };
 
 interface Body {
-  order_number?: number;
+  order_ref?: string; // 客户可见订单号（RP-XXXXX），首选
+  order_number?: number; // 内部自增号，兼容保留
   session_id?: string;
   tracking_number?: string;
   tracking_url?: string;
@@ -38,9 +39,9 @@ export async function POST(req: NextRequest) {
   } catch {
     return NextResponse.json({ error: "invalid body" }, { status: 400 });
   }
-  if (!body.order_number && !body.session_id) {
+  if (!body.order_ref && !body.order_number && !body.session_id) {
     return NextResponse.json(
-      { error: "order_number 或 session_id 必填其一" },
+      { error: "order_ref / order_number / session_id 必填其一" },
       { status: 400 },
     );
   }
@@ -71,9 +72,11 @@ export async function POST(req: NextRequest) {
   }
 
   let q = getSupabaseAdmin().from("orders").update(patch);
-  q = body.order_number
-    ? q.eq("order_number", body.order_number)
-    : q.eq("stripe_session_id", body.session_id!);
+  q = body.order_ref
+    ? q.eq("order_ref", body.order_ref.trim().toUpperCase())
+    : body.order_number
+      ? q.eq("order_number", body.order_number)
+      : q.eq("stripe_session_id", body.session_id!);
   const { data, error } = await q.select().maybeSingle();
 
   if (error) {
@@ -91,6 +94,7 @@ export async function POST(req: NextRequest) {
   return NextResponse.json({
     ok: true,
     order: {
+      order_ref: order.order_ref,
       order_number: order.order_number,
       status: order.status,
       tracking_number: order.tracking_number,

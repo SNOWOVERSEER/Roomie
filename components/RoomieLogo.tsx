@@ -58,7 +58,7 @@ export default function RoomieLogo({
       height={height}
       className={className}
       role="img"
-      aria-label="Roomie"
+      aria-label="RoomiePaw"
       style={{ overflow: "visible" }}
     >
       <g

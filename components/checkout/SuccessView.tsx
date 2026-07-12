@@ -15,10 +15,11 @@ import styles from "./SuccessView.module.css";
  */
 
 interface OrderSummary {
-  order_number: number;
+  order_ref: string;
   email: string;
   items: { handle: string; title: string; variant?: string; qty: number; unit_cents: number }[];
   amount_total: number;
+  shipping_cents: number;
   status: string;
 }
 
@@ -97,7 +98,7 @@ export default function SuccessView() {
       <div className={`shell ${styles.card}`}>
         <p className={styles.kicker}>
           {order
-            ? `Order № ${order.order_number} · confirmed`
+            ? `Order ${order.order_ref} · confirmed`
             : processing
               ? "Payment processing"
               : "Payment received"}
@@ -107,12 +108,12 @@ export default function SuccessView() {
         </h1>
         <p className={styles.lede}>
           {order
-            ? `A confirmation is on its way to ${order.email}. Clear a patch of wall — someone has plans for it.`
+            ? `A confirmation is on its way to ${order.email}. Clear a patch of wall, someone has plans for it.`
             : processing
               ? "Your payment provider is finishing up. We'll email your order number the moment it lands."
               : gaveUp
-                ? "Payment confirmed with Stripe. Your order number is coming by email — you can safely close this page."
-                : "Payment confirmed — fetching your order number…"}
+                ? "Payment confirmed with Stripe. Your order number is coming by email, so you can safely close this page."
+                : "Payment confirmed. Fetching your order number…"}
         </p>
 
         {order && (
@@ -129,14 +130,22 @@ export default function SuccessView() {
                 </li>
               ))}
             </ul>
+            <div className={styles.shipRow}>
+              <span>Shipping</span>
+              <b>
+                {order.shipping_cents === 0
+                  ? "Free"
+                  : formatCents(order.shipping_cents)}
+              </b>
+            </div>
             <div className={styles.totalRow}>
-              <span>Total · free AU shipping</span>
+              <span>Total · GST included</span>
               <strong>{formatCents(order.amount_total)}</strong>
             </div>
             {order.items.some((it) => it.handle === "canvas-house") && (
               <p className={styles.houseNote}>
-                Your House number is stamped on the frame — we build the run
-                in order and email you when yours hits the bench.
+                Your House number is stamped on the frame. We build the run in
+                order and email you when yours hits the bench.
               </p>
             )}
           </div>
@@ -145,7 +154,7 @@ export default function SuccessView() {
         <ol className={styles.steps}>
           <li>
             <h3>Confirmation email</h3>
-            <p>Order number and receipt — arriving about now.</p>
+            <p>Order number and receipt, arriving about now.</p>
           </li>
           <li>
             <h3>Built &amp; packed</h3>

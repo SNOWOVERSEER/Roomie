@@ -20,7 +20,7 @@ export default async function TheShelf() {
           <h2 className={styles.heading}>The roomful is growing</h2>
           <p className={styles.lede}>
             We&rsquo;re a small pet-furniture studio in Melbourne, making the
-            un-ugly version of everything a cat needs — one piece at a time.
+            un-ugly version of everything a cat needs, one piece at a time.
             Here&rsquo;s what&rsquo;s on the bench.
           </p>
         </Reveal>
@@ -31,7 +31,7 @@ export default async function TheShelf() {
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 src="/c01/shelf-featured.webp"
-                alt="The Canvas Scratcher at home — a framed canvas leaning by a sofa, cat asleep beside it"
+                alt="The Canvas Scratcher at home: a framed canvas leaning by a sofa, cat asleep beside it"
                 loading="lazy"
               />
               <span className={styles.nowChip}>In store now</span>

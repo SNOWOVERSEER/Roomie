@@ -3,7 +3,12 @@
 import { useEffect, useRef } from "react";
 import Link from "next/link";
 import type { CartLine } from "@/components/CartContext";
-import { CATALOG, formatCents } from "@/lib/catalog";
+import {
+  CATALOG,
+  formatCents,
+  SHIPPING,
+  shippingCentsFor,
+} from "@/lib/catalog";
 import { useCheckout } from "./useCheckout";
 import { lineImage } from "./lineImage";
 import styles from "./CartDrawer.module.css";
@@ -33,6 +38,7 @@ export default function CartDrawer({
 }) {
   const panelRef = useRef<HTMLElement>(null);
   const { busy, err, checkout } = useCheckout(lines);
+  const shipCents = shippingCentsFor(subtotalCents);
 
   // Esc 关闭
   useEffect(() => {
@@ -147,12 +153,23 @@ export default function CartDrawer({
             </ul>
 
             <footer className={styles.foot}>
-              <div className={styles.subRow}>
-                <span>Subtotal</span>
-                <strong>{formatCents(subtotalCents)}</strong>
+              <div className={styles.shipRow}>
+                <span>Shipping · AU only</span>
+                <b>{shipCents === 0 ? "Free" : formatCents(shipCents)}</b>
               </div>
+              <div className={styles.subRow}>
+                <span>Total</span>
+                <strong>{formatCents(subtotalCents + shipCents)}</strong>
+              </div>
+              {shipCents > 0 && (
+                <p className={styles.freeHint}>
+                  {formatCents(SHIPPING.freeOverCents - subtotalCents)} more
+                  and shipping is on us.
+                </p>
+              )}
               <p className={styles.finePrint}>
-                Free AU shipping · GST included · cards &amp; Afterpay
+                Free shipping over {formatCents(SHIPPING.freeOverCents)} · GST
+                included · cards &amp; Afterpay
               </p>
               <button
                 className={`btnPrimary ${styles.checkoutBtn}`}

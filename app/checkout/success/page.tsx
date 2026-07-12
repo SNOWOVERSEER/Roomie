@@ -5,8 +5,8 @@ import Footer from "@/components/sections/Footer";
 import SuccessView from "@/components/checkout/SuccessView";
 
 export const metadata: Metadata = {
-  title: "Order confirmed — Roomie",
-  description: "Payment received — the room is being prepared.",
+  title: "Order confirmed · RoomiePaw",
+  description: "Payment received. The room is being prepared.",
   robots: { index: false },
 };
 

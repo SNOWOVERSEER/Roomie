@@ -12,14 +12,14 @@ export default function BrandStory() {
       <div className={`shell ${styles.grid}`}>
         <div className={styles.textCol}>
           <Reveal>
-            <p className={styles.eyebrow}>Why Roomie</p>
+            <p className={styles.eyebrow}>Why RoomiePaw</p>
             <h2 className={styles.heading}>
               Pet stuff shouldn&rsquo;t look like pet stuff.
             </h2>
             <p className={styles.body}>
               Your cat lives in the living room, not in a pet aisle. So the
               things they scratch, nap on and eat from should hold their own
-              next to the sofa you saved up for. That&rsquo;s the whole idea —
+              next to the sofa you saved up for. That&rsquo;s the whole idea:
               furniture you share, from a small pet-furniture studio in
               Melbourne.
             </p>
@@ -45,11 +45,11 @@ export default function BrandStory() {
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src="/story/room-cat.jpg"
-              alt="The same living room — a cat sits proudly beside the canvas"
+              alt="The same living room, now with a cat sitting proudly beside the canvas"
               className={`${styles.catLayer} ${revealed ? styles.show : ""}`}
             />
             <span className={`${styles.hint} ${revealed ? styles.hintOff : ""}`}>
-              this room has a scratcher in it — <em>hover to meet the owner</em>
+              this room has a scratcher in it. <em>hover to meet the owner</em>
             </span>
           </button>
         </Reveal>
