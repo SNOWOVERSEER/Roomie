@@ -9,11 +9,16 @@
   z-index: 4;
   pointer-events: none;
   /* 关键 1：视频播放期间整层隐身（画作会遮住走到画前的猫）。
-     art-01 也是真画合成（视频帧色调 ≠ 实物），定格后用一段慢溶解
-     把真色画作盖上去 —— 突变会跳，溶解读作「光线定下来」。
+     art-01 也是真画合成，而生成视频里的画与实物存在色调 + 构图
+     比例的双重偏差 —— 裸交叉溶解会出现房子/太阳的重影漂移。
+     所以真画「带焦外进场」：模糊态先完成淡入（错位在虚焦里不可辨），
+     再收锐成实拍焦点，读作对焦拉实而非换图。
      用 opacity 而非 display，保证图片提前解码。 */
   opacity: 0;
-  transition: opacity 1200ms var(--ease-out) 240ms;
+  filter: blur(9px);
+  transition:
+    opacity 950ms var(--ease-out) 240ms,
+    filter 1500ms var(--ease-out) 420ms;
   /* 关键 2：羽化蒙版裁掉画布之外的一切 —— 木框与墙面由活视频
      原生呈现，覆盖图的矩形外沿不可能产生接缝色差。 */
   -webkit-mask-image: url("/hero/art/frame-mask.png");
@@ -24,6 +29,7 @@
 
 .frameActive {
   opacity: 1;
+  filter: blur(0);
   pointer-events: auto;
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
