@@ -11,7 +11,9 @@ export default function Nav() {
   const { count, bump, openDrawer } = useCart();
 
   useEffect(() => {
-    const onScroll = () => setSolid(window.scrollY > window.innerHeight * 0.7);
+    // 一开始滚动就上底色 —— 内页内容从页顶就开始，阈值晚了
+    // 文字会钻到透明导航底下（旧值 0.7vh 只对满屏 hero 的首页成立）
+    const onScroll = () => setSolid(window.scrollY > 12);
     onScroll();
     window.addEventListener("scroll", onScroll, { passive: true });
     return () => window.removeEventListener("scroll", onScroll);
