@@ -14,6 +14,11 @@ Melbourne, AU · Next.js · TypeScript
 
 ---
 
+> **Taking over this codebase (human or agent)?** Start with
+> [`docs/HANDOVER.md`](docs/HANDOVER.md) — red lines, the full design
+> system with exact tokens, asset pipelines, engineering pitfalls, and
+> the decision log. Ops manual: [`docs/phase2-runbook.md`](docs/phase2-runbook.md).
+
 ## What makes it special
 
 The hero is a self-contained **theatre**. A 10-second film plays on load — a cat
