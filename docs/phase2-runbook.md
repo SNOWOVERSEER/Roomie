@@ -47,7 +47,18 @@
 
 ## 日常操作
 
-### 发货（拿到追踪号后一条命令）
+**首选入口：本地 admin 后台**（admin-platform 起）——
+`npm run admin` → http://127.0.0.1:3100（口令 = ADMIN_SECRET；首次先
+`npm --prefix admin install`）。改价、库存、上下架、文案、发货、看单、
+候补导出全部在这里点完；改动约几秒生效，不需要部署。下面的 curl/SQL
+是后台不可用时的 fallback。
+
+### 发货
+
+**admin → Orders → 找到订单 → 填运单号选承运商 → Ship**（自动发发货邮件）。
+送达后同处「Mark delivered」。
+
+fallback（一条命令）：
 
 ```bash
 curl -X POST https://roomiepaw.vercel.app/api/shipping \
@@ -60,6 +71,19 @@ curl -X POST https://roomiepaw.vercel.app/api/shipping \
 - 自动：状态 → `shipped`、记 `shipped_at`、给顾客发「发货邮件」。
 - 送达后（可选）：`-d '{"order_ref":"482916","status":"delivered"}'`。
 - 也接受 `order_number`（内部自增号）或 `session_id`。
+- ⚠️ 2026-07-13 已知缺口：Vercel 的 `ADMIN_SECRET` 与本地 `.env.local`
+  不一致（生产回 401）——先在 Vercel env 对齐，admin 发货与这条 curl 才通。
+
+### 改价 / 库存 / 上下架 / 上新（全在 admin → Products）
+
+- **改价**：行内 edit → 填新价 → Save。自动在 Stripe 建新 Price、归档旧
+  Price、回写表；全站显示价与结算价同步换，**不用重跑 stripe:setup、不用部署**。
+- **库存**：默认 `∞ untracked`（不限量）；「track」开始计数，卖一件自动
+  减一，0 = 站点售罄置灰，红色 OVERSOLD = 并发竞态提醒（手工核对后补货）。
+- **上下架**：off sale 的商品从可购变 What's next 候补卡。
+- **上新**：Add a product 填 handle/文案/价格/图片路径（图片本体先走仓库
+  `public/` 素材管线：去 logo、webp 化，见 HANDOVER §6）→ Create in Stripe
+  → 核对后 put on sale。
 
 ### 订单号说明
 
@@ -76,7 +100,8 @@ curl -X POST https://roomiepaw.vercel.app/api/shipping \
 
 ### 查订单
 
-Supabase Dashboard → Table Editor → `orders`。
+**admin → Orders**（按 To ship / Shipped / Delivered 分组，点开看明细地址）。
+fallback：Supabase Dashboard → Table Editor → `orders`。
 字段：`order_ref`（顾客可见 6 位数字）、`order_number`（内部自增）、
 客户/地址、`items`、`amount_total`/`shipping_cents`（分）、
 `status`（paid/shipped/delivered）、追踪号、各时间戳。
@@ -89,9 +114,8 @@ Supabase Dashboard → Table Editor → `orders`。
 
 ### 看候补名单 / 导出邮箱
 
-Supabase Dashboard → Table Editor → `waitlist`（`product_handle` 区分产品：
-`canvas-house` / `nook-house` / `cloud-perch` / `wave-bowls`）。
-SQL Editor 导出某产品全部邮箱：
+**admin → Waitlist**（按产品分组 + 「download CSV」一键导出）。
+fallback：Supabase Dashboard → Table Editor → `waitlist`，或 SQL：
 
 ```sql
 select email from waitlist where product_handle = 'canvas-house' order by created_at;
@@ -101,18 +125,20 @@ select email from waitlist where product_handle = 'canvas-house' order by create
 
 首批猫屋当前**不可购**（2026-07-12 决策：选号预售撤销，改候补）。开售时：
 
-1. `lib/catalog.ts` 把 canvas-house 加回（Stripe price 已存在：
-   `price_1TsHxqDzmUuzRpRKebu6oZDS`，AU$189 占位）+ `scripts/stripe-setup.mjs` 的 SKUS 同步；
-2. HouseShop 面板把 WaitlistForm 换回购买按钮（git 历史里有选号版本可参考，
-   commit `4ca870b` 之前）；
-3. 给 waitlist 里的人发邮件（导出邮箱 → Resend 群发或手动）。
+1. **前置（代码，一次性）**：HouseShop 面板把 WaitlistForm 换回购买按钮
+   （git 历史里有选号版本可参考，commit `4ca870b` 之前）——开售形态是
+   待定产品决策；
+2. **admin → Products → canvas-house**：确认价格（Stripe price 已挂：
+   `price_1TsHxqDzmUuzRpRKebu6oZDS`，AU$189 占位，改价直接行内改）→
+   「track」设首批件数（10）→ put on sale；
+3. 给 waitlist 里的人发邮件（admin → Waitlist 导出 CSV → Resend 群发或手动）。
 
 ### 上新 SKU
 
-1. `lib/catalog.ts` 加一项（价格分）；
-2. `scripts/stripe-setup.mjs` 的 `SKUS` 数组同步加；
-3. `npm run stripe:setup`（幂等），把打印的 Price ID 填回 catalog；
-4. 前端把商品接进 PDP / 购物车调用 `add(handle, variant)`。
+**admin → Products → Add a product**（handle/文案/价格/图片路径）→
+Create in Stripe → put on sale。图片本体先走仓库 `public/` 素材管线入库部署。
+若新品要有自己的 PDP/购买面板，前端另行接（购物车调用 `add(handle, variant)`）。
+`scripts/stripe-setup.mjs` 已不再是上新路径（保留作初始化参考）。
 
 ### 数据库迁移
 
@@ -123,9 +149,12 @@ select email from waitlist where product_handle = 'canvas-house' order by create
 
 1. **Stripe 切 live**：
    - [ ] 完成 Stripe 账户激活（商业信息、银行账户）
-   - [ ] `sk_live_…` 替换 Vercel 的 `STRIPE_SECRET_KEY`
-   - [ ] 用 live key 重跑 `npm run stripe:setup` → 新 Price ID 回填
-     `lib/catalog.ts`、新 webhook secret 替换 Vercel 的 `STRIPE_WEBHOOK_SECRET`
+   - [ ] `sk_live_…` 替换 Vercel 的 `STRIPE_SECRET_KEY` **和本地 `.env.local`
+     （admin 用同一把 key，模式必须一致——admin 顶栏会显示 test/live）**
+   - [ ] live 侧重建 Price：**admin → Products 里对每个在售商品「改价」一次
+     （同价即可）**，自动在 live 建新 Price 回写表；占位商品用 Create in Stripe。
+     新 webhook secret 替换 Vercel 的 `STRIPE_WEBHOOK_SECRET`
+     （webhook endpoint 用 live key 重跑 `npm run stripe:setup` 创建）
    - [ ] Dashboard 开启 **Afterpay/Clearpay**（Settings → Payment methods；
      sandbox 里当前只有 Card/Klarna/Zip）
    - [ ] 开启 **Stripe Tax**（Settings → Tax，填墨尔本发货地址，登记 GST）
@@ -134,8 +163,8 @@ select email from waitlist where product_handle = 'canvas-house' order by create
    - [ ] Domains 里验证 `roomiepaw.com.au`（加 DNS 记录）
    - [ ] `RESEND_FROM` 换成如 `Roomie <orders@roomiepaw.com.au>`
    - 未验证前 `onboarding@resend.dev` 只能发给 Resend 账户本人邮箱（现状够测试用）
-3. **定价确认**（现为占位）：画芯 AU$35、猫屋 AU$189 → 改 `lib/catalog.ts`
-   + 重跑 `stripe:setup`（脚本按新价建新 Price，旧 Price 在 Dashboard 手动 archive）
+3. **定价确认**（现为占位）：画芯 AU$35、猫屋 AU$189 →
+   **admin → Products 行内改价**（自动建新 Price + 归档旧 Price，即时生效）
 4. **域名**：Vercel Domains 绑 `roomiepaw.com.au` → 更新 `NEXT_PUBLIC_URL`
    → 重跑 `stripe:setup`（webhook URL 换新域名）
 5. 测一笔真实小额订单，Dashboard 退款走一遍。

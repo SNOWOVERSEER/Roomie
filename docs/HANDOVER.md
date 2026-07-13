@@ -243,16 +243,19 @@ Resend 发交易邮件。服务端逻辑全部在 API Routes（无 Edge Function
 
 ```
 加购(localStorage) → POST /api/checkout → Stripe hosted checkout
-    → webhook → /api/webhook → orders 表 + 确认邮件
+    → webhook → /api/webhook → orders 表 + 扣库存 + 确认邮件
     → 浏览器回 /checkout/success（轮询 /api/order）
 发货：POST /api/shipping (Bearer ADMIN_SECRET) → shipped/delivered + 发货邮件
+      （日常首选本地 admin 的 Orders 页，见 §7.5）
 候补：WaitlistForm → POST /api/waitlist → waitlist 表
 ```
 
 不可妥协的设计决策：
 
-- **`lib/catalog.ts` 是可购 SKU / 价格 / Stripe Price ID 的唯一事实源**；
-  `/api/checkout` 服务端 re-derive，客户端只被信任"买什么买几个"。
+- **Supabase `products` 表是商品（SKU/价格/库存/文案/上下架/Stripe Price ID）
+  的唯一事实源**（admin-platform 分支起；原 `lib/catalog.ts` 常量已退役，
+  该文件现在是读取入口 `getCatalog()/getCatalogMap()` + 运费常量）；
+  `/api/checkout` 服务端 re-derive + 校验库存，客户端只被信任"买什么买几个"。
 - **webhook 幂等**：`orders.stripe_session_id` unique + upsert
   ignoreDuplicates；写库失败 → 500（Stripe 重试），邮件失败只记日志。
 - **orders / waitlist 两表 RLS 开、零策略**：只有 `sb_secret` 服务端可达。
@@ -276,6 +279,58 @@ Resend 发交易邮件。服务端逻辑全部在 API Routes（无 Edge Function
 - **待用户**：把交付的 env 清单贴进 Vercel → 允许 push 部署。
 
 猫屋当前 **waitlist-only**（选号预售已撤销）；开售步骤见 runbook「猫屋开售」。
+
+---
+
+## 7.5 商品数据与本地 Admin（admin-platform 分支，2026-07-13）
+
+**为什么**：改价原来要「改代码 → 重跑 stripe:setup → 回填 → 部署」，库存概念
+根本不存在。真库存（卖一减一）必须有可变存储 → 商品数据整体迁入 Supabase
+`products` 表（迁移 `0005_products.sql`），主站从表读取；本地 admin 后台
+点一下改价/补货，**约几秒内全站生效，不需要部署**。
+
+**数据模型**：`products(handle PK, title, tagline, price_cents, image,
+stripe_product_id, stripe_price_id, stock, available, numbered, sort)`，
+RLS 开零策略（同 orders）。**stock 语义：`null` = 不限量/不跟踪（默认）、
+数字 = 严格跟踪、`0` = 售罄（站点置灰 + checkout 409）、负数 = 并发竞态
+信号（admin 红色 OVERSOLD 警报；设计决策：不做预留锁，小店量级诚实模型）。**
+webhook 首次写单成功后调 `decrement_stock` RPC 原子扣减（PostgREST update
+不支持表达式，必须走函数）；幂等由 `stripe_session_id` unique 保证。
+
+**主站读取链**：root layout `force-dynamic`（**必须显式**——否则构建时
+预渲染把旧价烧进静态 HTML）+ 查表注入 `CartProvider`（客户端购物车只拿
+展示快照：handle/title/price/image/numbered/soldOut）；页面价格全部
+服务端查表（landing 刊头/门户卡/FinalCta/TheShelf/两 PDP/care/hero
+ctaNote——hero 的 ctaNote 现在是 `(price) => string` 函数）。结算金额
+永远服务端 re-derive，快照只管显示。
+
+**admin 应用**（`admin/` 独立 Next app，**永不部署**）：
+
+- 启动：`npm --prefix admin install`（一次）→ `npm run admin` →
+  http://127.0.0.1:3100，口令 = `ADMIN_SECRET`（30 天 cookie）。
+- 三页：**Products**（改价/库存三态/上下架/文案/新增删除/Create in Stripe）、
+  **Orders**（按状态分组，填运单号一键发货 = 打主站 shipping API 自动发邮件，
+  可标 delivered）、**Waitlist**（分组 + CSV 导出）。
+- **改价机制**：Stripe Price 金额不可变 → admin 自动「建新 Price → DB 回写
+  → 归档旧 Price」（旧价保持 active 到最后一步，改价过程结算不断档；
+  DB 写失败自动归档新价回滚）。
+- **安全四层**：只绑 127.0.0.1（局域网不可达）/ middleware Host 白名单
+  （防 DNS rebinding）/ ADMIN_SECRET 口令 cookie（sha256 派生，无状态）/
+  密钥只在 server actions（读根 `.env.local`，零拷贝）。主站 tsconfig
+  `exclude: ["admin"]`，admin 代码物理不进生产构建。
+- 发货目标：默认打生产 `/api/shipping`；根 `.env.local` 设
+  `SHIPPING_API_ORIGIN=http://localhost:3000` 可改打本地 dev（同一个
+  Supabase/Resend，功能等价；本地主站 dev 得起着）。
+
+**切 live Stripe 那天**（补充 runbook checklist）：换 live key 后，products
+表里的 `stripe_price_id` 仍是 test mode 值——在 admin 里对每个在售商品
+「改价」一次（同价即可）就会在 live 侧重建 Price 并回写；占位商品用
+Create in Stripe。**不再需要重跑 stripe:setup 回填代码。**
+
+**已知缺口（2026-07-13）**：Vercel 生产的 `ADMIN_SECRET` 与本地
+`.env.local` **不一致**（生产 shipping API 回 401，旧 curl 发货流程同样
+受影响）——用户需在 Vercel env 里把 `ADMIN_SECRET` 对齐成 `.env.local`
+的值（或反向），admin 发货即通。
 
 ---
 
@@ -317,6 +372,14 @@ Resend 发交易邮件。服务端逻辑全部在 API Routes（无 Edge Function
 10. 新页面用到 `useSearchParams` 必须包 `<Suspense>`（success 页先例）。
 11. Webhook 签名密钥**只在创建 endpoint 时返回一次**，拿到立刻落盘，
     别让它进终端管道（丢过一次，删了重建才拿回）。
+12. 根 tsconfig 的 `include: ["**/*.ts"]` 会把 `admin/` 卷进主站类型检查
+    ——必须 `exclude: ["admin"]`；`.gitignore` 的 `/node_modules` 带根锚定，
+    admin 的要单独加。
+13. admin 表格里"受控 checkbox + server action + router.refresh"会闪回旧态
+    （React 受控值等 refresh 才变）——状态切换用明确的按钮，别用 checkbox。
+14. 商品数据进表后，**新页面/组件里的价格一律服务端查表传 props**，
+    别再写死 AU$ 字面量（landing/PDP/care/hero 都已参数化，grep
+    `AU\$[0-9]` 应只剩运费常量语境）。
 
 ---
 
@@ -332,6 +395,7 @@ Resend 发交易邮件。服务端逻辑全部在 API Routes（无 Edge Function
 | 07-12 | P2 真实电商：Stripe/Supabase/Resend；猫屋改结算即收款 | `4ca870b`，Shopify 方案正式退役 |
 | 07-12 深夜 | 购物篮抽屉；**猫屋撤销选号预售改 waitlist**（问邮箱+校验） | `16daf28`，用户拍板 |
 | 07-12 深夜 | Nav 12px 上底修字叠 | `3988020` |
+| 07-13 | **商品数据迁 Supabase products 表 + 本地 admin 后台**（改价/库存/发货/waitlist 全后台化；推翻"商品数据用代码常量"决策——真库存必须可变存储） | admin-platform 分支，spec `docs/superpowers/specs/2026-07-13-local-admin-design.md` |
 
 ---
 

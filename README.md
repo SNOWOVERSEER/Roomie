@@ -59,6 +59,10 @@ npm run db:migrate           # apply supabase/migrations/*.sql
 npm run stripe:setup         # idempotent: Stripe products/prices/webhook
 npm run dev                  # http://localhost:3000
 npm run build                # production build
+
+npm --prefix admin install   # once
+npm run admin                # local admin (never deployed): 127.0.0.1:3100
+                             # prices, stock, availability, orders, waitlist
 ```
 
 To exercise the full purchase flow locally, forward Stripe webhooks:
