@@ -55,8 +55,9 @@ export async function POST(req: NextRequest) {
   return NextResponse.json({ received: true });
 }
 
-/** 客户可见订单号：RP + 5 位随机。非顺序 = 不暴露销量/增速（内部仍有自增 order_number） */
-const newOrderRef = () => `RP-${randomInt(10000, 100000)}`;
+/** 客户可见订单号：6 位纯数字随机（用户定稿：无前缀）。
+    非顺序 = 不暴露销量/增速；内部对账仍有自增 order_number */
+const newOrderRef = () => String(randomInt(100000, 1000000));
 
 async function recordOrder(session: Stripe.Checkout.Session) {
   const items = await itemsFromSession(session);

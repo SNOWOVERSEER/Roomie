@@ -9,7 +9,7 @@ import { sendShippingNotice } from "@/lib/email";
  *
  *   curl -X POST https://roomiepaw.vercel.app/api/shipping \
  *     -H "Authorization: Bearer $ADMIN_SECRET" -H "Content-Type: application/json" \
- *     -d '{"order_ref":"RP-48291","tracking_number":"XX123","carrier":"auspost"}'
+ *     -d '{"order_ref":"482916","tracking_number":"XX123","carrier":"auspost"}'
  */
 
 const TRACK_URL: Record<string, (n: string) => string> = {
@@ -18,7 +18,7 @@ const TRACK_URL: Record<string, (n: string) => string> = {
 };
 
 interface Body {
-  order_ref?: string; // 客户可见订单号（RP-XXXXX），首选
+  order_ref?: string; // 客户可见订单号（6 位数字），首选
   order_number?: number; // 内部自增号，兼容保留
   session_id?: string;
   tracking_number?: string;
@@ -73,7 +73,7 @@ export async function POST(req: NextRequest) {
 
   let q = getSupabaseAdmin().from("orders").update(patch);
   q = body.order_ref
-    ? q.eq("order_ref", body.order_ref.trim().toUpperCase())
+    ? q.eq("order_ref", body.order_ref.trim())
     : body.order_number
       ? q.eq("order_number", body.order_number)
       : q.eq("stripe_session_id", body.session_id!);

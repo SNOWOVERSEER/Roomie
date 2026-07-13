@@ -53,20 +53,20 @@
 curl -X POST https://roomiepaw.vercel.app/api/shipping \
   -H "Authorization: Bearer $ADMIN_SECRET" \
   -H "Content-Type: application/json" \
-  -d '{"order_ref":"RP-48291","tracking_number":"XX1234567890","carrier":"auspost"}'
+  -d '{"order_ref":"482916","tracking_number":"XX1234567890","carrier":"auspost"}'
 ```
 
 - `carrier` 支持 `auspost` / `sendle`（自动生成追踪链接），其他承运商传 `tracking_url`。
 - 自动：状态 → `shipped`、记 `shipped_at`、给顾客发「发货邮件」。
-- 送达后（可选）：`-d '{"order_ref":"RP-48291","status":"delivered"}'`。
+- 送达后（可选）：`-d '{"order_ref":"482916","status":"delivered"}'`。
 - 也接受 `order_number`（内部自增号）或 `session_id`。
 
 ### 订单号说明
 
-顾客看到的订单号是 **`order_ref`（RP-XXXXX，随机 5 位）** ——邮件、
-成功页、客服沟通都用它。设计原因：顺序号（Shopify 式 #1001 起）会让
-顾客推算出总销量和增速；随机引用号是小品牌通行做法。内部排序/对账
-仍有自增 `order_number`（Supabase 表里两列都在）。
+顾客看到的订单号是 **`order_ref`（6 位纯数字随机，如 482916）** ——
+邮件、成功页、客服沟通都用它（用户定稿：无前缀纯数字）。设计原因：
+顺序号（Shopify 式 #1001 起）会让顾客推算出总销量和增速；随机号是
+小品牌通行做法。内部排序/对账仍有自增 `order_number`（表里两列都在）。
 
 ### 运费规则（改动处：`lib/catalog.ts` 的 `SHIPPING`）
 
@@ -77,7 +77,7 @@ curl -X POST https://roomiepaw.vercel.app/api/shipping \
 ### 查订单
 
 Supabase Dashboard → Table Editor → `orders`。
-字段：`order_ref`（顾客可见 RP-XXXXX）、`order_number`（内部自增）、
+字段：`order_ref`（顾客可见 6 位数字）、`order_number`（内部自增）、
 客户/地址、`items`、`amount_total`/`shipping_cents`（分）、
 `status`（paid/shipped/delivered）、追踪号、各时间戳。
 

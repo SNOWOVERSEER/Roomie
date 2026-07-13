@@ -74,9 +74,8 @@ export default function ShippingReturnsPage() {
       <h2>Starting a return</h2>
       <p>
         Email <a href="mailto:hello@roomiepaw.com.au">hello@roomiepaw.com.au</a>{" "}
-        with your order number (it looks like RP-48291, and it's in your
-        confirmation email). We'll reply with the return address and next
-        steps.
+        with your six-digit order number (you'll find it in your confirmation
+        email). We'll reply with the return address and next steps.
       </p>
     </PolicyPage>
   );

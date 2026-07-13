@@ -31,7 +31,12 @@ const C = {
 const DISPLAY = `'Baloo 2','Trebuchet MS','Segoe UI',Verdana,sans-serif`;
 const BODY = `'Nunito Sans','Trebuchet MS','Segoe UI',Verdana,sans-serif`;
 
-const base = () => env.publicUrl || "https://roomiepaw.vercel.app";
+/* 邮件里的图片必须公网可达 —— 本地开发 NEXT_PUBLIC_URL 是 localhost，
+   收件端会全部断链（踩过），所以非 https 一律回退生产域名 */
+const base = () => {
+  const u = env.publicUrl;
+  return u && u.startsWith("https://") ? u : "https://roomiepaw.vercel.app";
+};
 
 /** 行缩略图（绝对 URL）：画芯 variant 对应画作平面稿，其余用商品图 */
 function itemThumb(it: OrderItem): string | null {
