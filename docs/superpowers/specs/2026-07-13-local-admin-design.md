@@ -154,6 +154,33 @@ admin 自带薄客户端初始化（`admin/lib/db.ts`、`admin/lib/stripe.ts`）
   admin 同样构建干净。
 - **上线顺序**：先跑迁移建表 seed → 部署主站（读表版）→ 目检生产 → 后台投入使用。
 
+## 修订 R1（2026-07-13 晚，用户验收反馈）
+
+首版三缺陷，用户全部指出：①库存状态只做了 PDP 按钮一处，landing 全无表现；
+②SKU 建模错误——按整件商品记库存，实际备货单位是「画框 ×1 + 画芯 ×6」共
+7 个库存单元；③上下架无前端表现，且无购买流程的商品不该能上架。
+
+**修正模型（三层）：**
+
+1. **库存单元 `stock_items`**（frame / print-01..06）：`stock`（null=不限量）
+   + `available`（画作退役开关——用户指出画作有「退役下架」语义，对应
+   seasonal drops 叙事；退役 ≠ 售罄）。
+2. **可售判定（BOM）**：Frame+print·画X = frame 可买 ∧ 画X 可买；
+   Print only·画X = 画X 可买。可买 = available ∧ (stock null ∨ stock>0)。
+3. **商品级 `products.available`** 保持总开关；新增 **`products.sellable`**
+   ——有完整购买流程的商品才 true（当前仅 scratcher/print），admin 上架
+   校验它（拆除猫屋误上架地雷：上架后购买面板不存在而候补接口反拒）。
+
+**前端表现：** 退役画从选择器/图库消失（hero 艺术层不过滤）；售罄画显示但
+标 out 不可买；库存 <10 标 low stock（用户定的阈值，前台显示）；画框售罄 →
+Frame+print 规格整列禁用；单商品下架 → 对应规格禁用标注；两规格全下架 →
+面板 waitlist 化（猫屋先例）；landing 清单卡/门户卡/FinalCta meta 文案跟随
+状态；TheShelf What's next 改为 `!sellable` 过滤（暂时下架的在售商品不混入
+「工作坊在做」叙事）。
+
+**扣减：** checkout 按 BOM 展开聚合校验（409 报具体组件）；webhook 扣组件
+（`decrement_stock_item` RPC）；BOM 商品的 products.stock 弃用置 null。
+
 ## 决策日志
 
 - 2026-07-13 用户确认：功能范围全选（价格/库存/订单发货/上下架文案/waitlist）。
