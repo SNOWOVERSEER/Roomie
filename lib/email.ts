@@ -1,6 +1,6 @@
 import { Resend } from "resend";
 import { env } from "./env";
-import { CATALOG, formatCents, type CatalogHandle } from "./catalog";
+import { formatCents, getCatalogMap, type CatalogItem } from "./catalog";
 import { ARTWORKS } from "./heroConfig";
 import type { OrderItem, OrderRow } from "./supabase-admin";
 
@@ -38,13 +38,15 @@ const base = () => {
   return u && u.startsWith("https://") ? u : "https://roomiepaw.vercel.app";
 };
 
-/** 行缩略图（绝对 URL）：画芯 variant 对应画作平面稿，其余用商品图 */
-function itemThumb(it: OrderItem): string | null {
+/** 行缩略图（绝对 URL）：画芯 variant 对应画作平面稿，其余用商品图（products 表） */
+function itemThumb(
+  it: OrderItem,
+  catalog: Map<string, CatalogItem>,
+): string | null {
   const i = ARTWORKS.findIndex((a) => a.title === it.variant);
   if (i >= 0) return `${base()}/hero/art/flat-0${i + 1}.png`;
-  if (it.handle === "canvas-house") return `${base()}/c01/house-poster.jpg`;
-  const cat = CATALOG[it.handle as CatalogHandle];
-  return cat ? `${base()}${cat.image}` : null;
+  const cat = catalog.get(it.handle);
+  return cat?.image ? `${base()}${cat.image}` : null;
 }
 
 function shell(preheader: string, body: string): string {
@@ -84,10 +86,10 @@ const heading = (text: string) =>
 const para = (text: string) =>
   `<p style="margin:14px 0 0;font:400 14.5px/1.65 ${BODY};color:${C.inkSoft};">${text}</p>`;
 
-function itemsTable(order: OrderRow): string {
+function itemsTable(order: OrderRow, catalog: Map<string, CatalogItem>): string {
   const rows = order.items
     .map((it) => {
-      const thumb = itemThumb(it);
+      const thumb = itemThumb(it, catalog);
       return `
   <tr>
     <td width="56" style="padding:12px 14px 12px 0;">
@@ -172,7 +174,8 @@ async function deliver(to: string, subject: string, html: string) {
   return { skipped: false as const, id: data?.id };
 }
 
-export function orderConfirmationEmail(order: OrderRow) {
+export async function orderConfirmationEmail(order: OrderRow) {
+  const catalog = await getCatalogMap();
   const subject = `Order ${order.order_ref} confirmed. It's theirs now.`;
   const first = order.customer_name?.split(" ")[0];
   const body = `
@@ -181,7 +184,7 @@ export function orderConfirmationEmail(order: OrderRow) {
     ${para(
       "Payment received, and the room is being prepared. We'll email again the day it ships, tracking included.",
     )}
-    ${itemsTable(order)}
+    ${itemsTable(order, catalog)}
     ${houseNote(order)}
     ${addressBlock(order)}`;
   return {
@@ -190,7 +193,8 @@ export function orderConfirmationEmail(order: OrderRow) {
   };
 }
 
-export function shippingNoticeEmail(order: OrderRow) {
+export async function shippingNoticeEmail(order: OrderRow) {
+  const catalog = await getCatalogMap();
   const subject = `Order ${order.order_ref} is on the way`;
   const carrierLine = order.carrier
     ? `${order.carrier === "auspost" ? "Australia Post" : order.carrier === "sendle" ? "Sendle" : order.carrier} has it now.`
@@ -202,18 +206,18 @@ export function shippingNoticeEmail(order: OrderRow) {
       `${carrierLine}${order.tracking_number ? ` Tracking number: <strong style="color:${C.ink};">${order.tracking_number}</strong>` : ""}`,
     )}
     ${order.tracking_url ? button(order.tracking_url, "Track the parcel") : ""}
-    ${itemsTable(order)}
+    ${itemsTable(order, catalog)}
     ${addressBlock(order)}
     ${para("Clear a patch of wall. Somebody is about to claim it.")}`;
   return { subject, html: shell("Tracking inside. Claws at the ready.", body) };
 }
 
 export async function sendOrderConfirmation(order: OrderRow) {
-  const { subject, html } = orderConfirmationEmail(order);
+  const { subject, html } = await orderConfirmationEmail(order);
   return deliver(order.email, subject, html);
 }
 
 export async function sendShippingNotice(order: OrderRow) {
-  const { subject, html } = shippingNoticeEmail(order);
+  const { subject, html } = await shippingNoticeEmail(order);
   return deliver(order.email, subject, html);
 }

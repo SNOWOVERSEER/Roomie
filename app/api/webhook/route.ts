@@ -5,7 +5,7 @@ import { getStripe } from "@/lib/stripe";
 import { env } from "@/lib/env";
 import { getSupabaseAdmin, type OrderItem, type OrderRow } from "@/lib/supabase-admin";
 import { sendOrderConfirmation } from "@/lib/email";
-import { CATALOG, type CatalogHandle } from "@/lib/catalog";
+import { getCatalogMap } from "@/lib/catalog";
 
 /*
  * POST /api/webhook —— Stripe 事件入口（生产 endpoint 由
@@ -94,6 +94,16 @@ async function recordOrder(session: Stripe.Checkout.Session) {
     if (!error) {
       const inserted = (data ?? [])[0] as OrderRow | undefined;
       if (inserted) {
+        // 原子扣库存（只扣 stock 非 null 的跟踪商品；重复事件走不到这里）
+        for (const it of inserted.items) {
+          const { error: decErr } = await getSupabaseAdmin().rpc(
+            "decrement_stock",
+            { p_handle: it.handle, p_qty: it.qty },
+          );
+          if (decErr) {
+            console.error("[webhook] 扣库存失败:", it.handle, decErr.message);
+          }
+        }
         await sendOrderConfirmation(inserted); // 内部吞错，邮件不阻断订单
       } else {
         console.log("[webhook] 重复事件，订单已存在:", session.id);
@@ -119,10 +129,11 @@ async function itemsFromSession(
       q?: number;
     }[];
     if (Array.isArray(cart) && cart.length > 0) {
-      return cart
-        .filter((c) => c.h in CATALOG)
-        .map((c) => {
-          const item = CATALOG[c.h as CatalogHandle];
+      const catalog = await getCatalogMap();
+      const known = cart.filter((c) => catalog.has(c.h));
+      if (known.length > 0) {
+        return known.map((c) => {
+          const item = catalog.get(c.h)!;
           return {
             handle: item.handle,
             title: item.title,
@@ -131,6 +142,7 @@ async function itemsFromSession(
             unit_cents: item.priceCents,
           };
         });
+      }
     }
   } catch {
     /* 快照缺失/超限 → 兜底 */

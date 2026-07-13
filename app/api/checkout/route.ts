@@ -1,20 +1,16 @@
 import { NextRequest, NextResponse } from "next/server";
-import {
-  CATALOG,
-  shippingCentsFor,
-  type CatalogHandle,
-} from "@/lib/catalog";
+import { getCatalogMap, canBuy, shippingCentsFor } from "@/lib/catalog";
 import { getStripe } from "@/lib/stripe";
 import { env } from "@/lib/env";
 
 /*
  * POST /api/checkout —— 创建 Stripe Checkout Session（托管结算页）。
- * 价格一律按 lib/catalog.ts 的 Price ID 服务端 re-derive，
- * 客户端只被信任「买什么、买几个」。
+ * 价格一律按 products 表的 Price ID 服务端 re-derive，
+ * 客户端只被信任「买什么、买几个」；库存不足/不可购 → 409 sold_out。
  */
 
 interface InLine {
-  handle: CatalogHandle;
+  handle: string;
   variant?: string;
   qty?: number;
 }
@@ -27,35 +23,56 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "invalid body" }, { status: 400 });
   }
 
+  const catalog = await getCatalogMap();
   const input = (body.lines ?? []).filter(
-    (l): l is InLine => !!l && typeof l === "object" && l.handle in CATALOG,
+    (l): l is InLine =>
+      !!l &&
+      typeof l === "object" &&
+      typeof l.handle === "string" &&
+      catalog.has(l.handle),
   );
   if (input.length === 0 || input.length > 20) {
     return NextResponse.json({ error: "empty or oversized cart" }, { status: 400 });
   }
 
-  // 规范化：数量 1..9；编号件（猫屋）恒 1
-  const lines = input.map((l) => ({
-    handle: l.handle,
-    variant:
-      typeof l.variant === "string" ? l.variant.slice(0, 40) : undefined,
-    qty: CATALOG[l.handle].numbered
-      ? 1
-      : Math.min(9, Math.max(1, Math.round(l.qty ?? 1))),
-  }));
+  // 规范化：数量 1..9；编号件恒 1
+  const lines = input.map((l) => {
+    const item = catalog.get(l.handle)!;
+    return {
+      item,
+      variant:
+        typeof l.variant === "string" ? l.variant.slice(0, 40) : undefined,
+      qty: item.numbered ? 1 : Math.min(9, Math.max(1, Math.round(l.qty ?? 1))),
+    };
+  });
+
+  // 可购与库存校验（合并同 handle 的数量后再比库存）
+  const qtyByHandle = new Map<string, number>();
+  for (const l of lines) {
+    qtyByHandle.set(l.item.handle, (qtyByHandle.get(l.item.handle) ?? 0) + l.qty);
+  }
+  for (const [handle, qty] of qtyByHandle) {
+    const item = catalog.get(handle)!;
+    if (!canBuy(item) || (item.stock !== null && qty > item.stock)) {
+      return NextResponse.json(
+        { error: "sold_out", handle, title: item.title },
+        { status: 409 },
+      );
+    }
+  }
 
   const base = env.publicUrl || req.nextUrl.origin;
 
   // 购物车快照进 metadata（webhook 写库时的 variant 事实源）；
   // Stripe metadata 值上限 500 字符，超限则置空、webhook 退回 line_items 兜底
   const snapshot = JSON.stringify(
-    lines.map((l) => ({ h: l.handle, v: l.variant, q: l.qty })),
+    lines.map((l) => ({ h: l.item.handle, v: l.variant, q: l.qty })),
   );
   const cartMeta = snapshot.length <= 500 ? snapshot : "";
 
   // 运费：小计满 AU$188 免运，否则统一 AU$26（只发澳洲；规则见 lib/catalog SHIPPING）
   const subtotalCents = lines.reduce(
-    (s, l) => s + CATALOG[l.handle].priceCents * l.qty,
+    (s, l) => s + l.item.priceCents * l.qty,
     0,
   );
   const shipCents = shippingCentsFor(subtotalCents);
@@ -64,7 +81,7 @@ export async function POST(req: NextRequest) {
     const session = await getStripe().checkout.sessions.create({
       mode: "payment",
       line_items: lines.map((l) => ({
-        price: CATALOG[l.handle].stripePriceId,
+        price: l.item.stripePriceId!,
         quantity: l.qty,
       })),
       shipping_address_collection: { allowed_countries: ["AU"] },
