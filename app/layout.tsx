@@ -1,7 +1,14 @@
 import type { Metadata } from "next";
 import { Baloo_2, Nunito_Sans } from "next/font/google";
 import "./globals.css";
-import { CartProvider } from "@/components/CartContext";
+import { getCatalog, isSoldOut } from "@/lib/catalog";
+import { CartProvider, type ClientCatalogItem } from "@/components/CartContext";
+
+/*
+ * 商品数据来自 Supabase（admin 后台可改价/库存）——必须显式动态渲染，
+ * 否则构建时预渲染会把旧价格烧进静态 HTML。
+ */
+export const dynamic = "force-dynamic";
 
 /*
  * Display: Baloo 2 — round, chubby, matches the Roomie wordmark.
@@ -35,16 +42,25 @@ export const metadata: Metadata = {
   },
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
+  // 客户端购物车的价格快照（上架商品；含售罄标记）。
+  // 展示用快照，结算金额永远由服务端 re-derive。
+  const catalog: ClientCatalogItem[] = (await getCatalog())
+    .filter((i) => i.available)
+    .map((i) => ({
+      handle: i.handle,
+      title: i.title,
+      priceCents: i.priceCents,
+      image: i.image,
+      numbered: i.numbered,
+      soldOut: isSoldOut(i),
+    }));
   return (
     <html lang="en">
       <body className={`${display.variable} ${body.variable}`}>
-        {/* TODO(Shopify): 当 store 就绪后，把 CartProvider 换成
-            <ShopifyProvider><CartProvider>（@shopify/hydrogen-react），
-            配置见 lib/shopify.ts */}
-        <CartProvider>{children}</CartProvider>
+        <CartProvider catalog={catalog}>{children}</CartProvider>
       </body>
     </html>
   );

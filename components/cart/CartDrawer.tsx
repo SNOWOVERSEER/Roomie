@@ -2,13 +2,11 @@
 
 import { useEffect, useRef } from "react";
 import Link from "next/link";
-import type { CartLine } from "@/components/CartContext";
-import {
-  CATALOG,
-  formatCents,
-  SHIPPING,
-  shippingCentsFor,
-} from "@/lib/catalog";
+import type {
+  CartLine,
+  ClientCatalogItem,
+} from "@/components/CartContext";
+import { formatCents, SHIPPING, shippingCentsFor } from "@/lib/catalog";
 import { useCheckout } from "./useCheckout";
 import { lineImage } from "./lineImage";
 import styles from "./CartDrawer.module.css";
@@ -25,6 +23,7 @@ export default function CartDrawer({
   lines,
   count,
   subtotalCents,
+  catalog,
   setQty,
   remove,
 }: {
@@ -33,6 +32,7 @@ export default function CartDrawer({
   lines: CartLine[];
   count: number;
   subtotalCents: number;
+  catalog: Record<string, ClientCatalogItem>;
   setQty: (key: string, qty: number) => void;
   remove: (key: string) => void;
 }) {
@@ -101,12 +101,13 @@ export default function CartDrawer({
           <>
             <ul className={styles.lines}>
               {lines.map((l) => {
-                const item = CATALOG[l.handle];
+                const item = catalog[l.handle];
+                if (!item) return null;
                 return (
                   <li key={l.key} className={styles.line}>
                     <div className={styles.thumb}>
                       {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img src={lineImage(l)} alt="" loading="lazy" />
+                      <img src={lineImage(l, item.image)} alt="" loading="lazy" />
                     </div>
                     <div className={styles.body}>
                       <p className={styles.name}>{item.title}</p>

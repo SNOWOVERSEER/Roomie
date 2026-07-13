@@ -5,25 +5,36 @@ import {
   useCallback,
   useContext,
   useEffect,
+  useMemo,
   useRef,
   useState,
 } from "react";
-import { CATALOG, type CatalogHandle } from "@/lib/catalog";
 import CartDrawer from "./cart/CartDrawer";
 import styles from "./CartContext.module.css";
 
 /*
  * 购物车（P2：真实行项目，localStorage 持久化）。
- * 价格/标题/图片一律从 CATALOG 派生，存储里只有 handle+variant+qty ——
- * 改价不会留下旧快照；服务端结算时还会再按 CATALOG re-derive 一次。
- * 编号件（猫屋）一号一行、qty 恒 1、重复加购只弹提示。
+ * 价格/标题/图片来自服务端注入的 catalog 快照（layout 查 products 表），
+ * 存储里只有 handle+variant+qty —— 改价不会留下旧快照；
+ * 服务端结算时还会再按 products 表 re-derive 一次。
+ * 编号件一号一行、qty 恒 1、重复加购只弹提示。
  */
 
 const STORAGE_KEY = "roomie-cart-v1";
 
+/** layout（服务端）注入的商品快照：仅上架商品，含售罄标记 */
+export interface ClientCatalogItem {
+  handle: string;
+  title: string;
+  priceCents: number;
+  image: string;
+  numbered: boolean;
+  soldOut: boolean;
+}
+
 export interface CartLine {
   key: string; // `${handle}::${variant ?? ""}`
-  handle: CatalogHandle;
+  handle: string;
   variant?: string; // "Wave Light" / "№ 03"
   qty: number;
 }
@@ -40,11 +51,9 @@ interface CartState {
   count: number;
   subtotalCents: number;
   bump: number; // 计数动画触发器
-  add: (
-    handle: CatalogHandle,
-    variant?: string,
-    opts?: AddOptions,
-  ) => void;
+  /** handle → 商品快照（价格/标题/图/售罄），展示层唯一数据源 */
+  catalog: Record<string, ClientCatalogItem>;
+  add: (handle: string, variant?: string, opts?: AddOptions) => void;
   setQty: (key: string, qty: number) => void;
   remove: (key: string) => void;
   clear: () => void;
@@ -58,6 +67,7 @@ const Ctx = createContext<CartState>({
   count: 0,
   subtotalCents: 0,
   bump: 0,
+  catalog: {},
   add: () => {},
   setQty: () => {},
   remove: () => {},
@@ -71,14 +81,18 @@ export const useCart = () => useContext(Ctx);
 const keyOf = (handle: string, variant?: string) =>
   `${handle}::${variant ?? ""}`;
 
-function sanitize(raw: unknown): CartLine[] {
+function sanitize(
+  raw: unknown,
+  catalog: Record<string, ClientCatalogItem>,
+): CartLine[] {
   if (!Array.isArray(raw)) return [];
   return raw
     .filter(
       (l): l is CartLine =>
         !!l &&
         typeof l === "object" &&
-        (l as CartLine).handle in CATALOG &&
+        typeof (l as CartLine).handle === "string" &&
+        (l as CartLine).handle in catalog &&
         typeof (l as CartLine).qty === "number",
     )
     .map((l) => ({
@@ -89,7 +103,17 @@ function sanitize(raw: unknown): CartLine[] {
     }));
 }
 
-export function CartProvider({ children }: { children: React.ReactNode }) {
+export function CartProvider({
+  catalog: catalogList,
+  children,
+}: {
+  catalog: ClientCatalogItem[];
+  children: React.ReactNode;
+}) {
+  const catalog = useMemo(
+    () => Object.fromEntries(catalogList.map((i) => [i.handle, i])),
+    [catalogList],
+  );
   const [lines, setLines] = useState<CartLine[]>([]);
   const [hydrated, setHydrated] = useState(false);
   const [bump, setBump] = useState(0);
@@ -105,12 +129,12 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     try {
       const raw = localStorage.getItem(STORAGE_KEY);
-      if (raw) setLines(sanitize(JSON.parse(raw)));
+      if (raw) setLines(sanitize(JSON.parse(raw), catalog));
     } catch {
       /* 损坏的存储直接放弃 */
     }
     setHydrated(true);
-  }, []);
+  }, [catalog]);
 
   useEffect(() => {
     if (!hydrated) return;
@@ -129,8 +153,16 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
 
   const add = useCallback<CartState["add"]>(
     (handle, variant, opts) => {
-      const item = CATALOG[handle];
+      const item = catalog[handle];
       if (!item) return;
+      if (item.soldOut) {
+        showToast(
+          item.title,
+          "is sold out right now",
+          "check back soon, small batches move fast",
+        );
+        return;
+      }
       const key = keyOf(handle, variant);
       const hit = lines.find((l) => l.key === key);
       const title =
@@ -159,7 +191,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
         opts?.note ?? "checkout when you're ready. Payments by Stripe",
       );
     },
-    [lines, showToast],
+    [lines, catalog, showToast],
   );
 
   const setQty = useCallback((key: string, qty: number) => {
@@ -190,7 +222,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
 
   const count = lines.reduce((s, l) => s + l.qty, 0);
   const subtotalCents = lines.reduce(
-    (s, l) => s + CATALOG[l.handle].priceCents * l.qty,
+    (s, l) => s + (catalog[l.handle]?.priceCents ?? 0) * l.qty,
     0,
   );
 
@@ -201,6 +233,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
         count,
         subtotalCents,
         bump,
+        catalog,
         add,
         setQty,
         remove,
@@ -216,6 +249,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
         lines={lines}
         count={count}
         subtotalCents={subtotalCents}
+        catalog={catalog}
         setQty={setQty}
         remove={remove}
       />

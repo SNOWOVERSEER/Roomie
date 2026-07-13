@@ -2,12 +2,7 @@
 
 import Link from "next/link";
 import { useCart } from "@/components/CartContext";
-import {
-  CATALOG,
-  formatCents,
-  SHIPPING,
-  shippingCentsFor,
-} from "@/lib/catalog";
+import { formatCents, SHIPPING, shippingCentsFor } from "@/lib/catalog";
 import { useCheckout } from "./useCheckout";
 import { lineImage } from "./lineImage";
 import styles from "./CartView.module.css";
@@ -19,7 +14,7 @@ import styles from "./CartView.module.css";
  */
 
 export default function CartView() {
-  const { lines, count, subtotalCents, setQty, remove } = useCart();
+  const { lines, count, subtotalCents, catalog, setQty, remove } = useCart();
   const { busy, err, checkout } = useCheckout(lines);
   const shipCents = shippingCentsFor(subtotalCents);
   const totalCents = subtotalCents + shipCents;
@@ -59,12 +54,13 @@ export default function CartView() {
           {/* ——— 行列表 ——— */}
           <ul className={styles.lines}>
             {lines.map((l) => {
-              const item = CATALOG[l.handle];
+              const item = catalog[l.handle];
+              if (!item) return null;
               return (
                 <li className={styles.line} key={l.key}>
                   <div className={styles.thumb}>
                     {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img src={lineImage(l)} alt="" loading="lazy" />
+                    <img src={lineImage(l, item.image)} alt="" loading="lazy" />
                   </div>
 
                   <div className={styles.lineBody}>

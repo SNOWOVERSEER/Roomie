@@ -24,7 +24,18 @@ export function useCheckout(lines: CartLine[]) {
           })),
         }),
       });
-      const data = (await res.json()) as { url?: string; error?: string };
+      const data = (await res.json()) as {
+        url?: string;
+        error?: string;
+        title?: string;
+      };
+      if (res.status === 409 && data.title) {
+        setErr(
+          `${data.title} just sold out. Remove it from the basket to continue.`,
+        );
+        setBusy(false);
+        return;
+      }
       if (!res.ok || !data.url) throw new Error(data.error ?? "no url");
       window.location.assign(data.url);
     } catch {
