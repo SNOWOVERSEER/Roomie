@@ -289,13 +289,40 @@ Resend 发交易邮件。服务端逻辑全部在 API Routes（无 Edge Function
 `products` 表（迁移 `0005_products.sql`），主站从表读取；本地 admin 后台
 点一下改价/补货，**约几秒内全站生效，不需要部署**。
 
-**数据模型**：`products(handle PK, title, tagline, price_cents, image,
-stripe_product_id, stripe_price_id, stock, available, numbered, sort)`，
-RLS 开零策略（同 orders）。**stock 语义：`null` = 不限量/不跟踪（默认）、
-数字 = 严格跟踪、`0` = 售罄（站点置灰 + checkout 409）、负数 = 并发竞态
-信号（admin 红色 OVERSOLD 警报；设计决策：不做预留锁，小店量级诚实模型）。**
-webhook 首次写单成功后调 `decrement_stock` RPC 原子扣减（PostgREST update
-不支持表达式，必须走函数）；幂等由 `stripe_session_id` unique 保证。
+**数据模型（R1 修订后，三层）**：
+
+1. **组件库存 `stock_items`**（迁移 0006）：备货单位 = `frame` + `print-01..06`
+   （id 序对齐 ARTWORKS）。`stock` 语义：`null` = 不限量/不跟踪（默认）、
+   数字 = 严格跟踪、`0` = 售罄、负数 = 并发竞态信号（admin 红色 OVERSOLD；
+   决策：不做预留锁，小店量级诚实模型）。`available=false` = **画作退役**
+   （seasonal drop 下场）：购买动线（PDP 选择器/图库预览）彻底消失，
+   与售罄（显示但标 out）不同；hero 换画交互是品牌艺术层不过滤。
+   画框不可退役（admin 拦）。低库存阈值 **<10**（`LOW_STOCK_AT`，前台标
+   low stock、后台红色警报；改要同步 `lib/inventory.ts` 与 `admin/lib/types.ts`）。
+2. **BOM 可售判定**（`lib/inventory.ts componentsFor`，admin 侧
+   `BOM_HANDLES` 同步）：Frame+print·画X = frame 可买 ∧ 画X 可买；
+   Print only·画X = 画X 可买。→ 画框售罄 = Frame+print 整列 sold out、
+   Print only 不受影响；某画售罄 = 两规格下该画都不可买。BOM 商品的
+   `products.stock` 弃用置 null（admin 显示 by inventory units，防双重记账）。
+3. **商品级 `products`**：`available` 总开关 + **`sellable`**（有完整购买
+   流程才可上架；当前仅 scratcher/print。防猫屋误上架地雷：页面是候补
+   表单而候补接口会拒 available=true）。`products(handle PK, title, tagline,
+   price_cents, image, stripe_product_id, stripe_price_id, stock, available,
+   sellable, numbered, sort)`，RLS 开零策略。
+
+webhook 首次写单成功后按 BOM 展开调 `decrement_stock_item`（非 BOM 商品
+调 `decrement_stock`）原子扣减（PostgREST update 不支持表达式，必须走
+函数）；幂等由 `stripe_session_id` unique 保证。checkout 双层校验：
+商品级（canBuy + products.stock）+ 组件级（BOM 聚合），409 报具体组件
+（`{error:"sold_out", component, title}`）。
+
+**下架/售罄的前端语义**：某规格下架 → PDP 对应 radio 禁用 + 说明；两规格
+全下架 → 购买面板换候补表单（猫屋先例，waitlist API 对 !available 放行）；
+售罄 ≠ 下架（不收邮箱，显示 sold out）。landing 清单卡/门户卡/FinalCta/
+TheShelf 链接的 meta 文案全部跟随状态（waitlist open / sold out ·
+restocking / 价格）。**What's next 只放 `!sellable` 且无专页的商品**
+（`TheShelf HAS_OWN_PAGE` 排除 scratcher/print/house——迁移曾让猫屋混入
+该区，R1 修复）。
 
 **主站读取链**：root layout `force-dynamic`（**必须显式**——否则构建时
 预渲染把旧价烧进静态 HTML）+ 查表注入 `CartProvider`（客户端购物车只拿
@@ -308,9 +335,10 @@ ctaNote——hero 的 ctaNote 现在是 `(price) => string` 函数）。结算�
 
 - 启动：`npm --prefix admin install`（一次）→ `npm run admin` →
   http://127.0.0.1:3100，口令 = `ADMIN_SECRET`（30 天 cookie）。
-- 三页：**Products**（改价/库存三态/上下架/文案/新增删除/Create in Stripe）、
-  **Orders**（按状态分组，填运单号一键发货 = 打主站 shipping API 自动发邮件，
-  可标 delivered）、**Waitlist**（分组 + CSV 导出）。
+- 三页：**Products**（改价/上下架[sellable 约束]/文案/新增删除/Create in
+  Stripe + **Inventory 区**：7 个库存单元的 stock 三态、画作退役/复出、
+  low stock 红色警报）、**Orders**（按状态分组，填运单号一键发货 = 打主站
+  shipping API 自动发邮件，可标 delivered）、**Waitlist**（分组 + CSV 导出）。
 - **改价机制**：Stripe Price 金额不可变 → admin 自动「建新 Price → DB 回写
   → 归档旧 Price」（旧价保持 active 到最后一步，改价过程结算不断档；
   DB 写失败自动归档新价回滚）。

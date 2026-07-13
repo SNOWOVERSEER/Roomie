@@ -181,6 +181,40 @@ export async function deleteProduct(handle: string): Promise<Result> {
   return { ok: true };
 }
 
+/* ―― 组件库存（stock_items：画框 + 六幅画芯）―― */
+
+export async function updateItemStock(
+  id: string,
+  stock: number | null,
+): Promise<Result> {
+  await assertAuth();
+  if (stock !== null && (!Number.isInteger(stock) || stock < 0 || stock > 100_000)) {
+    return { error: "stock out of range" };
+  }
+  const { error } = await db().from("stock_items").update({ stock }).eq("id", id);
+  if (error) return { error: error.message };
+  revalidatePath("/");
+  return { ok: true };
+}
+
+/** 画作退役/复出（seasonal drops：退役后购买动线里彻底消失） */
+export async function toggleItemAvailable(
+  id: string,
+  available: boolean,
+): Promise<Result> {
+  await assertAuth();
+  if (id === "frame" && !available) {
+    return { error: "the frame cannot be retired (take products off sale instead)" };
+  }
+  const { error } = await db()
+    .from("stock_items")
+    .update({ available })
+    .eq("id", id);
+  if (error) return { error: error.message };
+  revalidatePath("/");
+  return { ok: true };
+}
+
 /** 为无 Stripe 侧对象的商品补建 product + price（开售前置步骤） */
 export async function ensureStripe(handle: string): Promise<Result> {
   await assertAuth();

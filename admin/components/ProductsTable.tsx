@@ -67,6 +67,10 @@ export default function ProductsTable({ products }: { products: ProductRow[] }) 
   );
 }
 
+/* 库存走组件（stock_items）的商品：商品级 stock 弃用，防止双重记账。
+   与主站 lib/inventory.ts componentsFor 同步维护。 */
+const BOM_HANDLES = new Set(["canvas-scratcher", "canvas-print"]);
+
 function Row({
   p,
   run,
@@ -81,7 +85,11 @@ function Row({
   const [tagline, setTagline] = useState(p.tagline);
   const [stockDraft, setStockDraft] = useState(p.stock?.toString() ?? "");
 
-  const stockCell =
+  const stockCell = BOM_HANDLES.has(p.handle) ? (
+    <span className="hint" title="Stock is tracked per unit (frame / each print) in Inventory below">
+      by inventory units ↓
+    </span>
+  ) : (
     p.stock === null ? (
       <span className="row">
         <span className="hint">∞ untracked</span>
@@ -113,7 +121,8 @@ function Row({
         )}
         {p.stock > 0 && p.stock <= 2 && <b className="warn">low</b>}
       </span>
-    );
+    )
+  );
 
   return (
     <tr>

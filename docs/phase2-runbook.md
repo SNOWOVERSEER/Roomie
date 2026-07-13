@@ -71,16 +71,32 @@ curl -X POST https://roomiepaw.vercel.app/api/shipping \
 - 自动：状态 → `shipped`、记 `shipped_at`、给顾客发「发货邮件」。
 - 送达后（可选）：`-d '{"order_ref":"482916","status":"delivered"}'`。
 - 也接受 `order_number`（内部自增号）或 `session_id`。
-- ⚠️ 2026-07-13 已知缺口：Vercel 的 `ADMIN_SECRET` 与本地 `.env.local`
-  不一致（生产回 401）——先在 Vercel env 对齐，admin 发货与这条 curl 才通。
+- ⚠️ **2026-07-13 生产 env 事故级缺口（待店主处理）**：生产 API 层多项
+  不可用——`/api/waitlist` 500（Supabase env 坏）、`/api/checkout` 502
+  （Stripe env 坏）、`/api/shipping` 401（ADMIN_SECRET 不一致）。首页等
+  静态页正常。诊断：Vercel 环境变量整体未配对（历史 e2e 都在本地跑过，
+  生产 API 可能从未通过）。**修法：Vercel → Settings → Environment
+  Variables，按 `.env.example` 清单对照本地 `.env.local` 逐个核对重贴
+  （`NEXT_PUBLIC_URL` 用 https://roomiepaw.vercel.app、`STRIPE_WEBHOOK_SECRET`
+  用生产 endpoint 的 whsec，其余与本地同值），保存后 Redeploy。**
+  验证：对生产重跑上面的 waitlist/checkout curl 应 200。
 
 ### 改价 / 库存 / 上下架 / 上新（全在 admin → Products）
 
 - **改价**：行内 edit → 填新价 → Save。自动在 Stripe 建新 Price、归档旧
   Price、回写表；全站显示价与结算价同步换，**不用重跑 stripe:setup、不用部署**。
-- **库存**：默认 `∞ untracked`（不限量）；「track」开始计数，卖一件自动
-  减一，0 = 站点售罄置灰，红色 OVERSOLD = 并发竞态提醒（手工核对后补货）。
-- **上下架**：off sale 的商品从可购变 What's next 候补卡。
+- **库存（Inventory 区，按备货单位记）**：单位 = 画框 ×1 + 画芯 ×6。
+  默认 `∞ untracked`（不限量）；「track」开始计数，卖一件自动按组件扣
+  （买 Frame+print 扣框和画各一）。规则：**画框 0 = 全部 Frame+print 显示
+  售罄（Print only 照卖）；某画 0 = 该画两种规格都不可买（站点标 out）；
+  <10 = 前台标 low stock + 后台红警**；OVERSOLD 负数 = 并发竞态提醒
+  （手工核对后补）。
+- **画作退役（seasonal drops）**：Inventory 区「retire」→ 该画从站点购买
+  动线彻底消失（选择器/图库；hero 艺术层保留）；「bring back」复出。
+- **上下架（仅 ready-to-sell 商品）**：下架单个规格 = PDP 对应选项禁用；
+  抓板+画芯都下架 = 详情页变候补表单（自动收邮箱）；landing 入口自动
+  标注 waitlist open / sold out。占位商品显示 not ready to sell 不可上架
+  （得先有详情页+购买面板代码）。
 - **上新**：Add a product 填 handle/文案/价格/图片路径（图片本体先走仓库
   `public/` 素材管线：去 logo、webp 化，见 HANDOVER §6）→ Create in Stripe
   → 核对后 put on sale。
