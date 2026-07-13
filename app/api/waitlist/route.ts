@@ -1,18 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getSupabaseAdmin } from "@/lib/supabase-admin";
+import { getCatalogMap } from "@/lib/catalog";
 
 /*
  * POST /api/waitlist —— 候补登记 {email, handle}。
  * 幂等：unique(email, product_handle)；重复提交回 already=true（前端给友好提示）。
  * 邮箱只做格式校验 + 归一化（trim/lowercase），不发验证邮件（MVP）。
  */
-
-const VALID_HANDLES = new Set([
-  "canvas-house",
-  "nook-house",
-  "cloud-perch",
-  "wave-bowls",
-]);
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
 
@@ -26,7 +20,9 @@ export async function POST(req: NextRequest) {
 
   const email = (body.email ?? "").trim().toLowerCase();
   const handle = body.handle ?? "";
-  if (!VALID_HANDLES.has(handle)) {
+  // waitlist 只对「存在且未上架」的商品开放（上架商品直接购买）
+  const item = (await getCatalogMap()).get(handle);
+  if (!item || item.available) {
     return NextResponse.json({ error: "unknown product" }, { status: 400 });
   }
   if (!EMAIL_RE.test(email) || email.length > 254) {

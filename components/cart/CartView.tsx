@@ -9,7 +9,7 @@ import styles from "./CartView.module.css";
 
 /*
  * 购物篮整页（Nav 走抽屉，这页负责深链/Stripe cancel_url 回退）。
- * 「Checkout securely」→ POST /api/checkout（服务端按 CATALOG 定价
+ * 「Checkout securely」→ POST /api/checkout（服务端按 products 表定价
  * 建 Stripe Checkout Session）→ 跳 Stripe 托管结算页。
  */
 

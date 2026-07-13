@@ -70,33 +70,3 @@ export const SHIPPING = {
 
 export const shippingCentsFor = (subtotalCents: number): number =>
   subtotalCents >= SHIPPING.freeOverCents ? 0 : SHIPPING.flatCents;
-
-/* ―― 旧常量层，迁移期间保留，admin-platform Task 6 删除 ―― */
-
-export type CatalogHandle = "canvas-scratcher" | "canvas-print";
-
-interface LegacyCatalogItem {
-  handle: CatalogHandle;
-  title: string;
-  priceCents: number;
-  image: string;
-  stripePriceId: string;
-  numbered?: boolean;
-}
-
-export const CATALOG: Record<CatalogHandle, LegacyCatalogItem> = {
-  "canvas-scratcher": {
-    handle: "canvas-scratcher",
-    title: "The Canvas Scratcher",
-    priceCents: 8900,
-    image: "/c01/print-01.webp",
-    stripePriceId: "price_1TsHxoDzmUuzRpRKdgcL52kJ",
-  },
-  "canvas-print": {
-    handle: "canvas-print",
-    title: "Swap-in Print",
-    priceCents: 3500,
-    image: "/c01/print-02.webp",
-    stripePriceId: "price_1TsHxpDzmUuzRpRKRnGBcpHp",
-  },
-};
