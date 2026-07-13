@@ -8,13 +8,15 @@ import styles from "./Hero.module.css";
 interface Props {
   beats: { title: boolean; subtitle: boolean };
   steps: FreezeSteps;
+  /** 抓板现价（服务端 formatCents 结果），来自 products 表 */
+  priceText: string;
 }
 
 /**
  * 首屏文案层。桌面端悬浮于画面右上墙面；移动端落回图像下方的奶油底。
  * 入场节拍由视频叙事驱动（beats），定格后由错峰序列驱动（steps）。
  */
-export default function HeroCopy({ beats, steps }: Props) {
+export default function HeroCopy({ beats, steps, priceText }: Props) {
   return (
     <div className={styles.copyLayer}>
       <div
@@ -44,7 +46,7 @@ export default function HeroCopy({ beats, steps }: Props) {
               />
             </svg>
           </Link>
-          <span className={styles.ctaNote}>{HERO_COPY.ctaNote}</span>
+          <span className={styles.ctaNote}>{HERO_COPY.ctaNote(priceText)}</span>
         </div>
       </div>
     </div>

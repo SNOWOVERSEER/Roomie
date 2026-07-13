@@ -1,3 +1,4 @@
+import { formatCents, getCatalogMap } from "@/lib/catalog";
 import Nav from "@/components/Nav";
 import Hero from "@/components/Hero/Hero";
 import CanvasCollection from "@/components/sections/CanvasCollection";
@@ -16,12 +17,16 @@ import Footer from "@/components/sections/Footer";
  * 详情页：/scratcher（购买配置）、/house（编号预订）
  * 红线：站点任何位置不出现供应商品牌/logo/中文。
  */
-export default function Page() {
+export default async function Page() {
+  const catalog = await getCatalogMap();
+  const scratcherPrice = formatCents(
+    catalog.get("canvas-scratcher")?.priceCents ?? 0,
+  );
   return (
     <>
       <Nav />
       <main>
-        <Hero />
+        <Hero priceText={scratcherPrice} />
         <CanvasCollection />
         <TheShelf />
         <BrandStory />

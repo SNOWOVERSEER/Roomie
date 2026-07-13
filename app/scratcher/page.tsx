@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { formatCents, getCatalogMap, isSoldOut } from "@/lib/catalog";
 import Nav from "@/components/Nav";
 import Footer from "@/components/sections/Footer";
 import Reveal from "@/components/Reveal";
@@ -148,13 +149,19 @@ const SLIDES: Slide[] = [
   },
 ];
 
-export default function ScratcherPage() {
+export default async function ScratcherPage() {
+  const catalog = await getCatalogMap();
+  const scratcher = catalog.get("canvas-scratcher")!;
+  const print = catalog.get("canvas-print")!;
   return (
     <>
       <Nav />
       <main className={pdp.page}>
         <Crumb piece="The Scratcher" />
-        <ScratcherShop />
+        <ScratcherShop
+          full={{ priceCents: scratcher.priceCents, soldOut: isSoldOut(scratcher) }}
+          print={{ priceCents: print.priceCents, soldOut: isSoldOut(print) }}
+        />
 
         {/* 为什么好用 */}
         <section className={`${pdp.section} ${pdp.sectionWarm}`}>
@@ -300,8 +307,8 @@ export default function ScratcherPage() {
               </Reveal>
             </ol>
             <Reveal as="p" className={pdp.sectionCta} delay={240}>
-              Spare prints are AU$35 each, sold on their own.{" "}
-              <a href="#prints">Pick a fresh one</a>.
+              Spare prints are {formatCents(print.priceCents)} each, sold on
+              their own. <a href="#prints">Pick a fresh one</a>.
             </Reveal>
           </div>
         </section>

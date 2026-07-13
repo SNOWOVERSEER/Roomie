@@ -41,7 +41,7 @@ const ALL_STEPS: FreezeSteps = {
 
 const objectPosition = `${COVER_FOCUS.x * 100}% ${COVER_FOCUS.y * 100}%`;
 
-export default function Hero() {
+export default function Hero({ priceText }: { priceText: string }) {
   const stageRef = useRef<HTMLDivElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
   const timers = useRef<ReturnType<typeof setTimeout>[]>([]);
@@ -205,7 +205,7 @@ export default function Hero() {
         </div>
       </div>
 
-      <HeroCopy beats={beats} steps={steps} />
+      <HeroCopy beats={beats} steps={steps} priceText={priceText} />
     </section>
   );
 }

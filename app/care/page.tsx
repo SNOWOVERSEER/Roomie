@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { formatCents, getCatalogMap } from "@/lib/catalog";
 import PolicyPage from "@/components/policy/PolicyPage";
 
 export const metadata: Metadata = {
@@ -7,7 +8,9 @@ export const metadata: Metadata = {
     "How to keep a Canvas Series piece looking gallery-fresh: canvas care, pine frame care, and what to do when a print is well and truly loved.",
 };
 
-export default function CarePage() {
+export default async function CarePage() {
+  const catalog = await getCatalogMap();
+  const printPrice = formatCents(catalog.get("canvas-print")?.priceCents ?? 0);
   return (
     <PolicyPage
       eyebrow="Keep it lovely"
@@ -54,7 +57,7 @@ export default function CarePage() {
         The loop pile is meant to fray slowly and with dignity. Regular claw
         trims keep the weave tidy for longer, but a well-shredded corner is a
         badge of honour, not a defect. When a print is well and truly loved,{" "}
-        <a href="/scratcher#prints">swap in a fresh one for AU$35</a> and let
+        <a href="/scratcher#prints">swap in a fresh one for {printPrice}</a> and let
         the old one retire with honour.
       </p>
 

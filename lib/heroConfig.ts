@@ -107,6 +107,7 @@ export const HERO_COPY = {
   subtitle:
     "A framed canvas for your wall that's secretly a scratcher. Pet things that feel like part of home.",
   cta: "Shop the Canvas Scratcher", // TODO 最终文案待定
-  ctaNote: "AU$89 · swappable prints · ships AU-wide", // TODO 价格占位
+  /** 价格实时来自 products 表（页面服务端注入） */
+  ctaNote: (price: string) => `${price} · swappable prints · ships AU-wide`,
   tagHint: "spare prints by the wall, tap one to swap",
 };

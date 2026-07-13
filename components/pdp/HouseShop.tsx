@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { formatCents } from "@/lib/catalog";
 import WaitlistForm from "@/components/WaitlistForm";
 import pdp from "./pdp.module.css";
 import styles from "./HouseShop.module.css";
@@ -12,7 +13,7 @@ import styles from "./HouseShop.module.css";
  * 视频已抹除供应商 logo（含 logo 的镜头整段替换为干净镜头 + 静态补丁）。
  */
 
-export default function HouseShop() {
+export default function HouseShop({ priceCents }: { priceCents: number }) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const emailRef = useRef<HTMLInputElement | null>(null);
   const [reduced, setReduced] = useState<boolean | null>(null);
@@ -92,7 +93,7 @@ export default function HouseShop() {
 
             <div className={pdp.buyRow}>
               <span className={pdp.price}>
-                AU$189 <em>expected · no charge to join</em>
+                {formatCents(priceCents)} <em>expected · no charge to join</em>
               </span>
             </div>
 

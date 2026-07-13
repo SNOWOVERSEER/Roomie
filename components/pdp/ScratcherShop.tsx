@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { ARTWORKS } from "@/lib/heroConfig";
+import { formatCents } from "@/lib/catalog";
 import { useCart } from "@/components/CartContext";
 import pdp from "./pdp.module.css";
 import styles from "./ScratcherShop.module.css";
@@ -53,8 +54,11 @@ const PHOTOS = [...PRINT_PHOTOS, ...LIFE_PHOTOS];
 
 type Format = "full" | "print";
 
-/* TODO(Shopify): 单画芯 AU$35 为占位价，待用户确认 */
-const PRICE: Record<Format, string> = { full: "AU$89", print: "AU$35" };
+/** 服务端页面注入的规格报价（价格/售罄来自 products 表） */
+export interface OfferInfo {
+  priceCents: number;
+  soldOut: boolean;
+}
 
 const NOTES: Record<Format, string[]> = {
   full: [
@@ -70,12 +74,21 @@ const NOTES: Record<Format, string[]> = {
   ],
 };
 
-export default function ScratcherShop() {
+export default function ScratcherShop({
+  full,
+  print,
+}: {
+  full: OfferInfo;
+  print: OfferInfo;
+}) {
   const [photo, setPhoto] = useState(0);
   const [pick, setPick] = useState(0);
   const [format, setFormat] = useState<Format>("full");
   const { add } = useCart();
   const art = ARTWORKS[pick];
+  const offer: Record<Format, OfferInfo> = { full, print };
+  const price = (f: Format) => formatCents(offer[f].priceCents);
+  const soldOut = offer[format].soldOut;
 
   useEffect(() => {
     const apply = () => {
@@ -163,8 +176,12 @@ export default function ScratcherShop() {
                 onClick={() => setFormat("full")}
               >
                 <strong>Frame + print</strong>
-                <span>the full piece, ready to lean</span>
-                <em>AU$89</em>
+                <span>
+                  {full.soldOut
+                    ? "sold out right now"
+                    : "the full piece, ready to lean"}
+                </span>
+                <em>{price("full")}</em>
               </button>
               <button
                 role="radio"
@@ -173,8 +190,12 @@ export default function ScratcherShop() {
                 onClick={() => setFormat("print")}
               >
                 <strong>Print only</strong>
-                <span>a fresh canvas for your frame</span>
-                <em>AU$35</em>
+                <span>
+                  {print.soldOut
+                    ? "sold out right now"
+                    : "a fresh canvas for your frame"}
+                </span>
+                <em>{price("print")}</em>
               </button>
             </div>
 
@@ -209,10 +230,14 @@ export default function ScratcherShop() {
 
             <div className={pdp.buyRow}>
               <span className={pdp.price}>
-                {PRICE[format]} <em>free shipping over AU$188</em>
+                {price(format)} <em>free shipping over AU$188</em>
               </span>
-              <button className="btnPrimary" onClick={addToBasket}>
-                Add to basket
+              <button
+                className="btnPrimary"
+                onClick={addToBasket}
+                disabled={soldOut}
+              >
+                {soldOut ? "Sold out" : "Add to basket"}
               </button>
             </div>
 
@@ -232,11 +257,15 @@ export default function ScratcherShop() {
             {format === "full" ? "Scratcher" : "Print"} · {art.title}
           </span>
           <span className={pdp.stickyPrice}>
-            {PRICE[format]} · ships AU-wide
+            {price(format)} · ships AU-wide
           </span>
         </span>
-        <button className={pdp.stickyBtn} onClick={addToBasket}>
-          Add to basket
+        <button
+          className={pdp.stickyBtn}
+          onClick={addToBasket}
+          disabled={soldOut}
+        >
+          {soldOut ? "Sold out" : "Add to basket"}
         </button>
       </div>
     </section>

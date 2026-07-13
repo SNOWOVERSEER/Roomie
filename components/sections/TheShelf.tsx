@@ -1,16 +1,18 @@
 import Link from "next/link";
 import Reveal from "@/components/Reveal";
-import { getProducts } from "@/lib/shopify";
+import { formatCents, getCatalog } from "@/lib/catalog";
 import WaitlistForm from "@/components/WaitlistForm";
 import styles from "./TheShelf.module.css";
 
 /*
  * What's next 区 —— 小工作室叙事：一件一件做，未上市产品用
- * 手绘占位（available=false 的 mock 商品）+ waitlist。
+ * 手绘占位（products 表 available=false 的商品）+ waitlist。
  */
 export default async function TheShelf() {
-  const products = await getProducts();
+  const products = await getCatalog();
   const soon = products.filter((p) => !p.available);
+  const price = (h: string) =>
+    formatCents(products.find((p) => p.handle === h)?.priceCents ?? 0);
 
   return (
     <section className={styles.section} id="coming-next">
@@ -38,19 +40,19 @@ export default async function TheShelf() {
               <span className={styles.featuredBody}>
                 <span className={styles.featuredTitle}>The Canvas Series</span>
                 <span className={styles.featuredMeta}>
-                  two pieces, six prints · from AU$89
+                  two pieces, six prints · from {price("canvas-scratcher")}
                 </span>
               </span>
             </Link>
             <div className={styles.featuredLinks}>
               <Link href="/scratcher">
-                The Scratcher <em>AU$89</em>
+                The Scratcher <em>{price("canvas-scratcher")}</em>
               </Link>
               <Link href="/house">
                 The House <em>waitlist open</em>
               </Link>
               <Link href="/scratcher#prints">
-                Swap-in prints <em>AU$35</em>
+                Swap-in prints <em>{price("canvas-print")}</em>
               </Link>
             </div>
           </Reveal>

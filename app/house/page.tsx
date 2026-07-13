@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { formatCents, getCatalogMap } from "@/lib/catalog";
 import Nav from "@/components/Nav";
 import Footer from "@/components/sections/Footer";
 import Reveal from "@/components/Reveal";
@@ -37,13 +38,16 @@ const STILLS = [
   },
 ];
 
-export default function HousePage() {
+export default async function HousePage() {
+  const catalog = await getCatalogMap();
+  const house = catalog.get("canvas-house")!;
+  const scratcher = catalog.get("canvas-scratcher")!;
   return (
     <>
       <Nav />
       <main className={pdp.page}>
         <Crumb piece="The House" />
-        <HouseShop />
+        <HouseShop priceCents={house.priceCents} />
 
         {/* 剧照三联 */}
         <section className={pdp.section}>
@@ -101,7 +105,7 @@ export default function HousePage() {
           href="/scratcher"
           kicker="The original · shipping now"
           title="The Canvas Scratcher"
-          blurb="The original leaning print. Same canvases, same pine, AU$89."
+          blurb={`The original leaning print. Same canvases, same pine, ${formatCents(scratcher.priceCents)}.`}
           image="/c01/scratcher-solo.webp"
           imageAlt="The Canvas Scratcher leaning against a wall"
           cta="Meet the Scratcher"

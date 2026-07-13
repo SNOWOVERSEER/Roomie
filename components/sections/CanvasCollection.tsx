@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { formatCents, getCatalogMap } from "@/lib/catalog";
 import Reveal from "@/components/Reveal";
 import Filmstrip, { type Slide } from "./Filmstrip";
 import PortalCard from "./PortalCard";
@@ -63,7 +64,9 @@ const SLIDES: Slide[] = [
   },
 ];
 
-export default function CanvasCollection() {
+export default async function CanvasCollection() {
+  const catalog = await getCatalogMap();
+  const price = (h: string) => formatCents(catalog.get(h)?.priceCents ?? 0);
   return (
     <section className={styles.section} id="canvas">
       {/* ——— 产品线刊头 + 清单卡 ——— */}
@@ -86,7 +89,9 @@ export default function CanvasCollection() {
               <Link href="/scratcher">
                 <span className={styles.indexNo}>A</span>
                 <span className={styles.indexName}>The Canvas Scratcher</span>
-                <span className={styles.indexMeta}>AU$89 · shipping now</span>
+                <span className={styles.indexMeta}>
+                  {price("canvas-scratcher")} · shipping now
+                </span>
               </Link>
             </li>
             <li>
@@ -103,7 +108,7 @@ export default function CanvasCollection() {
                 <span className={styles.indexNo}>+</span>
                 <span className={styles.indexName}>Swap-in prints</span>
                 <span className={styles.indexMeta}>
-                  AU$35 each · seasonal drops
+                  {price("canvas-print")} each · seasonal drops
                 </span>
               </Link>
             </li>
@@ -124,7 +129,7 @@ export default function CanvasCollection() {
         <Reveal delay={60}>
           <PortalCard
             href="/scratcher"
-            kicker="AU$89 · six prints"
+            kicker={`${price("canvas-scratcher")} · six prints`}
             title="The Canvas Scratcher"
             blurb="A framed print your cat is allowed to ruin. Slowly, and with great ceremony."
             cta="See it properly"
