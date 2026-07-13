@@ -1,5 +1,6 @@
 import Link from "next/link";
-import { formatCents, getCatalogMap } from "@/lib/catalog";
+import { formatCents } from "@/lib/catalog";
+import { getProductStatuses } from "@/lib/inventory";
 import Reveal from "@/components/Reveal";
 import Filmstrip, { type Slide } from "./Filmstrip";
 import PortalCard from "./PortalCard";
@@ -65,8 +66,20 @@ const SLIDES: Slide[] = [
 ];
 
 export default async function CanvasCollection() {
-  const catalog = await getCatalogMap();
-  const price = (h: string) => formatCents(catalog.get(h)?.priceCents ?? 0);
+  const statuses = await getProductStatuses();
+  const scr = statuses.get("canvas-scratcher");
+  const prt = statuses.get("canvas-print");
+  /* 入口 meta 随状态换文案：下架 → 候补；售罄 → 补货中；正常 → 价格 */
+  const scrMeta = scr?.offSale
+    ? "off the shelf · waitlist open"
+    : scr?.soldOut
+      ? "sold out · restocking"
+      : `${formatCents(scr?.priceCents ?? 0)} · shipping now`;
+  const prtMeta = prt?.offSale
+    ? "off the shelf for now"
+    : prt?.soldOut
+      ? "sold out · restocking"
+      : `${formatCents(prt?.priceCents ?? 0)} each · seasonal drops`;
   return (
     <section className={styles.section} id="canvas">
       {/* ——— 产品线刊头 + 清单卡 ——— */}
@@ -89,9 +102,7 @@ export default async function CanvasCollection() {
               <Link href="/scratcher">
                 <span className={styles.indexNo}>A</span>
                 <span className={styles.indexName}>The Canvas Scratcher</span>
-                <span className={styles.indexMeta}>
-                  {price("canvas-scratcher")} · shipping now
-                </span>
+                <span className={styles.indexMeta}>{scrMeta}</span>
               </Link>
             </li>
             <li>
@@ -107,9 +118,7 @@ export default async function CanvasCollection() {
               <Link href="/scratcher#prints">
                 <span className={styles.indexNo}>+</span>
                 <span className={styles.indexName}>Swap-in prints</span>
-                <span className={styles.indexMeta}>
-                  {price("canvas-print")} each · seasonal drops
-                </span>
+                <span className={styles.indexMeta}>{prtMeta}</span>
               </Link>
             </li>
           </ol>
@@ -129,7 +138,13 @@ export default async function CanvasCollection() {
         <Reveal delay={60}>
           <PortalCard
             href="/scratcher"
-            kicker={`${price("canvas-scratcher")} · six prints`}
+            kicker={
+              scr?.offSale
+                ? "waitlist open"
+                : scr?.soldOut
+                  ? "sold out · back soon"
+                  : `${formatCents(scr?.priceCents ?? 0)} · six prints`
+            }
             title="The Canvas Scratcher"
             blurb="A framed print your cat is allowed to ruin. Slowly, and with great ceremony."
             cta="See it properly"

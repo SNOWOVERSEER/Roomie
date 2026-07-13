@@ -49,6 +49,8 @@ export interface ProductRow {
   /** null = 不限量/不跟踪；0 = 售罄（负数 = 并发竞态，admin 警报） */
   stock: number | null;
   available: boolean;
+  /** 有完整购买流程（详情页+购买面板）才可被上架 */
+  sellable: boolean;
   numbered: boolean;
   sort: number;
   created_at: string;

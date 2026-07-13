@@ -11,6 +11,8 @@ export interface ProductRow {
   /** null = 不限量/不跟踪；0 = 售罄；负数 = 并发竞态（界面红色警报） */
   stock: number | null;
   available: boolean;
+  /** 有完整购买流程（详情页+购买面板）才可被上架 */
+  sellable: boolean;
   numbered: boolean;
   sort: number;
   created_at: string;
@@ -54,6 +56,21 @@ export interface WaitlistRow {
   product_handle: string;
   created_at: string;
 }
+
+export interface StockItemRow {
+  id: string;
+  label: string;
+  /** null = 不限量/不跟踪；0 = 售罄；负数 = 并发竞态（红色警报） */
+  stock: number | null;
+  /** false = 画作退役（seasonal drop 下场，购买动线消失） */
+  available: boolean;
+  sort: number;
+  created_at: string;
+  updated_at: string;
+}
+
+/** 低库存警报阈值（与主站 lib/inventory.ts LOW_STOCK_AT 同步改） */
+export const LOW_STOCK_AT = 10;
 
 export const formatCents = (cents: number) =>
   `AU$${(cents / 100).toFixed(cents % 100 === 0 ? 0 : 2)}`;

@@ -1,6 +1,6 @@
 import { getSupabaseAdmin } from "./supabase-admin";
 import { ARTWORKS } from "./heroConfig";
-import { isSoldOut, type CatalogItem } from "./catalog";
+import { getCatalog, isSoldOut, type CatalogItem } from "./catalog";
 
 /*
  * 组件库存（BOM）：备货单位 = 画框 ×1 + 画芯 ×6（stock_items 表），
@@ -65,6 +65,29 @@ export function componentsFor(
     return printId ? [printId] : [];
   }
   return null;
+}
+
+/** landing 入口/购物车快照用的商品状态一览（一次拉齐两表） */
+export interface ProductStatus {
+  offSale: boolean;
+  soldOut: boolean;
+  priceCents: number;
+}
+
+export async function getProductStatuses(): Promise<
+  Map<string, ProductStatus>
+> {
+  const [catalog, items] = await Promise.all([getCatalog(), getStockItems()]);
+  return new Map(
+    catalog.map((p) => [
+      p.handle,
+      {
+        offSale: !p.available,
+        soldOut: productSoldOut(p, items),
+        priceCents: p.priceCents,
+      },
+    ]),
+  );
 }
 
 /**

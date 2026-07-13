@@ -1,14 +1,17 @@
 import Link from "next/link";
-import { formatCents, getCatalogMap } from "@/lib/catalog";
+import { formatCents } from "@/lib/catalog";
+import { getProductStatuses } from "@/lib/inventory";
 import Reveal from "@/components/Reveal";
 import styles from "./FinalCta.module.css";
 
 /* 收束段：夜色一拍，把两条购买动线最后各递一次。下单动作都在详情页。 */
 export default async function FinalCta() {
-  const catalog = await getCatalogMap();
-  const scratcherPrice = formatCents(
-    catalog.get("canvas-scratcher")?.priceCents ?? 0,
-  );
+  const scr = (await getProductStatuses()).get("canvas-scratcher");
+  const scrLabel = scr?.offSale
+    ? "The Scratcher · join the waitlist"
+    : scr?.soldOut
+      ? "The Scratcher · sold out, back soon"
+      : `The Scratcher · ${formatCents(scr?.priceCents ?? 0)}`;
   return (
     <section className={styles.section}>
       <div className={`shell ${styles.inner}`}>
@@ -21,7 +24,7 @@ export default async function FinalCta() {
         </Reveal>
         <Reveal delay={110} className={styles.row}>
           <Link className="btnPrimary" href="/scratcher">
-            The Scratcher · {scratcherPrice}
+            {scrLabel}
           </Link>
           <Link className={styles.ghostCream} href="/house">
             The House · join the waitlist

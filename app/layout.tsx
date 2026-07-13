@@ -1,7 +1,8 @@
 import type { Metadata } from "next";
 import { Baloo_2, Nunito_Sans } from "next/font/google";
 import "./globals.css";
-import { getCatalog, isSoldOut } from "@/lib/catalog";
+import { getCatalog } from "@/lib/catalog";
+import { getStockItems, productSoldOut } from "@/lib/inventory";
 import { CartProvider, type ClientCatalogItem } from "@/components/CartContext";
 
 /*
@@ -45,9 +46,13 @@ export const metadata: Metadata = {
 export default async function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
-  // 客户端购物车的价格快照（上架商品；含售罄标记）。
+  // 客户端购物车的价格快照（上架商品；售罄按组件库存聚合）。
   // 展示用快照，结算金额永远由服务端 re-derive。
-  const catalog: ClientCatalogItem[] = (await getCatalog())
+  const [rows, stockItems] = await Promise.all([
+    getCatalog(),
+    getStockItems(),
+  ]);
+  const catalog: ClientCatalogItem[] = rows
     .filter((i) => i.available)
     .map((i) => ({
       handle: i.handle,
@@ -55,7 +60,7 @@ export default async function RootLayout({
       priceCents: i.priceCents,
       image: i.image,
       numbered: i.numbered,
-      soldOut: isSoldOut(i),
+      soldOut: productSoldOut(i, stockItems),
     }));
   return (
     <html lang="en">

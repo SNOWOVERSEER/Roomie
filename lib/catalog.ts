@@ -17,6 +17,7 @@ export interface CatalogItem {
   stripePriceId: string | null;
   stock: number | null;
   available: boolean;
+  sellable: boolean;
   numbered: boolean;
   sort: number;
 }
@@ -31,6 +32,7 @@ const fromRow = (r: ProductRow): CatalogItem => ({
   stripePriceId: r.stripe_price_id,
   stock: r.stock,
   available: r.available,
+  sellable: r.sellable,
   numbered: r.numbered,
   sort: r.sort,
 });

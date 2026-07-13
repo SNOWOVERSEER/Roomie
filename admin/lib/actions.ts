@@ -101,6 +101,12 @@ export async function toggleAvailable(
   await assertAuth();
   const row = await getRow(handle);
   if (!row) return { error: "product not found" };
+  if (available && !row.sellable) {
+    return {
+      error:
+        "not ready to sell: this product has no purchase flow on the site yet (page + buy panel first)",
+    };
+  }
   if (available && !row.stripe_price_id) {
     return {
       error: "no Stripe price yet. Create in Stripe first, then put it on sale",

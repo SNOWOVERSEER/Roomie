@@ -208,7 +208,7 @@ function Row({
               take off
             </button>
           </span>
-        ) : (
+        ) : p.sellable ? (
           <span className="row">
             <span className="hint">off sale</span>
             <button
@@ -218,6 +218,13 @@ function Row({
             >
               put on
             </button>
+          </span>
+        ) : (
+          <span
+            className="hint"
+            title="No purchase flow on the site yet (needs a page + buy panel before it can go on sale)"
+          >
+            not ready to sell
           </span>
         )}
       </td>

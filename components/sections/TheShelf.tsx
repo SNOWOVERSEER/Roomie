@@ -1,18 +1,36 @@
 import Link from "next/link";
 import Reveal from "@/components/Reveal";
 import { formatCents, getCatalog } from "@/lib/catalog";
+import { getStockItems, productSoldOut } from "@/lib/inventory";
 import WaitlistForm from "@/components/WaitlistForm";
 import styles from "./TheShelf.module.css";
 
 /*
- * What's next 区 —— 小工作室叙事：一件一件做，未上市产品用
- * 手绘占位（products 表 available=false 的商品）+ waitlist。
+ * What's next 区 —— 小工作室叙事：一件一件做。
+ * 卡片来源 = 没有购买流程的商品（!sellable：从未 ready 的占位/猫屋）；
+ * 暂时下架的在售商品不混进「工作坊在做」叙事，在各自入口标注。
  */
 export default async function TheShelf() {
-  const products = await getCatalog();
-  const soon = products.filter((p) => !p.available);
-  const price = (h: string) =>
-    formatCents(products.find((p) => p.handle === h)?.priceCents ?? 0);
+  const [products, stockItems] = await Promise.all([
+    getCatalog(),
+    getStockItems(),
+  ]);
+  /* 有专页承接的商品不进 What's next（猫屋的 waitlist 在自己的 PDP） */
+  const HAS_OWN_PAGE = new Set([
+    "canvas-scratcher",
+    "canvas-print",
+    "canvas-house",
+  ]);
+  const soon = products.filter(
+    (p) => !p.sellable && !p.available && !HAS_OWN_PAGE.has(p.handle),
+  );
+  const status = (h: string) => {
+    const p = products.find((x) => x.handle === h);
+    if (!p) return "";
+    if (!p.available) return "waitlist";
+    if (productSoldOut(p, stockItems)) return "sold out";
+    return formatCents(p.priceCents);
+  };
 
   return (
     <section className={styles.section} id="coming-next">
@@ -40,19 +58,19 @@ export default async function TheShelf() {
               <span className={styles.featuredBody}>
                 <span className={styles.featuredTitle}>The Canvas Series</span>
                 <span className={styles.featuredMeta}>
-                  two pieces, six prints · from {price("canvas-scratcher")}
+                  two pieces, six prints · from {status("canvas-scratcher")}
                 </span>
               </span>
             </Link>
             <div className={styles.featuredLinks}>
               <Link href="/scratcher">
-                The Scratcher <em>{price("canvas-scratcher")}</em>
+                The Scratcher <em>{status("canvas-scratcher")}</em>
               </Link>
               <Link href="/house">
                 The House <em>waitlist open</em>
               </Link>
               <Link href="/scratcher#prints">
-                Swap-in prints <em>{price("canvas-print")}</em>
+                Swap-in prints <em>{status("canvas-print")}</em>
               </Link>
             </div>
           </Reveal>
