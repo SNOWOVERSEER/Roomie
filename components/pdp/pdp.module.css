@@ -304,6 +304,103 @@
   margin-bottom: 0.15rem;
 }
 
+/* ——— 蓝图区：侧视热点图 + 图例 + 规格线稿 ——— */
+.bpGrid {
+  margin-top: 2.2rem;
+  display: grid;
+  grid-template-columns: 0.78fr 1.22fr;
+  gap: clamp(2rem, 4.5vw, 4rem);
+  align-items: start;
+}
+
+.bpFigure {
+  position: relative;
+  border-radius: var(--r-media);
+  overflow: hidden;
+  box-shadow: var(--shadow-soft);
+}
+
+.bpFigure img {
+  width: 100%;
+  display: block;
+}
+
+.bpDot {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: var(--orange);
+  color: #fff8ee;
+  font-family: var(--font-display), sans-serif;
+  font-weight: 800;
+  font-size: 0.8rem;
+  box-shadow:
+    0 4px 12px rgba(212, 112, 42, 0.45),
+    0 0 0 4px color-mix(in srgb, var(--paper) 62%, transparent);
+}
+
+.bpLegend {
+  list-style: none;
+  display: grid;
+  gap: 1.35rem;
+}
+
+.bpLegend li {
+  display: flex;
+  gap: 1.1rem;
+  align-items: baseline;
+}
+
+.bpLegend h3 {
+  font-size: 1.1rem;
+  font-weight: 700;
+}
+
+.bpLegend p {
+  margin-top: 0.25rem;
+  font-size: 0.94rem;
+  color: var(--ink-soft);
+  max-width: 48ch;
+}
+
+.bpSpec {
+  margin-top: 2rem;
+  background: var(--cream-warm);
+  border-radius: var(--r-card);
+  padding: 1.3rem 1.4rem 0.8rem;
+}
+
+.bpSpecSvg {
+  width: 100%;
+  height: auto;
+  display: block;
+  max-width: 34rem;
+}
+
+/* ——— 换画步骤配图 ——— */
+.stepMedia {
+  border-radius: var(--r-card);
+  overflow: hidden;
+  box-shadow: var(--shadow-soft);
+  margin-bottom: 0.95rem;
+}
+
+.stepMedia img {
+  width: 100%;
+  aspect-ratio: 1;
+  object-fit: cover;
+  display: block;
+  transition: transform var(--dur-slow) var(--ease-out);
+}
+
+.stepsPhoto li:hover .stepMedia img {
+  transform: scale(1.04);
+}
+
 /* 步骤条（换画 / 预订流程） */
 .steps {
   list-style: none;
@@ -425,6 +522,12 @@ a.crossCard:hover {
 @media (max-width: 900px) {
   .stageGrid {
     grid-template-columns: 1fr;
+  }
+  .bpGrid {
+    grid-template-columns: 1fr;
+  }
+  .bpFigure {
+    max-width: 26rem;
   }
   .panelCol {
     position: static;

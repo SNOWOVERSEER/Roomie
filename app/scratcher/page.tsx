@@ -6,6 +6,7 @@ import Filmstrip, { type Slide } from "@/components/sections/Filmstrip";
 import Crumb from "@/components/pdp/Crumb";
 import CrossSell from "@/components/pdp/CrossSell";
 import ScratcherShop from "@/components/pdp/ScratcherShop";
+import SpecDrawing from "@/components/pdp/SpecDrawing";
 import pdp from "@/components/pdp/pdp.module.css";
 
 export const metadata: Metadata = {
@@ -60,6 +61,38 @@ const CRAFT = [
     alt: "Three pine easel backs standing in a row",
     title: "An engineered lean",
     body: "The easel is weighted for mid-scratch physics.",
+  },
+];
+
+/* 蓝图区：结构卖点（供应商物料转译）+ 热点图例。位置 % 基于 build-profile.webp */
+const BLUEPRINT = [
+  {
+    n: "01",
+    x: "78.5%",
+    y: "10%",
+    title: "35 mm solid pine",
+    body: "Rails with real section to them. From the doorway it reads as furniture, never as packaging.",
+  },
+  {
+    n: "02",
+    x: "44%",
+    y: "39%",
+    title: "Reads like art",
+    body: "The face sits at sofa eye level, so the print lands as a picture first. The scratching is a private matter.",
+  },
+  {
+    n: "03",
+    x: "78.5%",
+    y: "89%",
+    title: "Skirting-board clearance",
+    body: "The base steps back at the bottom, so it leans flush against real walls, skirting boards included.",
+  },
+  {
+    n: "04",
+    x: "24.5%",
+    y: "91%",
+    title: "The 70° lean",
+    body: "Tilted and re-tested on working cats: steep enough for a full stretch, planted enough for a hard shred.",
   },
 ];
 
@@ -170,7 +203,53 @@ export default function ScratcherPage() {
           </div>
         </section>
 
-        {/* 换画步骤 */}
+        {/* 蓝图：结构与尺寸（供应商物料转译 + 自绘规格线稿） */}
+        <section className={pdp.section}>
+          <div className="shell">
+            <Reveal>
+              <p className={pdp.kicker}>The blueprint</p>
+              <h2 className={pdp.sectionHeading}>Measured for the lean.</h2>
+            </Reveal>
+            <div className={pdp.bpGrid}>
+              <Reveal className={pdp.bpFigure}>
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src="/c01/build-profile.webp"
+                  alt="Side profile of the scratcher: a thick pine rail leaning on its wedge base at 70 degrees"
+                  loading="lazy"
+                />
+                {BLUEPRINT.map((b) => (
+                  <span
+                    key={b.n}
+                    className={pdp.bpDot}
+                    style={{ left: b.x, top: b.y }}
+                    aria-hidden
+                  >
+                    {b.n}
+                  </span>
+                ))}
+              </Reveal>
+              <div>
+                <ol className={pdp.bpLegend}>
+                  {BLUEPRINT.map((b, i) => (
+                    <Reveal as="li" key={b.n} delay={i * 90}>
+                      <span className={pdp.pointNum}>{b.n}</span>
+                      <div>
+                        <h3>{b.title}</h3>
+                        <p>{b.body}</p>
+                      </div>
+                    </Reveal>
+                  ))}
+                </ol>
+                <Reveal as="div" className={pdp.bpSpec} delay={300}>
+                  <SpecDrawing className={pdp.bpSpecSvg} />
+                </Reveal>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* 换画步骤（结构细节实拍配图） */}
         <section className={`${pdp.section} ${pdp.sectionWarm}`}>
           <div className="shell">
             <Reveal>
@@ -179,17 +258,43 @@ export default function ScratcherPage() {
                 New art in about a minute.
               </h2>
             </Reveal>
-            {/* TODO 文案：换画细节待与供应商核对（现按宣传视频概括） */}
-            <ol className={pdp.steps}>
+            <ol className={`${pdp.steps} ${pdp.stepsPhoto}`}>
               <Reveal as="li">
+                <div className={pdp.stepMedia}>
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src="/c01/build-clip.webp"
+                    alt="The metal clip on the back rail of the pine frame"
+                    loading="lazy"
+                  />
+                </div>
                 <h3>Unclip the back rail</h3>
                 <p>The frame opens without tools. Two clips, done.</p>
               </Reveal>
               <Reveal as="li" delay={90}>
+                <div className={pdp.stepMedia}>
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src="/c01/build-rail.webp"
+                    alt="The canvas edge riding the smooth timber slide rail"
+                    loading="lazy"
+                  />
+                </div>
                 <h3>Slide the canvas out</h3>
-                <p>Retire the well-loved print, slide the fresh one in.</p>
+                <p>
+                  The print rides a smooth timber rail. Retire the well-loved
+                  one, glide the fresh one in.
+                </p>
               </Reveal>
               <Reveal as="li" delay={180}>
+                <div className={pdp.stepMedia}>
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src="/c01/gallery-swap.webp"
+                    alt="Spare canvases lying flat beside the leaning frame"
+                    loading="lazy"
+                  />
+                </div>
                 <h3>Lean it back</h3>
                 <p>Same frame, new art. New territory for them.</p>
               </Reveal>

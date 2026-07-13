@@ -61,6 +61,7 @@ const NOTES: Record<Format, string[]> = {
     "Solid pine frame, weighted easel. Leans, never topples.",
     "Loop-pile canvas: satisfying shred, zero confetti.",
     "Prints swap in minutes, new drops each season.",
+    "430 × 630 × 35 mm. Poster presence, bookshelf footprint.",
   ],
   print: [
     "The print alone. Your frame stays on the wall.",
