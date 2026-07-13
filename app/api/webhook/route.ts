@@ -6,6 +6,7 @@ import { env } from "@/lib/env";
 import { getSupabaseAdmin, type OrderItem, type OrderRow } from "@/lib/supabase-admin";
 import { sendOrderConfirmation } from "@/lib/email";
 import { getCatalogMap } from "@/lib/catalog";
+import { componentsFor } from "@/lib/inventory";
 
 /*
  * POST /api/webhook —— Stripe 事件入口（生产 endpoint 由
@@ -94,14 +95,29 @@ async function recordOrder(session: Stripe.Checkout.Session) {
     if (!error) {
       const inserted = (data ?? [])[0] as OrderRow | undefined;
       if (inserted) {
-        // 原子扣库存（只扣 stock 非 null 的跟踪商品；重复事件走不到这里）
+        // 原子扣库存（重复事件走不到这里）：BOM 商品按组件展开扣
+        // stock_items，非 BOM 商品扣 products.stock。RPC 只影响
+        // stock 非 null 的跟踪行。
         for (const it of inserted.items) {
-          const { error: decErr } = await getSupabaseAdmin().rpc(
-            "decrement_stock",
-            { p_handle: it.handle, p_qty: it.qty },
-          );
-          if (decErr) {
-            console.error("[webhook] 扣库存失败:", it.handle, decErr.message);
+          const comps = componentsFor(it.handle, it.variant);
+          if (comps) {
+            for (const c of comps) {
+              const { error: decErr } = await getSupabaseAdmin().rpc(
+                "decrement_stock_item",
+                { p_id: c, p_qty: it.qty },
+              );
+              if (decErr) {
+                console.error("[webhook] 扣组件库存失败:", c, decErr.message);
+              }
+            }
+          } else {
+            const { error: decErr } = await getSupabaseAdmin().rpc(
+              "decrement_stock",
+              { p_handle: it.handle, p_qty: it.qty },
+            );
+            if (decErr) {
+              console.error("[webhook] 扣库存失败:", it.handle, decErr.message);
+            }
           }
         }
         await sendOrderConfirmation(inserted); // 内部吞错，邮件不阻断订单

@@ -1,12 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getCatalogMap, canBuy, shippingCentsFor } from "@/lib/catalog";
+import { componentsFor, getStockItems } from "@/lib/inventory";
 import { getStripe } from "@/lib/stripe";
 import { env } from "@/lib/env";
 
 /*
  * POST /api/checkout —— 创建 Stripe Checkout Session（托管结算页）。
  * 价格一律按 products 表的 Price ID 服务端 re-derive，
- * 客户端只被信任「买什么、买几个」；库存不足/不可购 → 409 sold_out。
+ * 客户端只被信任「买什么、买几个」。
+ * 库存校验两层：商品级（products.stock，非 BOM 商品）+ 组件级
+ * （stock_items，BOM 展开聚合：画框/各画芯）→ 不足或退役 → 409 sold_out。
  */
 
 interface InLine {
@@ -23,7 +26,10 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "invalid body" }, { status: 400 });
   }
 
-  const catalog = await getCatalogMap();
+  const [catalog, stockItems] = await Promise.all([
+    getCatalogMap(),
+    getStockItems(),
+  ]);
   const input = (body.lines ?? []).filter(
     (l): l is InLine =>
       !!l &&
@@ -46,7 +52,7 @@ export async function POST(req: NextRequest) {
     };
   });
 
-  // 可购与库存校验（合并同 handle 的数量后再比库存）
+  // 商品级校验（上架 + Stripe 接入 + 非 BOM 商品的 products.stock）
   const qtyByHandle = new Map<string, number>();
   for (const l of lines) {
     qtyByHandle.set(l.item.handle, (qtyByHandle.get(l.item.handle) ?? 0) + l.qty);
@@ -56,6 +62,23 @@ export async function POST(req: NextRequest) {
     if (!canBuy(item) || (item.stock !== null && qty > item.stock)) {
       return NextResponse.json(
         { error: "sold_out", handle, title: item.title },
+        { status: 409 },
+      );
+    }
+  }
+
+  // 组件级校验（BOM 展开聚合：一次结算里所有行对同一组件的需求求和）
+  const need = new Map<string, number>();
+  for (const l of lines) {
+    const comps = componentsFor(l.item.handle, l.variant);
+    if (!comps) continue;
+    for (const c of comps) need.set(c, (need.get(c) ?? 0) + l.qty);
+  }
+  for (const [id, qty] of need) {
+    const unit = stockItems.get(id);
+    if (!unit || !unit.available || (unit.stock !== null && qty > unit.stock)) {
+      return NextResponse.json(
+        { error: "sold_out", component: id, title: unit?.label ?? id },
         { status: 409 },
       );
     }
