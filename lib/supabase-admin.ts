@@ -38,6 +38,23 @@ export interface OrderRow {
   updated_at: string;
 }
 
+export interface ProductRow {
+  handle: string;
+  title: string;
+  tagline: string;
+  price_cents: number;
+  image: string;
+  stripe_product_id: string | null;
+  stripe_price_id: string | null;
+  /** null = 不限量/不跟踪；0 = 售罄（负数 = 并发竞态，admin 警报） */
+  stock: number | null;
+  available: boolean;
+  numbered: boolean;
+  sort: number;
+  created_at: string;
+  updated_at: string;
+}
+
 let client: SupabaseClient | null = null;
 
 export function getSupabaseAdmin(): SupabaseClient {
