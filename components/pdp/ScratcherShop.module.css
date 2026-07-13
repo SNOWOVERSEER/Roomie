@@ -134,6 +134,21 @@
   background: color-mix(in srgb, var(--orange) 7%, var(--paper));
 }
 
+/* 规格不可选（下架 / 画框售罄）：压灰、去悬浮、鼠标示意 */
+.formatOff {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.formatOff:hover {
+  transform: none;
+}
+
+.formatOff span {
+  color: color-mix(in srgb, var(--ink-soft) 80%, var(--orange-deep, #d4702a));
+  font-weight: 700;
+}
+
 /* ——— 画芯选择器 ——— */
 .picks {
   margin-top: 0.7rem;
@@ -143,12 +158,42 @@
 }
 
 .pick {
+  position: relative;
   padding: 3px;
   border-radius: 10px;
   border: 2.5px solid transparent;
   transition:
     border-color var(--dur-fast) var(--ease-out),
     transform var(--dur-fast) var(--ease-soft);
+}
+
+/* 售罄画：压淡但仍可点看（加购被禁）；角标说明 */
+.pickOut img {
+  opacity: 0.38;
+  filter: saturate(0.35);
+}
+
+/* 画芯角标：纸吊牌语感的小标签，右上角搭在画上 */
+.pickTag {
+  position: absolute;
+  top: -6px;
+  right: -7px;
+  font-style: normal;
+  font-family: var(--font-display), sans-serif;
+  font-weight: 800;
+  font-size: 0.58rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  line-height: 1;
+  padding: 3px 6px 2.5px;
+  border-radius: 999px;
+  background: var(--ink-soft);
+  color: var(--paper);
+  box-shadow: 0 1px 4px rgb(0 0 0 / 0.18);
+}
+
+.pickTagLow {
+  background: var(--orange);
 }
 
 .pick img {
@@ -180,6 +225,21 @@
   color: var(--ink-soft);
   margin-top: 0.15rem;
   animation: nameIn 260ms var(--ease-out) both;
+}
+
+.pickNameNote {
+  font-style: normal;
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: var(--orange-deep, #d4702a);
+}
+
+/* 双规格下架：候补文案（沿 WaitlistForm 常开版排布） */
+.offSaleBlurb {
+  margin-top: 0.9rem;
+  font-size: 0.95rem;
+  line-height: 1.6;
+  color: var(--ink-soft);
 }
 
 @keyframes nameIn {

@@ -1,5 +1,12 @@
 import type { Metadata } from "next";
-import { formatCents, getCatalogMap, isSoldOut } from "@/lib/catalog";
+import { formatCents, getCatalogMap } from "@/lib/catalog";
+import {
+  getStockItems,
+  itemBuyable,
+  itemLow,
+  printIdFor,
+} from "@/lib/inventory";
+import { ARTWORKS } from "@/lib/heroConfig";
 import Nav from "@/components/Nav";
 import Footer from "@/components/sections/Footer";
 import Reveal from "@/components/Reveal";
@@ -150,17 +157,35 @@ const SLIDES: Slide[] = [
 ];
 
 export default async function ScratcherPage() {
-  const catalog = await getCatalogMap();
+  const [catalog, stock] = await Promise.all([
+    getCatalogMap(),
+    getStockItems(),
+  ]);
   const scratcher = catalog.get("canvas-scratcher")!;
   const print = catalog.get("canvas-print")!;
+  const frame = stock.get("frame");
   return (
     <>
       <Nav />
       <main className={pdp.page}>
         <Crumb piece="The Scratcher" />
         <ScratcherShop
-          full={{ priceCents: scratcher.priceCents, soldOut: isSoldOut(scratcher) }}
-          print={{ priceCents: print.priceCents, soldOut: isSoldOut(print) }}
+          state={{
+            fullPriceCents: scratcher.priceCents,
+            printPriceCents: print.priceCents,
+            fullOffSale: !scratcher.available,
+            printOffSale: !print.available,
+            frameSoldOut: !itemBuyable(frame),
+            frameLow: itemLow(frame),
+            prints: ARTWORKS.map((a) => {
+              const unit = stock.get(printIdFor(a.title)!);
+              return {
+                retired: !unit || !unit.available,
+                soldOut: !itemBuyable(unit),
+                low: itemLow(unit),
+              };
+            }),
+          }}
         />
 
         {/* 为什么好用 */}

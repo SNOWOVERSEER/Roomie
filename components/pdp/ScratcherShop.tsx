@@ -1,9 +1,10 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { ARTWORKS } from "@/lib/heroConfig";
 import { formatCents } from "@/lib/catalog";
 import { useCart } from "@/components/CartContext";
+import WaitlistForm from "@/components/WaitlistForm";
 import pdp from "./pdp.module.css";
 import styles from "./ScratcherShop.module.css";
 
@@ -11,17 +12,33 @@ import styles from "./ScratcherShop.module.css";
  * 抓板详情页主舞台：左图库（主图 + 缩略）+ 右粘性购买面板。
  *
  * 联动是单向的（用户明确要求）：右侧选画芯 → 主图跳到该画芯的
- * 白底框内预览（图库前 6 张，索引与 ARTWORKS 对齐）；左侧手动
- * 翻图只改 photo，不回写画芯选择。
+ * 白底框内预览；左侧手动翻图只改 photo，不回写画芯选择。
  *
- * 规格两档：整件（框+画）/ 单画芯（换画补充装，单独购买）。
- * landing 的「Swap-in prints」入口带 #prints，直达单画芯规格。
+ * 库存/在售状态（R1，全部来自服务端查表）：
+ *   - 退役画（seasonal drop 下场）：选择器与框内预览彻底不渲染
+ *   - 售罄画：显示但角标 out，不可加购
+ *   - 低库存（<10）：角标 low
+ *   - 画框售罄：Frame+print 规格整体禁用（Print only 不受影响）
+ *   - 商品下架：对应规格禁用；两规格全下架 → 面板换候补表单
  */
 
-const PRINT_PHOTOS = ARTWORKS.map((a, i) => ({
-  src: `/c01/print-0${i + 1}.webp`,
-  alt: `The ${a.title} print in the pine frame, on white`,
-}));
+/** 每幅画的状态（ARTWORKS 序，服务端查 stock_items 算好传入） */
+export interface PrintState {
+  retired: boolean;
+  soldOut: boolean;
+  low: boolean;
+}
+
+export interface ShopState {
+  fullPriceCents: number;
+  printPriceCents: number;
+  /** products.available=false（商品级下架） */
+  fullOffSale: boolean;
+  printOffSale: boolean;
+  frameSoldOut: boolean;
+  frameLow: boolean;
+  prints: PrintState[];
+}
 
 const LIFE_PHOTOS = [
   {
@@ -50,66 +67,111 @@ const LIFE_PHOTOS = [
   },
 ];
 
-const PHOTOS = [...PRINT_PHOTOS, ...LIFE_PHOTOS];
-
 type Format = "full" | "print";
 
-/** 服务端页面注入的规格报价（价格/售罄来自 products 表） */
-export interface OfferInfo {
-  priceCents: number;
-  soldOut: boolean;
-}
-
-const NOTES: Record<Format, string[]> = {
-  full: [
-    "Solid pine frame, weighted easel. Leans, never topples.",
-    "Loop-pile canvas: satisfying shred, zero confetti.",
-    "Prints swap in minutes, new drops each season.",
-    "430 × 630 × 35 mm. Poster presence, bookshelf footprint.",
-  ],
-  print: [
-    "The print alone. Your frame stays on the wall.",
-    "Same loop-pile weave, fresh territory.",
-    "Fits every Canvas Series frame, Scratcher and House.",
-  ],
-};
-
-export default function ScratcherShop({
-  full,
-  print,
-}: {
-  full: OfferInfo;
-  print: OfferInfo;
-}) {
-  const [photo, setPhoto] = useState(0);
-  const [pick, setPick] = useState(0);
-  const [format, setFormat] = useState<Format>("full");
+export default function ScratcherShop({ state }: { state: ShopState }) {
   const { add } = useCart();
-  const art = ARTWORKS[pick];
-  const offer: Record<Format, OfferInfo> = { full, print };
-  const price = (f: Format) => formatCents(offer[f].priceCents);
-  const soldOut = offer[format].soldOut;
+
+  /* 退役画从购买动线消失：可见画列表（保留原始 ARTWORKS 索引） */
+  const visible = useMemo(
+    () =>
+      ARTWORKS.map((art, i) => ({ art, i, st: state.prints[i] })).filter(
+        (p) => p.st && !p.st.retired,
+      ),
+    [state.prints],
+  );
+
+  /* 图库 = 可见画的框内预览 + 生活方式实拍（photo 索引基于此数组） */
+  const photos = useMemo(
+    () => [
+      ...visible.map((p) => ({
+        src: `/c01/print-0${p.i + 1}.webp`,
+        alt: `The ${p.art.title} print in the pine frame, on white`,
+      })),
+      ...LIFE_PHOTOS,
+    ],
+    [visible],
+  );
+
+  const anyPrintBuyable = visible.some((p) => !p.st.soldOut);
+  const fullBuyable = !state.fullOffSale && !state.frameSoldOut && anyPrintBuyable;
+  const printBuyable = !state.printOffSale && anyPrintBuyable;
+  /* 两个规格都下架 = 主动收摊 → 候补表单（售罄但在售 ≠ 下架，不收邮箱） */
+  const offSaleEntirely = state.fullOffSale && state.printOffSale;
+
+  const [pick, setPick] = useState(() => {
+    const first = visible.find((p) => !p.st.soldOut) ?? visible[0];
+    return first ? first.i : 0;
+  });
+  const [photo, setPhoto] = useState(() =>
+    Math.max(0, visible.findIndex((p) => p.i === pick)),
+  );
+  const [format, setFormat] = useState<Format>(() =>
+    fullBuyable || !printBuyable ? "full" : "print",
+  );
 
   useEffect(() => {
     const apply = () => {
-      if (window.location.hash === "#prints") setFormat("print");
+      if (window.location.hash === "#prints" && !state.printOffSale) {
+        setFormat("print");
+      }
     };
     apply();
     window.addEventListener("hashchange", apply);
     return () => window.removeEventListener("hashchange", apply);
-  }, []);
+  }, [state.printOffSale]);
 
-  const choosePrint = (i: number) => {
-    setPick(i);
-    setPhoto(i); // 单向联动：主图跟到该画芯的框内预览
+  const art = ARTWORKS[pick];
+  const pickState = state.prints[pick];
+  const price = (f: Format) =>
+    formatCents(f === "full" ? state.fullPriceCents : state.printPriceCents);
+
+  const formatDisabled: Record<Format, boolean> = {
+    full: state.fullOffSale || state.frameSoldOut || !anyPrintBuyable,
+    print: state.printOffSale || !anyPrintBuyable,
+  };
+  const cantAdd =
+    formatDisabled[format] || !pickState || pickState.soldOut;
+
+  const fullNote = state.fullOffSale
+    ? "not available right now"
+    : state.frameSoldOut
+      ? "frames are out of stock"
+      : state.frameLow
+        ? "the full piece · low stock"
+        : "the full piece, ready to lean";
+  const printNote = state.printOffSale
+    ? "not sold on its own right now"
+    : "a fresh canvas for your frame";
+
+  const choosePrint = (artIdx: number) => {
+    setPick(artIdx);
+    const vi = visible.findIndex((p) => p.i === artIdx);
+    if (vi >= 0) setPhoto(vi); // 单向联动：主图跟到该画芯的框内预览
   };
 
-  const addToBasket = () =>
-    format === "full"
-      ? add("canvas-scratcher", art.title)
-      : add("canvas-print", art.title, {
-          note: "print only, your frame stays on the wall",
-        });
+  const addToBasket = () => {
+    if (cantAdd) return;
+    if (format === "full") add("canvas-scratcher", art.title);
+    else
+      add("canvas-print", art.title, {
+        note: "print only, your frame stays on the wall",
+      });
+  };
+
+  const NOTES: Record<Format, string[]> = {
+    full: [
+      "Solid pine frame, weighted easel. Leans, never topples.",
+      "Loop-pile canvas: satisfying shred, zero confetti.",
+      "Prints swap in minutes, new drops each season.",
+      "430 × 630 × 35 mm. Poster presence, bookshelf footprint.",
+    ],
+    print: [
+      "The print alone. Your frame stays on the wall.",
+      "Same loop-pile weave, fresh territory.",
+      "Fits every Canvas Series frame, Scratcher and House.",
+    ],
+  };
 
   return (
     <section className={pdp.stage}>
@@ -120,12 +182,12 @@ export default function ScratcherShop({
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               key={photo}
-              src={PHOTOS[photo].src}
-              alt={PHOTOS[photo].alt}
+              src={photos[photo]?.src ?? LIFE_PHOTOS[0].src}
+              alt={photos[photo]?.alt ?? LIFE_PHOTOS[0].alt}
             />
             <span className={styles.counterTag} aria-hidden>
               {String(photo + 1).padStart(2, "0")} /{" "}
-              {String(PHOTOS.length).padStart(2, "0")}
+              {String(photos.length).padStart(2, "0")}
             </span>
           </div>
           <div
@@ -133,7 +195,7 @@ export default function ScratcherShop({
             role="tablist"
             aria-label="Product photos"
           >
-            {PHOTOS.map((p, i) => (
+            {photos.map((p, i) => (
               <button
                 key={p.src}
                 role="tab"
@@ -153,7 +215,9 @@ export default function ScratcherShop({
         <div className={pdp.panelCol}>
           <div className={pdp.panel}>
             <p className={pdp.panelKicker}>
-              Shipping now · Australia-wide
+              {offSaleEntirely
+                ? "Off the bench for now"
+                : "Shipping now · Australia-wide"}
             </p>
             <h1 className={pdp.panelTitle}>The Canvas Scratcher</h1>
             <p className={pdp.panelTagline}>
@@ -161,113 +225,147 @@ export default function ScratcherShop({
               living happens against.
             </p>
 
-            <p className={pdp.panelLabel} id="prints">
-              Format
-            </p>
-            <div
-              className={styles.formats}
-              role="radiogroup"
-              aria-label="Choose a format"
-            >
-              <button
-                role="radio"
-                aria-checked={format === "full"}
-                className={`${styles.format} ${format === "full" ? styles.formatOn : ""}`}
-                onClick={() => setFormat("full")}
-              >
-                <strong>Frame + print</strong>
-                <span>
-                  {full.soldOut
-                    ? "sold out right now"
-                    : "the full piece, ready to lean"}
-                </span>
-                <em>{price("full")}</em>
-              </button>
-              <button
-                role="radio"
-                aria-checked={format === "print"}
-                className={`${styles.format} ${format === "print" ? styles.formatOn : ""}`}
-                onClick={() => setFormat("print")}
-              >
-                <strong>Print only</strong>
-                <span>
-                  {print.soldOut
-                    ? "sold out right now"
-                    : "a fresh canvas for your frame"}
-                </span>
-                <em>{price("print")}</em>
-              </button>
-            </div>
-
-            <p className={pdp.panelLabel}>
-              {format === "full" ? "Arrives wearing" : "Choose your print"}
-            </p>
-            <div
-              className={styles.picks}
-              role="radiogroup"
-              aria-label="Choose a print"
-            >
-              {ARTWORKS.map((a, i) => (
-                <button
-                  key={a.id}
-                  role="radio"
-                  aria-checked={pick === i}
-                  className={`${styles.pick} ${pick === i ? styles.picked : ""}`}
-                  onClick={() => choosePrint(i)}
-                  title={a.title}
+            {offSaleEntirely ? (
+              <>
+                <p className={styles.offSaleBlurb}>
+                  The Scratcher is off the shelf while we catch up. Leave your
+                  email and you&rsquo;ll hear first when it&rsquo;s back.
+                </p>
+                <WaitlistForm
+                  handle="canvas-scratcher"
+                  title="The Canvas Scratcher"
+                />
+              </>
+            ) : (
+              <>
+                <p className={pdp.panelLabel} id="prints">
+                  Format
+                </p>
+                <div
+                  className={styles.formats}
+                  role="radiogroup"
+                  aria-label="Choose a format"
                 >
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={`/hero/art/flat-0${i + 1}.png`} alt={a.title} />
-                </button>
-              ))}
-            </div>
-            <p className={styles.pickName} key={`n-${art.id}`}>
-              {art.title}
-            </p>
-            <p className={styles.pickCaption} key={`c-${art.id}`}>
-              {art.caption}
-            </p>
+                  <button
+                    role="radio"
+                    aria-checked={format === "full"}
+                    aria-disabled={formatDisabled.full}
+                    className={`${styles.format} ${format === "full" ? styles.formatOn : ""} ${formatDisabled.full ? styles.formatOff : ""}`}
+                    onClick={() =>
+                      !formatDisabled.full && setFormat("full")
+                    }
+                  >
+                    <strong>Frame + print</strong>
+                    <span>{fullNote}</span>
+                    <em>{price("full")}</em>
+                  </button>
+                  <button
+                    role="radio"
+                    aria-checked={format === "print"}
+                    aria-disabled={formatDisabled.print}
+                    className={`${styles.format} ${format === "print" ? styles.formatOn : ""} ${formatDisabled.print ? styles.formatOff : ""}`}
+                    onClick={() =>
+                      !formatDisabled.print && setFormat("print")
+                    }
+                  >
+                    <strong>Print only</strong>
+                    <span>{printNote}</span>
+                    <em>{price("print")}</em>
+                  </button>
+                </div>
 
-            <div className={pdp.buyRow}>
-              <span className={pdp.price}>
-                {price(format)} <em>free shipping over AU$188</em>
-              </span>
-              <button
-                className="btnPrimary"
-                onClick={addToBasket}
-                disabled={soldOut}
-              >
-                {soldOut ? "Sold out" : "Add to basket"}
-              </button>
-            </div>
+                <p className={pdp.panelLabel}>
+                  {format === "full" ? "Arrives wearing" : "Choose your print"}
+                </p>
+                <div
+                  className={styles.picks}
+                  role="radiogroup"
+                  aria-label="Choose a print"
+                >
+                  {visible.map((p) => (
+                    <button
+                      key={p.art.id}
+                      role="radio"
+                      aria-checked={pick === p.i}
+                      aria-label={`${p.art.title}${p.st.soldOut ? ", out of stock" : p.st.low ? ", low stock" : ""}`}
+                      className={`${styles.pick} ${pick === p.i ? styles.picked : ""} ${p.st.soldOut ? styles.pickOut : ""}`}
+                      onClick={() => choosePrint(p.i)}
+                      title={p.art.title}
+                    >
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img src={`/hero/art/flat-0${p.i + 1}.png`} alt="" />
+                      {p.st.soldOut ? (
+                        <i className={styles.pickTag} aria-hidden>
+                          out
+                        </i>
+                      ) : p.st.low ? (
+                        <i
+                          className={`${styles.pickTag} ${styles.pickTagLow}`}
+                          aria-hidden
+                        >
+                          low
+                        </i>
+                      ) : null}
+                    </button>
+                  ))}
+                </div>
+                <p className={styles.pickName} key={`n-${art.id}`}>
+                  {art.title}
+                  {pickState?.soldOut && (
+                    <em className={styles.pickNameNote}> · out of stock</em>
+                  )}
+                  {!pickState?.soldOut && pickState?.low && (
+                    <em className={styles.pickNameNote}> · low stock</em>
+                  )}
+                </p>
+                <p className={styles.pickCaption} key={`c-${art.id}`}>
+                  {art.caption}
+                </p>
 
-            <ul className={pdp.panelNotes}>
-              {NOTES[format].map((n) => (
-                <li key={n}>{n}</li>
-              ))}
-            </ul>
+                <div className={pdp.buyRow}>
+                  <span className={pdp.price}>
+                    {price(format)} <em>free shipping over AU$188</em>
+                  </span>
+                  <button
+                    className="btnPrimary"
+                    onClick={addToBasket}
+                    disabled={cantAdd}
+                  >
+                    {cantAdd ? "Sold out" : "Add to basket"}
+                  </button>
+                </div>
+
+                <ul className={pdp.panelNotes}>
+                  {NOTES[format].map((n) => (
+                    <li key={n}>{n}</li>
+                  ))}
+                </ul>
+              </>
+            )}
           </div>
         </div>
       </div>
 
       {/* ——— 移动端粘性购买条 ——— */}
-      <div className={pdp.stickyBar}>
-        <span className={pdp.stickyInfo}>
-          <span className={pdp.stickyName}>
-            {format === "full" ? "Scratcher" : "Print"} · {art.title}
+      {!offSaleEntirely && (
+        <div className={pdp.stickyBar}>
+          <span className={pdp.stickyInfo}>
+            <span className={pdp.stickyName}>
+              {format === "full" ? "Scratcher" : "Print"} · {art.title}
+            </span>
+            <span className={pdp.stickyPrice}>
+              {cantAdd ? "sold out right now" : `${price(format)} · ships AU-wide`}
+            </span>
           </span>
-          <span className={pdp.stickyPrice}>
-            {price(format)} · ships AU-wide
-          </span>
-        </span>
-        <button
-          className={pdp.stickyBtn}
-          onClick={addToBasket}
-          disabled={soldOut}
-        >
-          {soldOut ? "Sold out" : "Add to basket"}
-        </button>
-      </div>
+          <button
+            className={pdp.stickyBtn}
+            onClick={addToBasket}
+            disabled={cantAdd}
+          >
+            {cantAdd ? "Sold out" : "Add to basket"}
+          </button>
+        </div>
+      )}
     </section>
   );
 }
