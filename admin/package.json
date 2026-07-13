@@ -1,28 +1,22 @@
 {
-  "name": "roomie",
+  "name": "roomie-admin",
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev",
-    "build": "next build",
-    "start": "next start",
-    "db:migrate": "node scripts/db-migrate.mjs",
-    "stripe:setup": "node scripts/stripe-setup.mjs",
-    "admin": "npm --prefix admin run dev"
+    "dev": "next dev -H 127.0.0.1 -p 3100",
+    "build": "next build"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.110.2",
     "next": "^15.5.6",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
-    "resend": "^6.17.2",
     "stripe": "^22.3.1"
   },
   "devDependencies": {
     "@types/node": "^22",
     "@types/react": "^19",
     "@types/react-dom": "^19",
-    "pg": "^8.22.0",
     "typescript": "^5"
   }
 }

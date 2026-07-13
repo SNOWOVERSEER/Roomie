@@ -51,3 +51,9 @@ next-env.d.ts
 /tools/*.png
 /tools/*.npy
 !/tools/last-frame.png
+
+# admin（本地管理后台，独立 Next 应用）
+/admin/node_modules
+/admin/.next/
+/admin/next-env.d.ts
+/admin/tsconfig.tsbuildinfo
