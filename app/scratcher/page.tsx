@@ -85,7 +85,7 @@ const BLUEPRINT = [
     x: "78.5%",
     y: "89%",
     title: "Skirting-board clearance",
-    body: "The base steps back at the bottom, so it leans flush against real walls, skirting boards included.",
+    body: "The frame's top edge kisses the wall while the wedge's back corner sits just shy of it, leaving room for a skirting board.",
   },
   {
     n: "04",

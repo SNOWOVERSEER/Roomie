@@ -51,25 +51,44 @@ export default function SpecDrawing({ className }: { className?: string }) {
         THE FACE
       </text>
 
-      {/* ——— 侧视 ——— */}
+      {/* ——— 侧视（与实物一致：板与楔座贴合为一体） ——— */}
       <line x1="398" y1="343" x2="626" y2="343" stroke={soft} strokeWidth="1.5" />
-      {/* 楔形背板 */}
-      <polygon points="500,343 585,343 585,104" fill="var(--cream-warm)" stroke={ink} strokeWidth="2" strokeLinejoin="round" />
-      {/* 斜倚木条（70°） */}
-      <polygon points="462,340 565,57 581,63 478,346" fill="var(--paper)" stroke={ink} strokeWidth="2.5" strokeLinejoin="round" />
+      {/* 墙面（虚线）：自画框贴墙点 (563,66) 垂直落地，楔座右下角离墙一条缝（踢脚线位） */}
+      <line x1="563" y1="66" x2="563" y2="343" stroke={soft} strokeWidth="1.2" strokeDasharray="4 5" />
+      {/*
+       * 几何（对照供应商侧视原图）：板以 70° 斜倚，板脚平切落地；
+       * 楔座 = 全锐角三角形：apex 贴在板背面 80% 高度 (541,127)，
+       * 背边向后下方展开到 (556,343)（底比顶宽、右下角是底座最靠后
+       * 的点），但仍比板顶后缘的墙线 (x=567) 缩进一条踢脚线缝。
+       */}
+      <polygon
+        points="462,343 541,127 556,343"
+        fill="var(--cream-warm)"
+        stroke={ink}
+        strokeWidth="2"
+        strokeLinejoin="round"
+      />
+      {/* 斜倚画板：侧视为真长方形（底端方切、垂直于板轴），
+          底后角 (462,343) 落地，前角 (447,337.5) 微微离地，顶端后缘触墙 */}
+      <polygon
+        points="447,337.5 548,60 563,66 462,343"
+        fill="var(--paper)"
+        stroke={ink}
+        strokeWidth="2.5"
+        strokeLinejoin="round"
+      />
 
-      {/* 35mm 引注 */}
-      <line x1="585" y1="152" x2="610" y2="144" stroke={soft} strokeWidth="1.2" strokeDasharray="3 4" />
-      <text x="614" y="148" fontFamily={display} fontWeight="700" fontSize="14" fill={dim}>
-        35
-      </text>
-      <text x="614" y="163" fontFamily={display} fontWeight="600" fontSize="10.5" fill={soft}>
-        mm
+      {/* 35mm = 板厚，标在板顶端断面 */}
+      <line x1="551" y1="52" x2="557" y2="35" stroke={soft} strokeWidth="1.2" strokeDasharray="3 4" />
+      <line x1="566" y1="57" x2="572" y2="40" stroke={soft} strokeWidth="1.2" strokeDasharray="3 4" />
+      <line x1="556" y1="38" x2="571" y2="43" stroke={soft} strokeWidth="1.5" />
+      <text x="582" y="42" fontFamily={display} fontWeight="700" fontSize="14" fill={dim}>
+        35 mm
       </text>
 
-      {/* 70° 角 */}
-      <path d="M504 343 A34 34 0 0 0 481.5 311" fill="none" stroke="var(--orange)" strokeWidth="2" />
-      <text x="514" y="322" fontFamily={display} fontWeight="700" fontSize="14" fill={dim}>
+      {/* 70° = 板脚与地面夹角 */}
+      <path d="M478 343 A33 33 0 0 0 456.3 312" fill="none" stroke="var(--orange)" strokeWidth="2" />
+      <text x="488" y="325" fontFamily={display} fontWeight="700" fontSize="14" fill={dim}>
         70°
       </text>
       <text x="512" y="374" textAnchor="middle" fontFamily={display} fontWeight="700" fontSize="11.5" letterSpacing="2.5" fill={soft}>
