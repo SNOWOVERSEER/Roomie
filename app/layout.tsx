@@ -28,10 +28,19 @@ const body = Nunito_Sans({
   variable: "--font-body",
 });
 
+/* 非 https 或非法的 NEXT_PUBLIC_URL 一律回退生产域名（同 lib/email.ts base()
+   规则）——构建期 new URL() 对坏配置值抛错会炸整个 build，踩过 */
+const siteUrl = (() => {
+  const u = process.env.NEXT_PUBLIC_URL ?? "";
+  try {
+    return new URL(u.startsWith("https://") ? u : "https://roomiepaw.vercel.app");
+  } catch {
+    return new URL("https://roomiepaw.vercel.app");
+  }
+})();
+
 export const metadata: Metadata = {
-  metadataBase: new URL(
-    process.env.NEXT_PUBLIC_URL || "https://roomiepaw.vercel.app",
-  ),
+  metadataBase: siteUrl,
   title: "RoomiePaw · the art your cat can scratch",
   description:
     "The Canvas Scratcher by RoomiePaw: a framed canvas print for your wall that's secretly your cat's favourite thing. Pet furniture that feels like part of home. Melbourne, AU.",
