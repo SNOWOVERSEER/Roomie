@@ -91,6 +91,7 @@
 }
 
 .format {
+  position: relative; /* 库存角标（.pickTag）的定位基准 */
   display: grid;
   gap: 0.12rem;
   text-align: left;

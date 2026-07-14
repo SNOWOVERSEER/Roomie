@@ -133,13 +133,12 @@ export default function ScratcherShop({ state }: { state: ShopState }) {
   const cantAdd =
     formatDisabled[format] || !pickState || pickState.soldOut;
 
+  /* 低库存交给角标表达（与画芯选择器同一套视觉语言），副文案只解释禁用 */
   const fullNote = state.fullOffSale
     ? "not available right now"
     : state.frameSoldOut
       ? "frames are out of stock"
-      : state.frameLow
-        ? "the full piece · low stock"
-        : "the full piece, ready to lean";
+      : "the full piece, ready to lean";
   const printNote = state.printOffSale
     ? "not sold on its own right now"
     : "a fresh canvas for your frame";
@@ -258,6 +257,18 @@ export default function ScratcherShop({ state }: { state: ShopState }) {
                     <strong>Frame + print</strong>
                     <span>{fullNote}</span>
                     <em>{price("full")}</em>
+                    {!state.fullOffSale && state.frameSoldOut ? (
+                      <i className={styles.pickTag} aria-hidden>
+                        out
+                      </i>
+                    ) : !state.fullOffSale && state.frameLow ? (
+                      <i
+                        className={`${styles.pickTag} ${styles.pickTagLow}`}
+                        aria-hidden
+                      >
+                        low
+                      </i>
+                    ) : null}
                   </button>
                   <button
                     role="radio"
