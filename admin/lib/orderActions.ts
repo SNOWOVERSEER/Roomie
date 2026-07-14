@@ -1,66 +1,73 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { db } from "@/lib/db";
 import { assertAuth } from "@/lib/auth";
+import { sendShippingNotice } from "../../lib/email";
+import type { OrderRow } from "@/lib/types";
 
 type Result = { ok: true } | { error: string };
 
 /*
- * 发货/送达走主站 /api/shipping（不直写 DB）：发货邮件、追踪链接推导
- * 都在那里，复用不重复。默认打生产；SHIPPING_API_ORIGIN（根 .env.local）
- * 可显式改打本地 dev（同一个 Supabase 和 Resend，功能等价）。
- * 注意 NEXT_PUBLIC_URL 本地常是 localhost（教训：邮件断链），
- * 非 https 一律回退生产域名。
+ * 发货/送达：admin 直连 Supabase 更新订单 + 直调 Resend 发邮件
+ * （2026-07-14 决策：发货本质 = 一次 DB 更新 + 一次邮件 API 调用，
+ * 不依赖 Vercel 部署可用性——生产挂了也能发货）。
+ * 邮件模板跨目录复用主站 lib/email.ts（单一事实源）。
+ * 生产 /api/shipping 保留作 curl fallback，与这里逻辑对齐。
  */
-const site = () => {
-  const override = process.env.SHIPPING_API_ORIGIN ?? "";
-  if (override.startsWith("http")) return override.replace(/\/$/, "");
-  const u = process.env.NEXT_PUBLIC_URL ?? "";
-  return u.startsWith("https://") ? u : "https://roomiepaw.vercel.app";
-};
 
-async function callShipping(body: Record<string, unknown>): Promise<Result> {
-  await assertAuth();
-  const secret = process.env.ADMIN_SECRET;
-  if (!secret) return { error: "ADMIN_SECRET missing" };
-  try {
-    const res = await fetch(`${site()}/api/shipping`, {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${secret}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(body),
-      cache: "no-store",
-    });
-    const data = (await res.json()) as { error?: string };
-    if (res.status === 401) {
-      return {
-        error:
-          "production rejected ADMIN_SECRET. Sync the value in Vercel env with root .env.local, then retry",
-      };
-    }
-    if (!res.ok) return { error: data.error ?? `HTTP ${res.status}` };
-    revalidatePath("/orders");
-    return { ok: true };
-  } catch (e) {
-    return { error: e instanceof Error ? e.message : "network error" };
-  }
-}
+const TRACK_URL: Record<string, (n: string) => string> = {
+  auspost: (n) => `https://auspost.com.au/mypost/track/#/details/${n}`,
+  sendle: (n) => `https://track.sendle.com/tracking?ref=${n}`,
+};
 
 export async function shipOrder(
   orderRef: string,
   trackingNumber: string,
   carrier: string,
 ): Promise<Result> {
-  if (!trackingNumber.trim()) return { error: "tracking number required" };
-  return callShipping({
-    order_ref: orderRef,
-    tracking_number: trackingNumber.trim(),
-    carrier: carrier.trim() || undefined,
-  });
+  await assertAuth();
+  const tracking = trackingNumber.trim();
+  if (!tracking) return { error: "tracking number required" };
+
+  const c = carrier.trim().toLowerCase();
+  const trackingUrl = c && TRACK_URL[c] ? TRACK_URL[c](tracking) : null;
+
+  const { data, error } = await db()
+    .from("orders")
+    .update({
+      status: "shipped",
+      tracking_number: tracking,
+      tracking_url: trackingUrl,
+      carrier: c || null,
+      shipped_at: new Date().toISOString(),
+    })
+    .eq("order_ref", orderRef)
+    .select()
+    .maybeSingle();
+
+  if (error) return { error: error.message };
+  if (!data) return { error: "order not found" };
+
+  // 邮件失败不回滚发货状态（与主站语义一致）：记错误给店主看，可人工补发
+  const mail = await sendShippingNotice(data as OrderRow);
+  revalidatePath("/orders");
+  if ("error" in mail && mail.error) {
+    return { error: `shipped, but the email failed: ${mail.error}` };
+  }
+  return { ok: true };
 }
 
 export async function markDelivered(orderRef: string): Promise<Result> {
-  return callShipping({ order_ref: orderRef, status: "delivered" });
+  await assertAuth();
+  const { data, error } = await db()
+    .from("orders")
+    .update({ status: "delivered", delivered_at: new Date().toISOString() })
+    .eq("order_ref", orderRef)
+    .select("order_ref")
+    .maybeSingle();
+  if (error) return { error: error.message };
+  if (!data) return { error: "order not found" };
+  revalidatePath("/orders");
+  return { ok: true };
 }
