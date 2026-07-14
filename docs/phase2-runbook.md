@@ -48,8 +48,10 @@
 ## 日常操作
 
 **首选入口：本地 admin 后台**（admin-platform 起）——
-`npm run admin` → http://127.0.0.1:3100（口令 = ADMIN_SECRET；首次先
-`npm --prefix admin install`）。打开即 **Dashboard**（营收/待办/库存警报），
+日常用 **`npm run admin:fast`** → http://127.0.0.1:3100（先构建约半分钟，
+之后页面秒开；口令 = ADMIN_SECRET；首次先 `npm --prefix admin install`）。
+`npm run admin` 是开发模式（改后台代码时用，启动快但翻页慢些；
+两种模式别同时开，共用 .next 会互相打坏缓存）。打开即 **Dashboard**（营收/待办/库存警报），
 导航：Dashboard · Orders · Products · Customers · Waitlist。改价、库存、
 上下架、文案、发货、取消、退款、退货、联系客户、看单、导出全部在这里
 点完；改动约几秒生效，不需要部署。下面的 curl/SQL 是后台不可用时的

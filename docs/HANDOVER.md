@@ -337,8 +337,16 @@ ctaNote——hero 的 ctaNote 现在是 `(price) => string` 函数）。结算�
 
 **admin 应用**（`admin/` 独立 Next app，**永不部署**）：
 
-- 启动：`npm --prefix admin install`（一次）→ `npm run admin` →
-  http://127.0.0.1:3100，口令 = `ADMIN_SECRET`（30 天 cookie）。
+- 启动：`npm --prefix admin install`（一次）→ 日常 `npm run admin:fast`
+  （prod build+start，页面切换 ~50ms）或开发 `npm run admin`（Turbopack dev）
+  → http://127.0.0.1:3100，口令 = `ADMIN_SECRET`（30 天 cookie）。
+  两种模式共用 `admin/.next`，**不可同时开**（同主站 §9.1 坑）。
+- **UI（2026-07-14 重设计）**：与主站同一 design system——Baloo 2/Nunito Sans
+  （next/font）、cream/paper/橙蓝 token、暖棕阴影、色点软底状态徽章、虚线
+  时间线。骨架 = 侧栏（(app) route group 内，登录页无导航）+ 内容；侧栏
+  Orders 项带待发货角标（layout head-count 查询）。每路由有 loading.tsx
+  骨架屏；`experimental.staleTimes.dynamic=30` 让 30s 内切回走客户端缓存
+  （server action 后 router.refresh() 仍强制拉新——改这个值要想清楚这两者）。
 - 五页（2026-07-14 订单管理全面化，spec
   `docs/superpowers/specs/2026-07-14-admin-order-management-design.md`）：
   - **Dashboard（/）**：净营收 KPI（今日/7d/30d，已扣退款）/单量/AOV/
