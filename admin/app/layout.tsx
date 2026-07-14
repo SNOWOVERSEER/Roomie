@@ -1,7 +1,19 @@
 import type { Metadata } from "next";
-import Link from "next/link";
+import { Baloo_2, Nunito_Sans } from "next/font/google";
 import "./globals.css";
-import { stripeMode } from "@/lib/stripe";
+
+/* 字体与主站同源（Baloo 2 display / Nunito Sans body）——后台是店的里屋，
+   不是另一家公司。侧栏骨架在 (app)/layout.tsx；登录页无导航。 */
+const display = Baloo_2({
+  subsets: ["latin"],
+  weight: ["500", "600", "700", "800"],
+  variable: "--font-display",
+});
+const body = Nunito_Sans({
+  subsets: ["latin"],
+  weight: ["400", "600", "700"],
+  variable: "--font-body",
+});
 
 export const metadata: Metadata = {
   title: "Roomie Admin",
@@ -14,24 +26,9 @@ export default function RootLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const mode = stripeMode();
   return (
-    <html lang="en">
-      <body>
-        <nav className="nav">
-          <strong style={{ color: "var(--orange-deep)" }}>Roomie Admin</strong>
-          <Link href="/">Dashboard</Link>
-          <Link href="/orders">Orders</Link>
-          <Link href="/products">Products</Link>
-          <Link href="/customers">Customers</Link>
-          <Link href="/waitlist">Waitlist</Link>
-          <span className="mode">
-            Stripe: <b className={mode === "live" ? "warn" : undefined}>{mode}</b>
-            {" "}· local only (127.0.0.1:3100)
-          </span>
-        </nav>
-        <main>{children}</main>
-      </body>
+    <html lang="en" className={`${display.variable} ${body.variable}`}>
+      <body>{children}</body>
     </html>
   );
 }

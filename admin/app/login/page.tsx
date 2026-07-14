@@ -27,17 +27,33 @@ export default async function LoginPage({
   return (
     <form
       action={login}
-      style={{ maxWidth: 380, margin: "18vh auto 0", display: "grid", gap: 12 }}
+      style={{
+        maxWidth: 360,
+        margin: "24vh auto 0",
+        display: "grid",
+        gap: 12,
+        background: "var(--paper)",
+        border: "1px solid var(--line)",
+        borderRadius: "var(--r-card)",
+        boxShadow: "var(--shadow-soft)",
+        padding: "30px 28px 26px",
+      }}
     >
-      <h1>Roomie Admin</h1>
+      <div className="brand" style={{ padding: 0 }}>
+        Roomie<span className="brandTag">admin</span>
+      </div>
+      <p className="hint" style={{ margin: "0 0 4px" }}>
+        The back room. Keys, ledgers, parcel tape.
+      </p>
       <input
         type="password"
         name="secret"
         placeholder="ADMIN_SECRET"
         autoFocus
         required
+        aria-label="Admin secret"
       />
-      {bad && <p className="warn">Wrong secret.</p>}
+      {bad && <p className="warn" style={{ margin: 0 }}>Wrong secret.</p>}
       <button type="submit">Enter</button>
     </form>
   );

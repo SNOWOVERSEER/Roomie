@@ -98,7 +98,7 @@ export default async function CustomersPage() {
                   {new Date(c.lastAt).toLocaleDateString("en-AU")}
                 </span>
               </p>
-              <table style={{ margin: "8px 0" }}>
+              <table style={{ margin: "8px 0", maxWidth: 720 }}>
                 <thead>
                   <tr><th>Order</th><th>Date</th><th>Total</th><th>Refunded</th><th>Status</th></tr>
                 </thead>

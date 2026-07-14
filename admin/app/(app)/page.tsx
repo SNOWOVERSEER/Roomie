@@ -198,7 +198,7 @@ export default async function DashboardPage() {
           {topRows.length === 0 ? (
             <p className="hint">No sales yet.</p>
           ) : (
-            <table>
+            <table className="money">
               <thead>
                 <tr><th>Product</th><th>Units</th><th>Gross</th></tr>
               </thead>

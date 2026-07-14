@@ -252,7 +252,7 @@ function Order({
         <span className={`badge ${o.status}`}>{STATUS_LABEL[o.status]}</span>
       </summary>
       <div className="body">
-        <table style={{ margin: "8px 0" }}>
+        <table className="money" style={{ margin: "8px 0" }}>
           <thead>
             <tr><th>Item</th><th>Variant</th><th>Qty</th><th>Unit</th></tr>
           </thead>

@@ -43,7 +43,8 @@ export default async function SlipPage({
     <div className="slip">
       <style>{`
         @media print {
-          .nav, .noPrint { display: none !important; }
+          .side, .noPrint { display: none !important; }
+          .frame { display: block !important; }
           body { background: #fff !important; }
           main { max-width: none !important; padding: 0 !important; }
           .slip { border: 0 !important; box-shadow: none !important; }
