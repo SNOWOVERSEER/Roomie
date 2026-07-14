@@ -49,9 +49,11 @@
 
 **首选入口：本地 admin 后台**（admin-platform 起）——
 `npm run admin` → http://127.0.0.1:3100（口令 = ADMIN_SECRET；首次先
-`npm --prefix admin install`）。改价、库存、上下架、文案、发货、看单、
-候补导出全部在这里点完；改动约几秒生效，不需要部署。下面的 curl/SQL
-是后台不可用时的 fallback。
+`npm --prefix admin install`）。打开即 **Dashboard**（营收/待办/库存警报），
+导航：Dashboard · Orders · Products · Customers · Waitlist。改价、库存、
+上下架、文案、发货、取消、退款、退货、联系客户、看单、导出全部在这里
+点完；改动约几秒生效，不需要部署。下面的 curl/SQL 是后台不可用时的
+fallback。
 
 ### 发货
 
@@ -116,16 +118,67 @@ curl -X POST https://roomiepaw.vercel.app/api/shipping \
 
 ### 查订单
 
-**admin → Orders**（按 To ship / Shipped / Delivered 分组，点开看明细地址）。
+**admin → Orders**：顶部可搜（订单号/邮箱/姓名/运单号/商品名）、按状态
+chips 过滤；默认按 To ship → Returns in progress → Shipped → Delivered →
+Returned → Cancelled 分组。点开一单能看：明细/地址、支付（点开直达
+Stripe Dashboard 该笔付款）、**时间线**（下单/发货/送达/取消/退货/每笔
+退款/发过的每封邮件/库存回补）、**内部备注**（只有你可见）。右上
+**Export CSV** 全量导出对账（含运费/退款/净额列）。
 fallback：Supabase Dashboard → Table Editor → `orders`。
-字段：`order_ref`（顾客可见 6 位数字）、`order_number`（内部自增）、
-客户/地址、`items`、`amount_total`/`shipping_cents`（分）、
-`status`（paid/shipped/delivered）、追踪号、各时间戳。
+`status` 六态：paid / shipped / delivered / cancelled / return_requested /
+returned；`refunded_cents` 是累计已退款（分）。
 
-### 退款 / 优惠券（零代码，规格决策）
+### 取消订单（退单，未发货时）
 
-- 退款：Stripe Dashboard → Payments → 找到付款 → Refund。
-- 优惠券：Stripe Dashboard → Product catalog → Coupons → 建 Coupon + Promotion Code；
+**admin → Orders → To ship 组 → 点开订单 → Cancel order…** 确认面板会写明
+退款金额；「Put the stock back」勾选 = 回补跟踪中的库存（默认勾上）。
+确认后自动：Stripe 全额退款 → 状态 cancelled → 回补库存 → 给顾客发
+取消邮件。**退款失败则整个取消不会发生**（绝不会出现"单取消了钱没退"）。
+
+### 退款（部分/全额，任意已付状态）
+
+**admin → Orders → 点开订单 → Refund…**：填金额（默认 = 剩余可退全额）
+选原因 → Refund。自动打 Stripe（按 payment intent）、记时间线、给顾客发
+退款邮件（"5 到 10 个工作日到账"话术）。部分退款不改订单状态，只在
+单头加 partly refunded 徽章。
+fallback：Stripe Dashboard → Payments → Refund（注意：Dashboard 手工退款
+要同步回订单表，需要生产 webhook 订阅了 `charge.refunded`——跑一次
+`npm run stripe:setup` 会自动补订；admin 里退款不依赖这个）。
+
+### 退货（已发货/已送达后）
+
+1. 顾客来信要退 → **admin → Orders → 该单 → Start return…**：填原因（可选），
+   默认勾「Email return instructions」（可附一段自由文字，比如退货地址）。
+   状态变 return_requested，进 Returns in progress 组。
+2. 包裹收到 → **Mark returned…**：默认勾退款（金额可改）+ 回补库存 →
+   确认。状态 returned，顾客收到退款邮件。
+3. 顾客反悔不退了 → **Cancel return** 回到原状态。
+   对客政策（30 天）在 `/shipping-returns`，退货邮件里已带链接。
+
+### 联系客户 / 重发邮件
+
+- **admin → Orders → 该单 → Email customer…**：主题+正文（空行分段），
+  以品牌邮件模板发出，顾客直接回信即到你邮箱。发过的信都记在时间线。
+- 单没收到确认邮件？**Resend confirmation**；发货邮件同理 **Resend
+  shipping email**（To ship 组看不到后者，发货后才有）。
+
+### 装箱单
+
+**admin → Orders → 该单 → Packing slip ↗** → 打印（黑白 A4，含价格与
+GST included 行）。TODO：拿到 ABN 后加一行就能兼作 tax invoice。
+
+### 数据统计 / 客户
+
+- **Dashboard（后台首页）**：今日/7 天/30 天净营收（已扣退款）、单量、
+  客单价、累计退款、30 天营收柱状图、Top products、库存警报（低于 10 /
+  售罄 / OVERSOLD / 退役）、最近订单、候补计数；顶部一行是待办
+  （几单待发货、几单退货处理中）。
+- **Customers**：按邮箱聚合的客户列表（单数、累计净消费、每单状态、
+  是否在候补名单），点邮箱直接写信。
+
+### 优惠券（零代码，规格决策）
+
+- Stripe Dashboard → Product catalog → Coupons → 建 Coupon + Promotion Code；
   结算页已开 `allow_promotion_codes`，顾客直接输码。
 
 ### 看候补名单 / 导出邮箱

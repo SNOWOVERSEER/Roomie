@@ -247,6 +247,10 @@ Resend 发交易邮件。服务端逻辑全部在 API Routes（无 Edge Function
     → 浏览器回 /checkout/success（轮询 /api/order）
 发货：POST /api/shipping (Bearer ADMIN_SECRET) → shipped/delivered + 发货邮件
       （日常首选本地 admin 的 Orders 页，见 §7.5）
+退款同步：webhook 另订 charge.refunded → orders.refunded_cents 写
+      charge.amount_refunded 权威累计值（幂等；兜住 Stripe Dashboard 手工退款。
+      ⚠️ 既有生产 endpoint 还没订这个事件——跑一次 npm run stripe:setup 会
+      自动补订；admin 内退款不依赖它）
 候补：WaitlistForm → POST /api/waitlist → waitlist 表
 ```
 
@@ -335,10 +339,29 @@ ctaNote——hero 的 ctaNote 现在是 `(price) => string` 函数）。结算�
 
 - 启动：`npm --prefix admin install`（一次）→ `npm run admin` →
   http://127.0.0.1:3100，口令 = `ADMIN_SECRET`（30 天 cookie）。
-- 三页：**Products**（改价/上下架[sellable 约束]/文案/新增删除/Create in
-  Stripe + **Inventory 区**：7 个库存单元的 stock 三态、画作退役/复出、
-  low stock 红色警报）、**Orders**（按状态分组，填运单号一键发货 = 打主站
-  shipping API 自动发邮件，可标 delivered）、**Waitlist**（分组 + CSV 导出）。
+- 五页（2026-07-14 订单管理全面化，spec
+  `docs/superpowers/specs/2026-07-14-admin-order-management-design.md`）：
+  - **Dashboard（/）**：净营收 KPI（今日/7d/30d，已扣退款）/单量/AOV/
+    累计退款、30 天 SVG 柱状图、Top products、库存警报、最近订单、候补数、
+    待办行（待发货/退货中）。全部服务端 JS 聚合（jsonb 不上 PostgREST 过滤）。
+  - **Orders**：搜索（ref/邮箱/姓名/运单/商品）+ 状态 chips + 分组工作台。
+    每单：明细/地址/支付（Stripe Dashboard 直链，test/live 感知）/时间线/
+    内部备注（orders.admin_note）/按状态动作。动作 = 发货、送达、
+    **取消（退款先行，失败不落库；可选回补库存）**、**部分/全额退款**
+    （Stripe by payment intent，refunded_cents 回读 charge 权威值）、
+    **退货流**（start → mark returned[可选退款+回补] / cancel return）、
+    **联系客户**（自由主题+正文，品牌壳）、重发确认/发货邮件、装箱单
+    （/orders/[ref]/slip 可打印，ABN TODO）、Export CSV（对账列）。
+  - **Products（/products）**：原首页整体平移（改价/上下架/文案/库存，机制不变）。
+  - **Customers**：按 email 聚合（单数/累计净消费/每单状态/waitlist 交叉）。
+  - **Waitlist**（分组 + CSV 导出）。
+- **订单状态机**：paid → shipped → delivered 主线；paid → cancelled（退单）；
+  shipped/delivered → return_requested → returned（退货）。退款独立于状态
+  （refunded_cents 累计，部分退款只加徽章）。里程碑时间戳全在 orders 列上，
+  `order_events` 表只记流水（refund/email/restock/return_cancelled）——
+  时间线 = 列派生 + 事件合并，防双写漂移。回补库存走 restock_item/
+  restock_product RPC（decrement 的对偶），只记真实回补（untracked 单元
+  是 RPC 静默 no-op，代码先查跟踪集再回补）。
 - **改价机制**：Stripe Price 金额不可变 → admin 自动「建新 Price → DB 回写
   → 归档旧 Price」（旧价保持 active 到最后一步，改价过程结算不断档；
   DB 写失败自动归档新价回滚）。
@@ -424,6 +447,7 @@ Create in Stripe。**不再需要重跑 stripe:setup 回填代码。**
 | 07-12 深夜 | 购物篮抽屉；**猫屋撤销选号预售改 waitlist**（问邮箱+校验） | `16daf28`，用户拍板 |
 | 07-12 深夜 | Nav 12px 上底修字叠 | `3988020` |
 | 07-13 | **商品数据迁 Supabase products 表 + 本地 admin 后台**（改价/库存/发货/waitlist 全后台化；推翻"商品数据用代码常量"决策——真库存必须可变存储） | admin-platform 分支，spec `docs/superpowers/specs/2026-07-13-local-admin-design.md` |
+| 07-14 | **admin 订单管理全面化**：六态状态机（+取消/退货流）、Stripe 退款（部分/全额，refunded_cents 存权威累计值）、order_events 时间线、联系客户/重发邮件、Dashboard 统计、Customers、订单 CSV、装箱单。原则：退款先行（退款失败则取消/收货不落库）、里程碑不双写 | 用户全权委托；spec `2026-07-14-admin-order-management-design.md`，25 项 e2e 验证含真实 test-mode 退款 |
 
 ---
 
