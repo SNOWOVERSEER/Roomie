@@ -8,7 +8,8 @@
     "start": "next start",
     "db:migrate": "node scripts/db-migrate.mjs",
     "stripe:setup": "node scripts/stripe-setup.mjs",
-    "admin": "npm --prefix admin run dev"
+    "admin": "npm --prefix admin run dev",
+    "admin:fast": "npm --prefix admin run build && npm --prefix admin run start"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.110.2",

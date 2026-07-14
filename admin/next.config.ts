@@ -18,5 +18,10 @@ try {
 
 const nextConfig: NextConfig = {
   outputFileTracingRoot: path.join(__dirname),
+  experimental: {
+    // 客户端路由缓存：30 秒内切回访问过的页直接用缓存（后台数据这点
+    // 时延可接受；server action 后的 router.refresh() 依旧强制拉新）。
+    staleTimes: { dynamic: 30 },
+  },
 };
 export default nextConfig;

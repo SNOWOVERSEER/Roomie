@@ -3,8 +3,9 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev -H 127.0.0.1 -p 3100",
-    "build": "next build"
+    "dev": "next dev --turbopack -H 127.0.0.1 -p 3100",
+    "build": "next build",
+    "start": "next start -H 127.0.0.1 -p 3100"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.110.2",
