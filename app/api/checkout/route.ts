@@ -1,8 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getCatalogMap, canBuy, shippingCentsFor } from "@/lib/catalog";
 import { componentsFor, getStockItems } from "@/lib/inventory";
+import { ARTWORKS } from "@/lib/heroConfig";
 import { getStripe } from "@/lib/stripe";
 import { env } from "@/lib/env";
+
+/* variant 只可能是画名（白名单校验，非法值剥离）——它会进订单快照与
+   邮件模板，绝不能是自由字符串（HTML 注入面）。猫屋编号 variant 待开售时扩。 */
+const VALID_VARIANTS = new Set<string>(ARTWORKS.map((a) => a.title));
 
 /*
  * POST /api/checkout —— 创建 Stripe Checkout Session（托管结算页）。
@@ -47,7 +52,9 @@ export async function POST(req: NextRequest) {
     return {
       item,
       variant:
-        typeof l.variant === "string" ? l.variant.slice(0, 40) : undefined,
+        typeof l.variant === "string" && VALID_VARIANTS.has(l.variant)
+          ? l.variant
+          : undefined,
       qty: item.numbered ? 1 : Math.min(9, Math.max(1, Math.round(l.qty ?? 1))),
     };
   });

@@ -38,6 +38,15 @@ const base = () => {
   return u && u.startsWith("https://") ? u : "https://roomiepaw.vercel.app";
 };
 
+/* 所有进 HTML 的动态文本一律转义：variant/姓名/地址来自客户输入
+   （checkout 白名单是第一道，这里是纵深防御的第二道） */
+const esc = (s: string) =>
+  s
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;");
+
 /** 行缩略图（绝对 URL）：画芯 variant 对应画作平面稿，其余用商品图（products 表） */
 function itemThumb(
   it: OrderItem,
@@ -96,8 +105,8 @@ function itemsTable(order: OrderRow, catalog: Map<string, CatalogItem>): string 
       ${thumb ? `<img src="${thumb}" alt="" width="48" style="width:48px;height:64px;object-fit:cover;border-radius:9px;border:0;display:block;background:${C.cream};">` : ""}
     </td>
     <td style="padding:12px 10px 12px 0;">
-      <span style="font:700 14.5px/1.3 ${DISPLAY};color:${C.ink};">${it.title}</span><br>
-      <span style="font:400 13px/1.5 ${BODY};color:${C.inkSoft};">${it.variant ? `${it.variant} · ` : ""}qty ${it.qty}</span>
+      <span style="font:700 14.5px/1.3 ${DISPLAY};color:${C.ink};">${esc(it.title)}</span><br>
+      <span style="font:400 13px/1.5 ${BODY};color:${C.inkSoft};">${it.variant ? `${esc(it.variant)} · ` : ""}qty ${it.qty}</span>
     </td>
     <td align="right" style="padding:12px 0;font:700 14.5px/1.3 ${DISPLAY};color:${C.ink};white-space:nowrap;">
       ${formatCents(it.unit_cents * it.qty)}
@@ -136,7 +145,8 @@ function addressBlock(order: OrderRow): string {
     [a.city, a.state, a.postal_code].filter(Boolean).join(" "),
     a.country,
   ]
-    .filter(Boolean)
+    .filter((s): s is string => !!s)
+    .map(esc)
     .join("<br>");
   if (!lines) return "";
   return `
@@ -180,7 +190,7 @@ export async function orderConfirmationEmail(order: OrderRow) {
   const first = order.customer_name?.split(" ")[0];
   const body = `
     ${kicker(`Order ${order.order_ref} · confirmed`)}
-    ${heading(`It's theirs now${first ? `, ${first}` : ""}.`)}
+    ${heading(`It's theirs now${first ? `, ${esc(first)}` : ""}.`)}
     ${para(
       "Payment received, and the room is being prepared. We'll email again the day it ships, tracking included.",
     )}
@@ -203,7 +213,7 @@ export async function shippingNoticeEmail(order: OrderRow) {
     ${kicker(`Order ${order.order_ref} · shipped`)}
     ${heading("It's on the way.")}
     ${para(
-      `${carrierLine}${order.tracking_number ? ` Tracking number: <strong style="color:${C.ink};">${order.tracking_number}</strong>` : ""}`,
+      `${carrierLine}${order.tracking_number ? ` Tracking number: <strong style="color:${C.ink};">${esc(order.tracking_number)}</strong>` : ""}`,
     )}
     ${order.tracking_url ? button(order.tracking_url, "Track the parcel") : ""}
     ${itemsTable(order, catalog)}

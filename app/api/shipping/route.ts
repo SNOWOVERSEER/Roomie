@@ -1,3 +1,4 @@
+import { timingSafeEqual } from "node:crypto";
 import { NextRequest, NextResponse } from "next/server";
 import { env } from "@/lib/env";
 import { getSupabaseAdmin, type OrderRow } from "@/lib/supabase-admin";
@@ -5,12 +6,23 @@ import { sendShippingNotice } from "@/lib/email";
 
 /*
  * POST /api/shipping —— 内部履约接口（Bearer ADMIN_SECRET 鉴权）。
- * 手动发货后调用：更新状态/追踪号并发发货邮件。用法见 docs/phase2-runbook.md：
+ * 日常发货首选本地 admin（直连 Supabase+Resend，见 admin/lib/orderActions.ts）；
+ * 本接口保留作 curl fallback。用法见 docs/phase2-runbook.md：
  *
  *   curl -X POST https://roomiepaw.vercel.app/api/shipping \
  *     -H "Authorization: Bearer $ADMIN_SECRET" -H "Content-Type: application/json" \
  *     -d '{"order_ref":"482916","tracking_number":"XX123","carrier":"auspost"}'
+ *
+ * 加固（2026-07-14）：常数时间比较（防时序侧信道）+ 失败尝试留痕。
+ * ADMIN_SECRET 为 48 位 hex（192-bit 熵），暴力不可行；未配置时恒 401。
  */
+
+function authOk(header: string | null, secret: string): boolean {
+  if (!secret || !header?.startsWith("Bearer ")) return false;
+  const got = Buffer.from(header.slice(7));
+  const want = Buffer.from(secret);
+  return got.length === want.length && timingSafeEqual(got, want);
+}
 
 const TRACK_URL: Record<string, (n: string) => string> = {
   auspost: (n) => `https://auspost.com.au/mypost/track/#/details/${n}`,
@@ -28,8 +40,11 @@ interface Body {
 }
 
 export async function POST(req: NextRequest) {
-  const auth = req.headers.get("authorization") ?? "";
-  if (!env.adminSecret || auth !== `Bearer ${env.adminSecret}`) {
+  if (!authOk(req.headers.get("authorization"), env.adminSecret)) {
+    console.warn("[shipping] 鉴权失败", {
+      ip: req.headers.get("x-forwarded-for") ?? "unknown",
+      ua: (req.headers.get("user-agent") ?? "").slice(0, 80),
+    });
     return NextResponse.json({ error: "unauthorized" }, { status: 401 });
   }
 
