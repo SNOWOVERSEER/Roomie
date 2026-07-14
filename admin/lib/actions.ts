@@ -76,7 +76,7 @@ export async function updatePrice(
       .prices.update(row.stripe_price_id, { active: false })
       .catch(() => {});
   }
-  revalidatePath("/");
+  revalidatePath("/products");
   return { ok: true };
 }
 
@@ -90,7 +90,7 @@ export async function updateStock(
   }
   const { error } = await db().from("products").update({ stock }).eq("handle", handle);
   if (error) return { error: error.message };
-  revalidatePath("/");
+  revalidatePath("/products");
   return { ok: true };
 }
 
@@ -117,7 +117,7 @@ export async function toggleAvailable(
     .update({ available })
     .eq("handle", handle);
   if (error) return { error: error.message };
-  revalidatePath("/");
+  revalidatePath("/products");
   return { ok: true };
 }
 
@@ -135,7 +135,7 @@ export async function updateCopy(
     .update({ title: t, tagline: tagline.trim() })
     .eq("handle", handle);
   if (error) return { error: error.message };
-  revalidatePath("/");
+  revalidatePath("/products");
   return { ok: true };
 }
 
@@ -166,7 +166,7 @@ export async function createProduct(input: {
     sort: 1000,
   });
   if (error) return { error: error.message };
-  revalidatePath("/");
+  revalidatePath("/products");
   return { ok: true };
 }
 
@@ -177,7 +177,7 @@ export async function deleteProduct(handle: string): Promise<Result> {
   if (row.available) return { error: "take it off sale before deleting" };
   const { error } = await db().from("products").delete().eq("handle", handle);
   if (error) return { error: error.message };
-  revalidatePath("/");
+  revalidatePath("/products");
   return { ok: true };
 }
 
@@ -193,7 +193,7 @@ export async function updateItemStock(
   }
   const { error } = await db().from("stock_items").update({ stock }).eq("id", id);
   if (error) return { error: error.message };
-  revalidatePath("/");
+  revalidatePath("/products");
   return { ok: true };
 }
 
@@ -211,7 +211,7 @@ export async function toggleItemAvailable(
     .update({ available })
     .eq("id", id);
   if (error) return { error: error.message };
-  revalidatePath("/");
+  revalidatePath("/products");
   return { ok: true };
 }
 
@@ -238,6 +238,6 @@ export async function ensureStripe(handle: string): Promise<Result> {
   } catch (e) {
     return { error: `Stripe: ${e instanceof Error ? e.message : "failed"}` };
   }
-  revalidatePath("/");
+  revalidatePath("/products");
   return { ok: true };
 }

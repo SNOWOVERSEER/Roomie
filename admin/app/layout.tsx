@@ -20,8 +20,10 @@ export default function RootLayout({
       <body>
         <nav className="nav">
           <strong style={{ color: "var(--orange-deep)" }}>Roomie Admin</strong>
-          <Link href="/">Products</Link>
+          <Link href="/">Dashboard</Link>
           <Link href="/orders">Orders</Link>
+          <Link href="/products">Products</Link>
+          <Link href="/customers">Customers</Link>
           <Link href="/waitlist">Waitlist</Link>
           <span className="mode">
             Stripe: <b className={mode === "live" ? "warn" : undefined}>{mode}</b>
