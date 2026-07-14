@@ -164,6 +164,10 @@ const houseNote = (order: OrderRow) =>
 const button = (href: string, label: string) =>
   `<a href="${href}" style="display:inline-block;margin-top:22px;background:${C.orange};color:#fff8ee;font:700 15px/1 ${DISPLAY};text-decoration:none;border-radius:999px;padding:14px 28px;">${label}</a>`;
 
+/** 暖底提示盒（houseNote 同款视觉），内容需已转义 */
+const noteBox = (html: string) =>
+  `<p style="margin:20px 0 0;padding:13px 16px;background:${C.creamWarm};border-radius:14px;font:400 13.5px/1.6 ${BODY};color:${C.ink};">${html}</p>`;
+
 async function deliver(to: string, subject: string, html: string) {
   if (!env.resendApiKey) {
     console.log(`[email] RESEND_API_KEY 未配置，跳过发送：「${subject}」→ ${to}`);
@@ -222,6 +226,82 @@ export async function shippingNoticeEmail(order: OrderRow) {
   return { subject, html: shell("Tracking inside. Claws at the ready.", body) };
 }
 
+/* ―― 订单生命周期邮件（admin 触发；文案约定：英文、无长破折号）―― */
+
+const REFUND_ETA = "It usually lands within 5 to 10 business days.";
+
+export async function cancellationEmail(order: OrderRow, refundCents: number) {
+  const catalog = await getCatalogMap();
+  const subject =
+    refundCents > 0
+      ? `Order ${order.order_ref} cancelled · refund on the way`
+      : `Order ${order.order_ref} cancelled`;
+  // refundCents = 0 只发生在「此前已全额退款、随后补取消」：paid 订单必然收过钱
+  const refundLine =
+    refundCents > 0
+      ? `<strong style="color:${C.ink};">${formatCents(refundCents)}</strong> is heading back to your original payment method. ${REFUND_ETA}`
+      : "Your payment for this order has already been refunded in full.";
+  const body = `
+    ${kicker(`Order ${order.order_ref} · cancelled`)}
+    ${heading("Your order is cancelled.")}
+    ${para(`We've cancelled order ${order.order_ref} in full. ${refundLine}`)}
+    ${itemsTable(order, catalog)}
+    ${para("The wall stays bare for now. If you change your mind, we'll be here.")}`;
+  return { subject, html: shell("Order cancelled. Refund on its way.", body) };
+}
+
+export async function refundNoticeEmail(order: OrderRow, refundCents: number) {
+  const catalog = await getCatalogMap();
+  const subject = `A refund for order ${order.order_ref} is on the way`;
+  // 调用方在 DB 更新后传入最新 order —— 用累计值判断是否部分退款
+  const partial = order.refunded_cents < order.amount_total;
+  const body = `
+    ${kicker(`Order ${order.order_ref} · refund`)}
+    ${heading("Money heading back your way.")}
+    ${para(
+      `We've refunded <strong style="color:${C.ink};">${formatCents(refundCents)}</strong> to your original payment method. ${REFUND_ETA}`,
+    )}
+    ${partial ? para("This is a partial refund. The rest of your order stands as placed.") : ""}
+    ${itemsTable(order, catalog)}`;
+  return { subject, html: shell("Your refund is on its way.", body) };
+}
+
+export async function returnInstructionsEmail(order: OrderRow, note?: string) {
+  const catalog = await getCatalogMap();
+  const subject = `Return for order ${order.order_ref} · next steps`;
+  const body = `
+    ${kicker(`Order ${order.order_ref} · return`)}
+    ${heading("Let's bring it home.")}
+    ${para(
+      "We've started a return for your order. Reply to this email and we'll sort out the details together, return address included.",
+    )}
+    ${note?.trim() ? noteBox(esc(note.trim()).replaceAll("\n", "<br>")) : ""}
+    ${para(
+      `The full policy lives at <a href="${base()}/shipping-returns" style="color:${C.blueDeep};">roomiepaw · shipping &amp; returns</a>. Thirty days, original condition, original packaging if you still have it.`,
+    )}
+    ${itemsTable(order, catalog)}
+    ${para("Pack it snugly. Couriers are not gentle people.")}`;
+  return { subject, html: shell("Return started. Reply and we'll sort it.", body) };
+}
+
+export function customerNoteEmail(
+  order: OrderRow,
+  subject: string,
+  message: string,
+) {
+  // 自由撰写：主题即标题；正文按空行分段，段内换行保留
+  const paras = message
+    .trim()
+    .split(/\n{2,}/)
+    .map((p) => para(esc(p).replaceAll("\n", "<br>")))
+    .join("");
+  const body = `
+    ${kicker(`Order ${order.order_ref} · RoomiePaw`)}
+    ${heading(esc(subject))}
+    ${paras}`;
+  return { subject, html: shell("A note about your order.", body) };
+}
+
 export async function sendOrderConfirmation(order: OrderRow) {
   const { subject, html } = await orderConfirmationEmail(order);
   return deliver(order.email, subject, html);
@@ -229,5 +309,29 @@ export async function sendOrderConfirmation(order: OrderRow) {
 
 export async function sendShippingNotice(order: OrderRow) {
   const { subject, html } = await shippingNoticeEmail(order);
+  return deliver(order.email, subject, html);
+}
+
+export async function sendCancellation(order: OrderRow, refundCents: number) {
+  const { subject, html } = await cancellationEmail(order, refundCents);
+  return deliver(order.email, subject, html);
+}
+
+export async function sendRefundNotice(order: OrderRow, refundCents: number) {
+  const { subject, html } = await refundNoticeEmail(order, refundCents);
+  return deliver(order.email, subject, html);
+}
+
+export async function sendReturnInstructions(order: OrderRow, note?: string) {
+  const { subject, html } = await returnInstructionsEmail(order, note);
+  return deliver(order.email, subject, html);
+}
+
+export async function sendCustomerNote(
+  order: OrderRow,
+  subject: string,
+  message: string,
+) {
+  const { html } = customerNoteEmail(order, subject, message);
   return deliver(order.email, subject, html);
 }

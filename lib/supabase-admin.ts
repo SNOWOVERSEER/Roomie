@@ -14,10 +14,23 @@ export interface OrderItem {
   unit_cents: number;
 }
 
+/**
+ * 履约状态机（0007 起）：paid → shipped → delivered 主线；
+ * paid → cancelled（退单）；shipped/delivered → return_requested → returned（退货）。
+ * 退款独立于状态：refunded_cents 存 Stripe 权威累计值（部分退款不改状态）。
+ */
+export type OrderStatus =
+  | "paid"
+  | "shipped"
+  | "delivered"
+  | "cancelled"
+  | "return_requested"
+  | "returned";
+
 export interface OrderRow {
   id: string;
   order_number: number;
-  /** 客户可见订单号（RP-XXXXX，随机非顺序，不暴露销量） */
+  /** 客户可见订单号（6 位纯数字随机，不暴露销量） */
   order_ref: string;
   stripe_session_id: string;
   stripe_payment_intent_id: string | null;
@@ -27,15 +40,32 @@ export interface OrderRow {
   items: OrderItem[];
   amount_total: number;
   shipping_cents: number;
+  /** 已退款累计（分）。与 Stripe charge.amount_refunded 对齐 */
+  refunded_cents: number;
   currency: string;
-  status: "paid" | "shipped" | "delivered";
+  status: OrderStatus;
   tracking_number: string | null;
   tracking_url: string | null;
   carrier: string | null;
+  return_reason: string | null;
+  admin_note: string | null;
   created_at: string;
   shipped_at: string | null;
   delivered_at: string | null;
+  cancelled_at: string | null;
+  return_requested_at: string | null;
+  returned_at: string | null;
   updated_at: string;
+}
+
+/** 订单事件（时间线补充；里程碑由 orders 时间戳列派生，不入表） */
+export interface OrderEventRow {
+  id: string;
+  order_id: string;
+  type: "refund" | "email" | "restock" | "return_cancelled";
+  message: string;
+  data: Record<string, unknown>;
+  created_at: string;
 }
 
 export interface ProductRow {

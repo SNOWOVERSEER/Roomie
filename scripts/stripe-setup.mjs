@@ -79,24 +79,34 @@ for (const sku of SKUS) {
   console.log(`${sku.handle}: product=${product.id} price=${price.id} (${sku.unitAmount} aud)`);
 }
 
-// —— 生产 webhook endpoint（幂等：按 URL 匹配）——
+// —— 生产 webhook endpoint（幂等：按 URL 匹配；已存在则对齐事件订阅）——
 const hookUrl = `${SITE}/api/webhook`;
+const ENABLED_EVENTS = [
+  "checkout.session.completed",
+  "checkout.session.async_payment_succeeded",
+  "checkout.session.async_payment_failed",
+  "charge.refunded", // 退款额同步（admin 或 Dashboard 手工退款都被兜住）
+];
 const hooks = await stripe.webhookEndpoints.list({ limit: 100 });
 let hook = hooks.data.find((h) => h.url === hookUrl);
 if (!hook) {
   hook = await stripe.webhookEndpoints.create({
     url: hookUrl,
-    enabled_events: [
-      "checkout.session.completed",
-      "checkout.session.async_payment_succeeded",
-      "checkout.session.async_payment_failed",
-    ],
+    enabled_events: ENABLED_EVENTS,
     description: "Roomie production — writes orders + confirmation email",
   });
   console.log(`webhook created: ${hook.id}`);
   console.log(`PROD_STRIPE_WEBHOOK_SECRET=${hook.secret}`); // 只在创建时返回一次
 } else {
-  console.log(`webhook exists: ${hook.id}（secret 只在创建时显示，可在 Dashboard 查看）`);
+  const missing = ENABLED_EVENTS.filter((e) => !hook.enabled_events.includes(e));
+  if (missing.length > 0) {
+    hook = await stripe.webhookEndpoints.update(hook.id, {
+      enabled_events: ENABLED_EVENTS,
+    });
+    console.log(`webhook updated: ${hook.id}（补订 ${missing.join(", ")}）`);
+  } else {
+    console.log(`webhook exists: ${hook.id}（secret 只在创建时显示，可在 Dashboard 查看）`);
+  }
 }
 
 console.log("\n--- lib/catalog.ts 常量 ---");

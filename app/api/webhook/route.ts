@@ -51,6 +51,29 @@ export async function POST(req: NextRequest) {
     case "checkout.session.async_payment_failed":
       console.warn("[webhook] 异步支付失败:", event.data.object.id);
       break;
+    // 退款同步（含 Stripe Dashboard 手工退款）：refunded_cents 永远写
+    // charge.amount_refunded 权威累计值 → 与 admin 侧退款天然幂等互不重复。
+    case "charge.refunded": {
+      const charge = event.data.object;
+      const pi =
+        typeof charge.payment_intent === "string"
+          ? charge.payment_intent
+          : (charge.payment_intent?.id ?? null);
+      if (pi) {
+        const { data, error } = await getSupabaseAdmin()
+          .from("orders")
+          .update({ refunded_cents: charge.amount_refunded })
+          .eq("stripe_payment_intent_id", pi)
+          .select("order_ref")
+          .maybeSingle();
+        if (error) {
+          // 让 Stripe 重试，避免退款额漂移
+          return NextResponse.json({ error: "sync failed" }, { status: 500 });
+        }
+        if (!data) console.warn("[webhook] 退款同步：找不到订单", pi);
+      }
+      break;
+    }
   }
 
   return NextResponse.json({ received: true });
