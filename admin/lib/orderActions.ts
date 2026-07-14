@@ -83,19 +83,31 @@ async function afterEmail(
 
 /**
  * 回补库存（取消/退货收货）：BOM 商品按组件展开，其余走商品级。
- * RPC 只影响 stock 非 null 的跟踪行；不限量的行天然跳过。
+ * RPC 对 stock=null（不跟踪）是静默 no-op —— 先查出跟踪中的行，
+ * 只对它们回补，事件流水才不会记下没发生的回补。
  */
 async function restockOrder(order: OrderRow): Promise<string[]> {
+  const [itemsQ, productsQ] = await Promise.all([
+    db().from("stock_items").select("id").not("stock", "is", null),
+    db().from("products").select("handle").not("stock", "is", null),
+  ]);
+  const trackedItems = new Set(
+    ((itemsQ.data ?? []) as { id: string }[]).map((r) => r.id),
+  );
+  const trackedProducts = new Set(
+    ((productsQ.data ?? []) as { handle: string }[]).map((r) => r.handle),
+  );
+
   const restocked: string[] = [];
   for (const it of order.items) {
     const comps = componentsFor(it.handle, it.variant);
     if (comps) {
-      for (const c of comps) {
+      for (const c of comps.filter((c) => trackedItems.has(c))) {
         const { error } = await db().rpc("restock_item", { p_id: c, p_qty: it.qty });
         if (error) console.error("[admin] 回补组件失败:", c, error.message);
         else restocked.push(`${c} ×${it.qty}`);
       }
-    } else {
+    } else if (trackedProducts.has(it.handle)) {
       const { error } = await db().rpc("restock_product", {
         p_handle: it.handle,
         p_qty: it.qty,
