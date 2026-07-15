@@ -75,15 +75,13 @@ curl -X POST https://roomiepaw.vercel.app/api/shipping \
 - 自动：状态 → `shipped`、记 `shipped_at`、给顾客发「发货邮件」。
 - 送达后（可选）：`-d '{"order_ref":"482916","status":"delivered"}'`。
 - 也接受 `order_number`（内部自增号）或 `session_id`。
-- ⚠️ **2026-07-13 生产 env 事故级缺口（待店主处理）**：生产 API 层多项
-  不可用——`/api/waitlist` 500（Supabase env 坏）、`/api/checkout` 502
-  （Stripe env 坏）、`/api/shipping` 401（ADMIN_SECRET 不一致）。首页等
-  静态页正常。诊断：Vercel 环境变量整体未配对（历史 e2e 都在本地跑过，
-  生产 API 可能从未通过）。**修法：Vercel → Settings → Environment
-  Variables，按 `.env.example` 清单对照本地 `.env.local` 逐个核对重贴
-  （`NEXT_PUBLIC_URL` 用 https://roomiepaw.vercel.app、`STRIPE_WEBHOOK_SECRET`
-  用生产 endpoint 的 whsec，其余与本地同值），保存后 Redeploy。**
-  验证：对生产重跑上面的 waitlist/checkout curl 应 200。
+- ⚠️ **生产现状（2026-07-15 合并部署后复测）**：Supabase ✓、waitlist ✓、
+  checkout ✓（test mode 能开出真实结算页）。**待你处理两件**：
+  1. **在售价是测试残值**：站上现在显示（并会实收）scratcher AU$149、
+     print AU$42——07-13 改价测试的遗留。恢复：admin → Products →
+     scratcher 改回 **89**、print 改回 **35**（各一次行内改价，秒生效）。
+  2. `/api/shipping` 401——生产 `ADMIN_SECRET` 与本地不一致。只影响这条
+     curl 兜底（admin 后台发货不走它），对齐成本地值即可。
 
 ### 改价 / 库存 / 上下架 / 上新（全在 admin → Products）
 

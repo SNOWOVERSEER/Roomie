@@ -267,7 +267,25 @@ Resend 发交易邮件。服务端逻辑全部在 API Routes（无 Edge Function
 - Afterpay 异步支付：completed 事件 `payment_status` 可能未付，只记已付；
   `async_payment_succeeded` 再落库。
 
-现状快照（2026-07-12）：
+现状快照（2026-07-15，admin-platform 已合并 main 并部署）：
+
+- **生产已跑 DB 化代码**：全站 force-dynamic 从 products/stock_items 读，
+  改价补货免部署生效。生产 Supabase env ✓（/api/order 探针 404 干净）；
+  **Stripe checkout ✓**（test mode，真实 session 创建成功）。旧部署的结算
+  故障根因是「07-13 改价事故归档掉的 price id 还硬编码在旧代码里」——
+  DB 化代码读表里的现行 id，合并顺带自愈。
+- **⚠️ 在售价格是测试残值（等店主处理）**：products 表里 scratcher=AU$149、
+  print=AU$42（07-13 后台改价测试的遗留；当时只回滚了 Stripe 归档，没回滚
+  表值），现在生产站显示并会实收这个价。**正典价 AU$89 / AU$35**——
+  admin → Products 两次行内改价即恢复（display 与实收始终一致，无错收
+  风险，只是价签不对）。定价属产品决策，agent 未代改。
+- 生产 `ADMIN_SECRET` 仍与本地不一致（shipping API 401）——只影响 curl
+  兜底，admin 发货直连 Supabase/Resend 不受影响。
+- webhook 的 `charge.refunded` 订阅仍待补（跑一次 `npm run stripe:setup`）。
+- 结算回跳 URL 已加固（`lib/env.ts publicOrigin()`）：生产上 NEXT_PUBLIC_URL
+  误配 localhost 也不会把付完款的客户带去 localhost。
+
+历史快照（2026-07-12）：
 
 - Stripe **test mode**：scratcher `price_1TsHxoDzmUuzRpRKdgcL52kJ`(8900) /
   print `price_1TsHxpDzmUuzRpRKRnGBcpHp`(3500) / house
@@ -465,6 +483,7 @@ Create in Stripe。**不再需要重跑 stripe:setup 回填代码。**
 | 07-12 深夜 | Nav 12px 上底修字叠 | `3988020` |
 | 07-13 | **商品数据迁 Supabase products 表 + 本地 admin 后台**（改价/库存/发货/waitlist 全后台化；推翻"商品数据用代码常量"决策——真库存必须可变存储） | admin-platform 分支，spec `docs/superpowers/specs/2026-07-13-local-admin-design.md` |
 | 07-14 | **admin 订单管理全面化**：六态状态机（+取消/退货流）、Stripe 退款（部分/全额，refunded_cents 存权威累计值）、order_events 时间线、联系客户/重发邮件、Dashboard 统计、Customers、订单 CSV、装箱单。原则：退款先行（退款失败则取消/收货不落库）、里程碑不双写 | 用户全权委托；spec `2026-07-14-admin-order-management-design.md`，25 项 e2e 验证含真实 test-mode 退款 |
+| 07-15 | **admin-platform 合并 main 上生产**（用户拍板）：全站 DB 化 + admin 后台 + SaaS Dashboard 一并落地；结算回跳 URL 加固（publicOrigin，生产拒信 localhost）。合并顺带修好生产结算（旧代码硬编码着 07-13 事故中被归档的 price id；DB 化后读现行 id 自愈）。**发现在售价为 149/42 测试残值，正典 89/35，定价属产品决策留给店主在 admin 恢复** | ff `c7d8e40..56f7ef7`；生产验证见 runbook 现状 |
 
 ---
 
