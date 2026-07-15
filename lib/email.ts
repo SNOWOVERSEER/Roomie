@@ -1,5 +1,5 @@
 import { Resend } from "resend";
-import { env } from "./env";
+import { env, PROD_ORIGIN } from "./env";
 import { formatCents, getCatalogMap, type CatalogItem } from "./catalog";
 import { ARTWORKS } from "./heroConfig";
 import type { OrderItem, OrderRow } from "./supabase-admin";
@@ -35,7 +35,7 @@ const BODY = `'Nunito Sans','Trebuchet MS','Segoe UI',Verdana,sans-serif`;
    收件端会全部断链（踩过），所以非 https 一律回退生产域名 */
 const base = () => {
   const u = env.publicUrl;
-  return u && u.startsWith("https://") ? u : "https://roomiepaw.vercel.app";
+  return u && u.startsWith("https://") ? u : PROD_ORIGIN;
 };
 
 /* 所有进 HTML 的动态文本一律转义：variant/姓名/地址来自客户输入

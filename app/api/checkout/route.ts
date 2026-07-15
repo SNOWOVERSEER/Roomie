@@ -3,7 +3,7 @@ import { getCatalogMap, canBuy, shippingCentsFor } from "@/lib/catalog";
 import { componentsFor, getStockItems } from "@/lib/inventory";
 import { ARTWORKS } from "@/lib/heroConfig";
 import { getStripe } from "@/lib/stripe";
-import { env } from "@/lib/env";
+import { env, publicOrigin } from "@/lib/env";
 
 /* variant 只可能是画名（白名单校验，非法值剥离）——它会进订单快照与
    邮件模板，绝不能是自由字符串（HTML 注入面）。猫屋编号 variant 待开售时扩。 */
@@ -91,7 +91,9 @@ export async function POST(req: NextRequest) {
     }
   }
 
-  const base = env.publicUrl || req.nextUrl.origin;
+  // 结算回跳地址：生产上只信 https（NEXT_PUBLIC_URL 误配 localhost 时
+  // 退回请求源），本地 dev 照常回 localhost:3000
+  const base = publicOrigin(req.nextUrl.origin);
 
   // 购物车快照进 metadata（webhook 写库时的 variant 事实源）；
   // Stripe metadata 值上限 500 字符，超限则置空、webhook 退回 line_items 兜底

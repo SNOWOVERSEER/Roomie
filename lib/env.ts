@@ -14,3 +14,21 @@ export const env = {
   adminSecret: process.env.ADMIN_SECRET ?? "",
   publicUrl: process.env.NEXT_PUBLIC_URL ?? "",
 };
+
+/** 客户端生产环境的规范地址（改域名只动这里 + .env.example） */
+export const PROD_ORIGIN = "https://roomiepaw.vercel.app";
+
+/**
+ * 站点对外源（结算回跳等客户可见 URL 用）：
+ * - https 的 NEXT_PUBLIC_URL 永远可信；
+ * - http（本地 dev 的 localhost:3000）只在非生产构建可信——
+ *   生产上 NEXT_PUBLIC_URL 误配成 localhost 时绝不能把付完款的客户
+ *   重定向到 localhost；
+ * - 其余情况用调用方兜底（如请求源），再兜到生产域名。
+ */
+export function publicOrigin(fallback: string = PROD_ORIGIN): string {
+  const u = env.publicUrl.replace(/\/+$/, "");
+  if (u.startsWith("https://")) return u;
+  if (u.startsWith("http://") && process.env.NODE_ENV !== "production") return u;
+  return fallback.replace(/\/+$/, "") || PROD_ORIGIN;
+}

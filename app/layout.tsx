@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Baloo_2, Nunito_Sans } from "next/font/google";
 import "./globals.css";
 import { getCatalog } from "@/lib/catalog";
+import { PROD_ORIGIN } from "@/lib/env";
 import { getStockItems, productSoldOut } from "@/lib/inventory";
 import { CartProvider, type ClientCatalogItem } from "@/components/CartContext";
 
@@ -33,9 +34,9 @@ const body = Nunito_Sans({
 const siteUrl = (() => {
   const u = process.env.NEXT_PUBLIC_URL ?? "";
   try {
-    return new URL(u.startsWith("https://") ? u : "https://roomiepaw.vercel.app");
+    return new URL(u.startsWith("https://") ? u : PROD_ORIGIN);
   } catch {
-    return new URL("https://roomiepaw.vercel.app");
+    return new URL(PROD_ORIGIN);
   }
 })();
 
