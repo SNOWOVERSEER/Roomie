@@ -441,7 +441,8 @@ export default function Dashboard({
     { label: "Orders", value: String(cur.orders), d: delta(cur.orders, prev?.orders ?? null), goodWhen: "up" },
     { label: "Avg order", value: cur.orders ? formatCents(cur.aov) : "·", d: delta(cur.aov, prev?.aov ?? null), goodWhen: "up" },
     { label: "Units sold", value: String(cur.units), d: delta(cur.units, prev?.units ?? null), goodWhen: "up" },
-    { label: "Refunded", value: cur.refunded > 0 ? `−${formatCents(cur.refunded)}` : "AU$0", d: delta(cur.refunded, prev?.refunded ?? null), goodWhen: "down" },
+    // 标签已写明 Refunded，数值用正数（负号读起来像出错——店主反馈 07-15）
+    { label: "Refunded", value: formatCents(cur.refunded), d: delta(cur.refunded, prev?.refunded ?? null), goodWhen: "down" },
     { label: "Time to ship", value: fmtHours(cur.shipHours), d: cur.shipHours !== null && prev?.shipHours != null ? delta(cur.shipHours, prev.shipHours) : null, goodWhen: "down" },
   ];
 

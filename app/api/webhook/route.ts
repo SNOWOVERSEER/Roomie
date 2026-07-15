@@ -5,7 +5,7 @@ import { getStripe } from "@/lib/stripe";
 import { env } from "@/lib/env";
 import { getSupabaseAdmin, type OrderItem, type OrderRow } from "@/lib/supabase-admin";
 import { sendOrderConfirmation } from "@/lib/email";
-import { getCatalogMap } from "@/lib/catalog";
+import { formatCents, getCatalogMap } from "@/lib/catalog";
 import { componentsFor } from "@/lib/inventory";
 
 /*
@@ -52,7 +52,9 @@ export async function POST(req: NextRequest) {
       console.warn("[webhook] 异步支付失败:", event.data.object.id);
       break;
     // 退款同步（含 Stripe Dashboard 手工退款）：refunded_cents 永远写
-    // charge.amount_refunded 权威累计值 → 与 admin 侧退款天然幂等互不重复。
+    // charge.amount_refunded 权威累计值。按增量判断幂等：admin 侧退款自己
+    // 先写了 DB（增量为 0），这里只补记「外部发起」的退款流水——
+    // 时间线/Activity 才看得见 Dashboard 手工退款（店主反馈 07-15）。
     case "charge.refunded": {
       const charge = event.data.object;
       const pi =
@@ -60,17 +62,37 @@ export async function POST(req: NextRequest) {
           ? charge.payment_intent
           : (charge.payment_intent?.id ?? null);
       if (pi) {
-        const { data, error } = await getSupabaseAdmin()
+        const { data: row, error: readErr } = await getSupabaseAdmin()
+          .from("orders")
+          .select("id, refunded_cents")
+          .eq("stripe_payment_intent_id", pi)
+          .maybeSingle();
+        if (readErr) {
+          return NextResponse.json({ error: "sync read failed" }, { status: 500 });
+        }
+        if (!row) {
+          console.warn("[webhook] 退款同步：找不到订单", pi);
+          break;
+        }
+        const delta = charge.amount_refunded - row.refunded_cents;
+        if (delta <= 0) break; // 已是最新（重投/admin 已记）
+        const { error } = await getSupabaseAdmin()
           .from("orders")
           .update({ refunded_cents: charge.amount_refunded })
-          .eq("stripe_payment_intent_id", pi)
-          .select("order_ref")
-          .maybeSingle();
+          .eq("id", row.id);
         if (error) {
           // 让 Stripe 重试，避免退款额漂移
           return NextResponse.json({ error: "sync failed" }, { status: 500 });
         }
-        if (!data) console.warn("[webhook] 退款同步：找不到订单", pi);
+        const { error: evErr } = await getSupabaseAdmin()
+          .from("order_events")
+          .insert({
+            order_id: row.id,
+            type: "refund",
+            message: `Refunded ${formatCents(delta)} (Stripe)`,
+            data: { cents: delta, stripe_event_id: event.id },
+          });
+        if (evErr) console.error("[webhook] 退款流水写入失败:", evErr.message);
       }
       break;
     }
