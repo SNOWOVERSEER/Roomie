@@ -302,6 +302,37 @@ export function customerNoteEmail(
   return { subject, html: shell("A note about your order.", body) };
 }
 
+/* ―― 营销邮件：Roomie letter 欢迎信（10% 码）―― */
+
+export function welcomeCouponEmail(code: string) {
+  const subject = "Your 10% off is inside · welcome to the Roomie letter";
+  const ticket = `
+  <div style="margin:24px 0 0;padding:20px 22px;border:2px dashed ${C.orange};border-radius:16px;background:${C.creamWarm};text-align:center;">
+    <p style="margin:0;font:800 11px/1 ${DISPLAY};color:${C.orangeDeep};letter-spacing:.16em;text-transform:uppercase;">10% off your first piece</p>
+    <p style="margin:10px 0 0;font:800 26px/1.1 ${DISPLAY};letter-spacing:.06em;color:${C.blueDeep};">${esc(code)}</p>
+  </div>`;
+  const body = `
+    ${kicker("The Roomie letter · welcome")}
+    ${heading("Ten percent, for the first piece.")}
+    ${para(
+      "You're on the letter now: first look at new pieces, restocks, and the occasional treat for the ones on four legs. No noise, we write when there's something worth writing about.",
+    )}
+    ${ticket}
+    ${para(
+      "Paste it in the promo code box at checkout. One use, yours only, it takes 10% off your first order.",
+    )}
+    ${button(`${base()}/scratcher`, "Pick your print")}
+    ${para(
+      "Not for you? Reply with the word unsubscribe and we'll quietly take you off the list.",
+    )}`;
+  return { subject, html: shell("Your 10% off code is inside.", body) };
+}
+
+export async function sendWelcomeCoupon(to: string, code: string) {
+  const { subject, html } = welcomeCouponEmail(code);
+  return deliver(to, subject, html);
+}
+
 export async function sendOrderConfirmation(order: OrderRow) {
   const { subject, html } = await orderConfirmationEmail(order);
   return deliver(order.email, subject, html);

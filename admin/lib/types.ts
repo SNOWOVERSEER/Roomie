@@ -92,6 +92,17 @@ export interface WaitlistRow {
   created_at: string;
 }
 
+/** The Roomie letter 订阅（10% 欢迎码随订阅发放） */
+export interface SubscriberRow {
+  id: string;
+  email: string;
+  promo_code: string | null;
+  stripe_promotion_code_id: string | null;
+  source: string;
+  emailed_at: string | null;
+  created_at: string;
+}
+
 export interface StockItemRow {
   id: string;
   label: string;
