@@ -1,10 +1,17 @@
 import type { Metadata } from "next";
 import { Baloo_2, Nunito_Sans } from "next/font/google";
+import { cookies } from "next/headers";
 import "./globals.css";
 import { getCatalog } from "@/lib/catalog";
 import { PROD_ORIGIN } from "@/lib/env";
 import { getStockItems, productSoldOut } from "@/lib/inventory";
 import { CartProvider, type ClientCatalogItem } from "@/components/CartContext";
+import PromoProvider from "@/components/promo/PromoProvider";
+import {
+  activeCampaign,
+  PROMO_DISMISS_COOKIE,
+  SUBSCRIBED_COOKIE,
+} from "@/lib/promos";
 
 /*
  * 商品数据来自 Supabase（admin 后台可改价/库存）——必须显式动态渲染，
@@ -58,10 +65,21 @@ export default async function RootLayout({
 }: Readonly<{ children: React.ReactNode }>) {
   // 客户端购物车的价格快照（上架商品；售罄按组件库存聚合）。
   // 展示用快照，结算金额永远由服务端 re-derive。
-  const [rows, stockItems] = await Promise.all([
+  const [rows, stockItems, jar] = await Promise.all([
     getCatalog(),
     getStockItems(),
+    cookies(),
   ]);
+
+  // 活动栏位初始可见性在服务端算好：已关掉（7 天内、同活动）或
+  // 已订阅（letter 类活动）都不渲染 —— SSR 首帧即正确，无闪烁无位移
+  const dismissedId = jar.get(PROMO_DISMISS_COOKIE)?.value ?? null;
+  const subscribed = jar.get(SUBSCRIBED_COOKIE)?.value === "1";
+  const act = activeCampaign();
+  const campaign =
+    act && act.id !== dismissedId && !(act.kind === "subscribe" && subscribed)
+      ? act
+      : null;
   const catalog: ClientCatalogItem[] = rows
     .filter((i) => i.available)
     .map((i) => ({
@@ -75,7 +93,11 @@ export default async function RootLayout({
   return (
     <html lang="en">
       <body className={`${display.variable} ${body.variable}`}>
-        <CartProvider catalog={catalog}>{children}</CartProvider>
+        <CartProvider catalog={catalog}>
+          <PromoProvider campaign={campaign} subscribed={subscribed}>
+            {children}
+          </PromoProvider>
+        </CartProvider>
       </body>
     </html>
   );

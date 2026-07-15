@@ -1,7 +1,14 @@
-.nav {
+/* 固定栈：活动栏位 + 导航行（栏位收起时导航顺滑上移） */
+.stack {
   position: fixed;
   inset: 0 0 auto 0;
   z-index: 60;
+  display: flex;
+  flex-direction: column;
+}
+
+.nav {
+  position: relative;
   display: flex;
   align-items: center;
   gap: 2.2rem;

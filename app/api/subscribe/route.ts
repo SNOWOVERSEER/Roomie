@@ -62,7 +62,7 @@ async function mintPromotionCode(
   for (let i = 0; i < 3; i++) {
     try {
       return await stripe.promotionCodes.create({
-        coupon: WELCOME_COUPON_ID,
+        promotion: { type: "coupon", coupon: WELCOME_COUPON_ID },
         code: mintCode(),
         max_redemptions: 1,
         metadata: { email, source: "roomie-letter" },

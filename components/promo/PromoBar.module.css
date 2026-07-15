@@ -1,0 +1,94 @@
+/* ——— 活动栏位：夜蓝底上一行字 + 橙色小胶囊 CTA ——— */
+
+/* grid-rows 0fr/1fr 收放：内容自然高度，收起时导航整体顺滑上移 */
+.wrap {
+  display: grid;
+  grid-template-rows: 1fr;
+  transition: grid-template-rows 420ms var(--ease-out);
+}
+
+.tuckedWrap {
+  grid-template-rows: 0fr;
+  pointer-events: none;
+}
+
+.clip {
+  overflow: hidden;
+  min-height: 0;
+}
+
+.bar {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.9rem;
+  background: var(--navy);
+  color: var(--cream);
+  padding: 0.5rem clamp(2.8rem, 6vw, 3.6rem) 0.55rem clamp(1rem, 3vw, 2rem);
+  font-family: var(--font-display), sans-serif;
+}
+
+.msg {
+  min-width: 0;
+  font-size: 0.88rem;
+  font-weight: 600;
+  letter-spacing: 0.015em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.cta {
+  flex: none;
+  font-family: inherit;
+  font-weight: 700;
+  font-size: 0.8rem;
+  letter-spacing: 0.04em;
+  color: #fff8ee;
+  background: var(--orange);
+  border-radius: 999px;
+  padding: 0.34em 1em;
+  transition:
+    transform var(--dur-fast) var(--ease-soft),
+    background var(--dur-fast) var(--ease-out);
+}
+
+.cta:hover {
+  transform: translateY(-1px);
+  background: var(--orange-deep);
+}
+
+.x {
+  position: absolute;
+  right: clamp(0.55rem, 2vw, 1.15rem);
+  top: 50%;
+  translate: 0 -50%;
+  display: grid;
+  place-items: center;
+  width: 27px;
+  height: 27px;
+  border-radius: 50%;
+  color: color-mix(in srgb, var(--cream) 72%, transparent);
+  transition:
+    background var(--dur-fast) var(--ease-out),
+    color var(--dur-fast) var(--ease-out);
+}
+
+.x:hover {
+  background: rgba(248, 246, 240, 0.14);
+  color: var(--cream);
+}
+
+@media (max-width: 640px) {
+  .bar {
+    gap: 0.6rem;
+    padding-block: 0.44rem 0.5rem;
+  }
+  .msg {
+    font-size: 0.79rem;
+  }
+  .cta {
+    font-size: 0.73rem;
+  }
+}

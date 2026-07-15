@@ -17,7 +17,8 @@
 
 /* ——— 面包屑条：固定 Nav 底下的一条奶油带 ——— */
 .crumb {
-  padding: 5.4rem 0 0;
+  /* 顶部要同时让开固定导航 + 活动栏位（栏位只在页顶露脸） */
+  padding: 6.6rem 0 0;
   background: var(--cream);
 }
 

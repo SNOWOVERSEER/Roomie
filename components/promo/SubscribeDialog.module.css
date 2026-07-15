@@ -1,0 +1,260 @@
+/* ——— Roomie letter 弹层：桌面居中纸卡 / 移动端底部抽屉 ——— */
+
+.overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 100; /* 高于 CartDrawer/toast 的 90 */
+  display: grid;
+  place-items: center;
+  padding: 1.2rem;
+  background: rgba(18, 27, 47, 0.45);
+  backdrop-filter: blur(3px);
+  -webkit-backdrop-filter: blur(3px);
+  animation: overlayIn 260ms var(--ease-out) both;
+}
+
+@keyframes overlayIn {
+  from {
+    opacity: 0;
+  }
+}
+
+.card {
+  position: relative;
+  width: min(480px, 100%);
+  background: var(--paper);
+  border-radius: var(--r-media);
+  box-shadow: var(--shadow-lift);
+  padding: 2.1rem 2.2rem 2.2rem;
+  animation: cardIn 420ms var(--ease-soft) both;
+}
+
+@keyframes cardIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px) scale(0.97);
+  }
+}
+
+.x {
+  position: absolute;
+  top: 0.9rem;
+  right: 0.9rem;
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  color: var(--ink-soft);
+  transition:
+    background var(--dur-fast) var(--ease-out),
+    color var(--dur-fast) var(--ease-out);
+}
+
+.x:hover {
+  background: rgba(46, 46, 51, 0.07);
+  color: var(--ink);
+}
+
+.kicker {
+  font-family: var(--font-display), sans-serif;
+  font-weight: 700;
+  font-size: 0.82rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--orange-deep);
+}
+
+.heading {
+  margin-top: 0.45rem;
+  font-size: clamp(1.55rem, 3vw, 1.9rem);
+  padding-right: 1.6rem; /* 别钻到关闭钮底下 */
+}
+
+.sub {
+  margin-top: 0.6rem;
+  color: var(--ink-soft);
+  font-size: 0.97rem;
+  max-width: 40ch;
+}
+
+.form {
+  margin-top: 1.15rem;
+}
+
+/* 蜜罐：移出视野但保持可提交 */
+.hp {
+  position: absolute;
+  left: -9999px;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+}
+
+.row {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.row input {
+  flex: 1 1 12rem;
+  min-width: 0;
+  font: inherit;
+  font-size: 0.97rem;
+  color: var(--ink);
+  background: var(--cream);
+  border: 2px solid color-mix(in srgb, var(--ink-soft) 22%, transparent);
+  border-radius: 999px;
+  padding: 0.66em 1.15em;
+  transition:
+    border-color var(--dur-fast) var(--ease-out),
+    background var(--dur-fast) var(--ease-out);
+}
+
+.row input::placeholder {
+  color: color-mix(in srgb, var(--ink-soft) 70%, transparent);
+}
+
+.row input:focus-visible {
+  outline: none;
+  border-color: var(--blue);
+  background: var(--paper);
+}
+
+.row input[aria-invalid="true"] {
+  border-color: #c25a2a;
+}
+
+.join {
+  font-family: var(--font-display), sans-serif;
+  font-weight: 700;
+  font-size: 0.95rem;
+  color: #fff8ee;
+  background: var(--orange);
+  border-radius: 999px;
+  padding: 0.62em 1.35em;
+  white-space: nowrap;
+  box-shadow: 0 6px 18px rgba(212, 112, 42, 0.32);
+  transition:
+    transform var(--dur-fast) var(--ease-soft),
+    background var(--dur-fast) var(--ease-out),
+    opacity var(--dur-fast) var(--ease-out);
+}
+
+.join:hover:not(:disabled) {
+  transform: translateY(-2px);
+  background: var(--orange-deep);
+}
+
+.join:disabled {
+  opacity: 0.65;
+}
+
+.err {
+  margin-top: 0.55rem;
+  font-size: 0.85rem;
+  color: #b3471d;
+}
+
+.legal {
+  margin-top: 0.7rem;
+  font-size: 0.8rem;
+  color: color-mix(in srgb, var(--ink-soft) 82%, transparent);
+}
+
+/* ——— 成功态：纸吊牌式票券 ——— */
+
+.ticket {
+  margin-top: 1.25rem;
+  padding: 1.05rem 1.2rem 1.15rem;
+  border: 2px dashed var(--orange);
+  border-radius: 16px;
+  background: var(--cream-warm);
+  display: grid;
+  gap: 0.4rem;
+  justify-items: center;
+  rotate: -1.2deg;
+  animation: ticketIn 520ms var(--ease-soft) both;
+}
+
+@keyframes ticketIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px) scale(0.96);
+    rotate: 1deg;
+  }
+}
+
+.ticketLabel {
+  font-family: var(--font-display), sans-serif;
+  font-weight: 700;
+  font-size: 0.72rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--orange-deep);
+}
+
+.ticketCode {
+  font-family: var(--font-display), sans-serif;
+  font-weight: 800;
+  font-size: 1.5rem;
+  letter-spacing: 0.07em;
+  color: var(--blue-deep);
+  user-select: all;
+}
+
+.ticketRow {
+  margin-top: 0.95rem;
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  flex-wrap: wrap;
+}
+
+.copy {
+  font-family: var(--font-display), sans-serif;
+  font-weight: 700;
+  font-size: 0.88rem;
+  color: var(--blue-deep);
+  border: 2px solid color-mix(in srgb, var(--blue) 32%, transparent);
+  border-radius: 999px;
+  padding: 0.4em 1.1em;
+  transition:
+    transform var(--dur-fast) var(--ease-soft),
+    border-color var(--dur-fast) var(--ease-out);
+}
+
+.copy:hover {
+  transform: translateY(-1px);
+  border-color: var(--blue);
+}
+
+.fine {
+  font-size: 0.8rem;
+  color: var(--ink-soft);
+}
+
+.doneBtn {
+  margin-top: 1.35rem;
+}
+
+/* ——— 移动端：底部抽屉 ——— */
+@media (max-width: 640px) {
+  .overlay {
+    place-items: end stretch;
+    padding: 0;
+  }
+  .card {
+    width: 100%;
+    border-radius: 22px 22px 0 0;
+    padding: 1.75rem 1.4rem calc(1.7rem + env(safe-area-inset-bottom));
+    animation: sheetIn 460ms var(--ease-soft) both;
+  }
+  @keyframes sheetIn {
+    from {
+      opacity: 0.5;
+      transform: translateY(58%);
+    }
+  }
+}

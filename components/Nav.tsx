@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import RoomieLogo from "./RoomieLogo";
+import PromoBar from "./promo/PromoBar";
 import { useCart } from "./CartContext";
 import styles from "./Nav.module.css";
 
@@ -20,7 +21,11 @@ export default function Nav() {
   }, []);
 
   return (
-    <header className={`${styles.nav} ${solid ? styles.solid : ""}`}>
+    /* 固定栈：活动栏位在导航上沿，二者一体悬浮于内容之上 ——
+       栏位收起/关闭只在栈内动，页面内容零位移 */
+    <div className={styles.stack}>
+      <PromoBar />
+      <header className={`${styles.nav} ${solid ? styles.solid : ""}`}>
       <Link href="/" aria-label="RoomiePaw home" className={styles.logo}>
         <RoomieLogo height={38} />
       </Link>
@@ -59,6 +64,7 @@ export default function Nav() {
           {count}
         </span>
       </button>
-    </header>
+      </header>
+    </div>
   );
 }
