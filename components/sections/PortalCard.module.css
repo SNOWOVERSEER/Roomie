@@ -143,15 +143,16 @@
 }
 
 /* 活动点拉成进度胶囊，填充时长与停留节拍同源（--dwell）——
-   既标位置，也预告下一次切换什么时候来 */
-.dotOn {
+   既标位置，也预告下一次切换什么时候来。
+   选择器写 .dots .dotOn 是为了赢过上面 .dots i 的特异性（类+元素）。 */
+.dots .dotOn {
   position: relative;
   overflow: hidden;
   width: 24px;
   background: rgba(248, 246, 240, 0.38);
 }
 
-.dotOn::after {
+.dots .dotOn::after {
   content: "";
   position: absolute;
   inset: 0;

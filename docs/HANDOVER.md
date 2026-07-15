@@ -59,7 +59,13 @@ https://roomiepaw.vercel.app 。本地一笔沙盒订单（№ 1001）已全流�
 
 - 店格：墨尔本小工作室，"一件一件做"（What's next 区叙事）；
   slogan 语域：*pet things that feel like part of home* / *furniture you
-  share with the cat*。
+  share with your pets*。
+- **品牌层 vs 产品层的物种口径（2026-07-15 用户纠偏，红线级）**：
+  RoomiePaw 是**宠物**家居店（狗等品类都会做），**品牌层文案不许锁死在
+  cat**——metadata/OG、页脚、BrandStory、What's next、政策页、邮件壳
+  一律说 pets；只有**产品本身是猫产品**的地方（Canvas Series 的 hero
+  标题、/scratcher、/house、照片 alt/caption 的事实描述）才允许 cat。
+  新增品类/文案时按这条自检。
 - 文案声线：克制的幽默 + 拟猫视角旁白。例句（保持这个味道）：
   - "A framed print your cat is allowed to ruin — slowly, and with great ceremony."
   - "The daily shred, honoured in full."
@@ -148,6 +154,10 @@ https://roomiepaw.vercel.app 。本地一笔沙盒订单（№ 1001）已全流�
 | toast | `CartContext.module.css`（勾 + 标题 + line + note 双行语义） |
 | 空态 | `CartView` / `CartDrawer` 空态（大标题 + 一句幽默 + 主 CTA） |
 | 行内表单 | `components/WaitlistForm.*`（胶囊输入 + 蓝色提交 + 行内报错） |
+| 活动栏位 | `components/promo/PromoBar.*`（夜蓝细条，grid-rows 0fr/1fr 收放） |
+| 居中弹层/底部抽屉 | `components/promo/SubscribeDialog.*`（纸卡 + 移动端 sheet + 焦点圈闭） |
+| 优惠票券 | `SubscribeDialog.module.css` `.ticket`（虚线橙框 + 微倾 + user-select: all） |
+| 图片加载微光 | `components/SmartImg.*`（无包装层，背景微光 + 解码后落定；轮播类自管加载态勿用） |
 
 a11y 基线：radiogroup/radio + aria-checked 做选择器；dialog + aria-modal
 做抽屉；`.srOnly` 藏 label；`:focus-visible` 全局蓝描边；aria-live 报状态。
@@ -426,6 +436,49 @@ Create in Stripe。**不再需要重跑 stripe:setup 回填代码。**
 
 ---
 
+## 7.6 活动栏位与 Roomie letter（2026-07-15，用户全权委托）
+
+设计文档：`docs/superpowers/specs/2026-07-15-promo-slot-brand-voice-carousel-design.md`。
+
+**活动栏位（promo bar）**
+- 配置唯一事实源 `lib/promos.ts` CAMPAIGNS：限时活动排在常青位前面，
+  窗口期自动顶上/让位（墨尔本 +10 粗算）；`kind: "subscribe" | "link"`。
+  上/换活动 = 改数组 + push。换活动**必须换 id**（dismiss cookie 按 id 记 7 天）。
+- 形态：夜蓝细条坐在固定导航栈顶（`Nav.tsx` 的 `.stack` 包 PromoBar +
+  header）。只在页面顶部露脸，滚动即收起（grid-rows 0fr）、回顶回来；
+  `/cart` 与 `/checkout/*` 不渲染。收起时挂 `inert`。
+- SSR 无闪烁：layout 服务端读 cookie（`rp_promo_dismissed` /
+  `rp_subscribed`）算好初始可见性传 `PromoProvider`；站点本就
+  force-dynamic，零成本。PDP 顶部留白已从 5.4rem 提到 6.6rem 让开栈高。
+- 自动邀请（仅 landing）：滚过 0.6 屏且到站 >6s 才弹，一生一次
+  （localStorage `rp_letter_prompted`，手动打开过也算）；已订阅/已关栏
+  位不弹。
+
+**订阅发码链（/api/subscribe）**
+- 落库顺序 self-healing：先占 `subscribers` 行（unique email）→ 懒建
+  coupon `ROOMIE10`（10% once，固定 id 幂等，test/live 各自首次成立）→
+  发唯一 promotion code `ROOMIE10-XXXXX`（无易混字符集，max_redemptions=1，
+  metadata.email）→ 回填行。任一步失败，同邮箱下次提交自动补齐；重复
+  订阅返回原码（幂等）。结算页 `allow_promotion_codes` 本来就开着，
+  码在 Stripe 托管页直接可用。
+- 蜜罐字段 `company`：有值即装作成功、零写入。
+- 欢迎邮件 best-effort（`welcomeCouponEmail`）：失败只记日志，码已在
+  页面票券上展示。**Resend 域名未验证前只能发到店主邮箱**（admin
+  letter 表的 welcome_emailed 列会如实显示 not sent）。
+- Admin：Waitlist 页新增 "The Roomie letter" 区（邮箱/码/邮件状态 +
+  CSV `waitlist/letter-export`）。
+- 留给店主/后续：营销退订目前是"回信 unsubscribe"人工处理；活动改
+  DB 化（admin 编辑）按需再做。
+
+**验证方法论（本轮沉淀）**
+- Playwright 21 项 e2e：SSR 可见性/收起/关闭 cookie/订阅发码/幂等/
+  自动邀请一生一次/结算动线免打扰/轮播交互/微光加载/移动端 sheet，
+  合成订阅一律 `letter-e2e-9xxx@` 打标，测完删行 + 停用码。
+- in-app Browser pane 的 fetch 提交在弹层里不可靠（点击后请求未达
+  服务端），跟历史"截图过期"同类：**交互断言一律走 Playwright**。
+
+---
+
 ## 8. 密钥与环境
 
 | 位置 | 内容 |
@@ -493,6 +546,7 @@ Create in Stripe。**不再需要重跑 stripe:setup 回填代码。**
 | 07-13 | **商品数据迁 Supabase products 表 + 本地 admin 后台**（改价/库存/发货/waitlist 全后台化；推翻"商品数据用代码常量"决策——真库存必须可变存储） | admin-platform 分支，spec `docs/superpowers/specs/2026-07-13-local-admin-design.md` |
 | 07-14 | **admin 订单管理全面化**：六态状态机（+取消/退货流）、Stripe 退款（部分/全额，refunded_cents 存权威累计值）、order_events 时间线、联系客户/重发邮件、Dashboard 统计、Customers、订单 CSV、装箱单。原则：退款先行（退款失败则取消/收货不落库）、里程碑不双写 | 用户全权委托；spec `2026-07-14-admin-order-management-design.md`，25 项 e2e 验证含真实 test-mode 退款 |
 | 07-15 | **admin-platform 合并 main 上生产**（用户拍板）：全站 DB 化 + admin 后台 + SaaS Dashboard 一并落地；结算回跳 URL 加固（publicOrigin，生产拒信 localhost）。合并顺带修好生产结算（旧代码硬编码着 07-13 事故中被归档的 price id；DB 化后读现行 id 自愈）。**发现在售价为 149/42 测试残值，正典 89/35，定价属产品决策留给店主在 admin 恢复** | ff `c7d8e40..56f7ef7`；生产验证见 runbook 现状 |
+| 07-15 晚 | **品牌口径纠偏（cat→pets，红线见 §3）+ 活动栏位与 Roomie letter 10% 发码上线（§7.6）+ 轮播/加载体验打磨**（门户卡同相位漂移交叉溶解、横滑翻页、进度胶囊；胶片惯性吸附+键盘；SmartImg 微光加载） | 用户全权委托；spec `2026-07-15-promo-slot-...-design.md`，21 项 Playwright e2e 全绿 |
 
 ---
 
