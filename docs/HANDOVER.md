@@ -281,7 +281,11 @@ Resend 发交易邮件。服务端逻辑全部在 API Routes（无 Edge Function
   风险，只是价签不对）。定价属产品决策，agent 未代改。
 - 生产 `ADMIN_SECRET` 仍与本地不一致（shipping API 401）——只影响 curl
   兜底，admin 发货直连 Supabase/Resend 不受影响。
-- webhook 的 `charge.refunded` 订阅仍待补（跑一次 `npm run stripe:setup`）。
+- webhook 已补订 `charge.refunded` ✓（07-15，用户授权 API 对齐）。但同日
+  e2e 发现 🚨 **Vercel 的 `STRIPE_WEBHOOK_SECRET` 是错值**（有值、能到
+  路由、真实事件全部 bad signature 拒收；大概率贴成了本地 stripe listen
+  的 whsec）→ **生产真实付款不会入库不会发确认邮件**（历史测试全走本地
+  转发所以从未暴露）。修法与验证步骤见 runbook「生产现状」第 1 条。
 - 结算回跳 URL 已加固（`lib/env.ts publicOrigin()`）：生产上 NEXT_PUBLIC_URL
   误配 localhost 也不会把付完款的客户带去 localhost。
 
