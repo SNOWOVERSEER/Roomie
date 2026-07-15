@@ -15,7 +15,7 @@ export default async function CarePage() {
     <PolicyPage
       eyebrow="Keep it lovely"
       title="Care guide"
-      lede="The Canvas Series is built to be scratched, so care is less about protecting it from the cat and more about keeping it handsome while they work."
+      lede="The Canvas Series is built to be scratched, so care is less about protecting it from claws and more about keeping it handsome while they work."
       updated="12 July 2026"
     >
       <h2>The canvas</h2>

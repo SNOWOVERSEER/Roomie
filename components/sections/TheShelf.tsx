@@ -40,7 +40,7 @@ export default async function TheShelf() {
           <h2 className={styles.heading}>The roomful is growing</h2>
           <p className={styles.lede}>
             We&rsquo;re a small pet-furniture studio in Melbourne, making the
-            un-ugly version of everything a cat needs, one piece at a time.
+            un-ugly version of everything a pet needs, one piece at a time.
             Here&rsquo;s what&rsquo;s on the bench.
           </p>
         </Reveal>

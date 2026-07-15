@@ -42,13 +42,13 @@ const siteUrl = (() => {
 
 export const metadata: Metadata = {
   metadataBase: siteUrl,
-  title: "RoomiePaw · the art your cat can scratch",
+  title: "RoomiePaw · pet furniture that feels like home",
   description:
-    "The Canvas Scratcher by RoomiePaw: a framed canvas print for your wall that's secretly your cat's favourite thing. Pet furniture that feels like part of home. Melbourne, AU.",
+    "RoomiePaw is a small Melbourne studio making pet furniture that holds its own in the living room. First up: The Canvas Scratcher, a framed print your cat is allowed to ruin.",
   openGraph: {
-    title: "RoomiePaw · the art your cat can scratch",
+    title: "RoomiePaw · pet furniture that feels like home",
     description:
-      "A framed canvas for your wall that's secretly a scratcher. Pet things that feel like part of home.",
+      "Pet things that feel like part of home, from a small Melbourne studio. First up: a framed canvas that's secretly a scratcher.",
     images: ["/hero/still-last.jpg"],
   },
 };

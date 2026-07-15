@@ -17,7 +17,7 @@ export default function BrandStory() {
               Pet stuff shouldn&rsquo;t look like pet stuff.
             </h2>
             <p className={styles.body}>
-              Your cat lives in the living room, not in a pet aisle. So the
+              Your pets live in the living room, not in a pet aisle. So the
               things they scratch, nap on and eat from should hold their own
               next to the sofa you saved up for. That&rsquo;s the whole idea:
               furniture you share, from a small pet-furniture studio in

@@ -15,7 +15,7 @@ export default function PrivacyPage() {
     <PolicyPage
       eyebrow="The fine print"
       title="Privacy policy"
-      lede="Plain English, because you're buying cat furniture, not signing a lease."
+      lede="Plain English, because you're buying pet furniture, not signing a lease."
       updated="12 July 2026"
     >
       <h2>What we collect</h2>

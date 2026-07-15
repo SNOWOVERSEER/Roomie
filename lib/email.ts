@@ -77,7 +77,7 @@ function shell(preheader: string, body: string): string {
     ${body}
   </td></tr>
   <tr><td style="padding:20px 10px 0;font:400 12.5px/1.7 ${BODY};color:${C.inkSoft};">
-    <span style="color:${C.orange};font-weight:700;">RoomiePaw</span> · Melbourne, AU · furniture you share with the cat<br>
+    <span style="color:${C.orange};font-weight:700;">RoomiePaw</span> · Melbourne, AU · furniture you share with your pets<br>
     Questions about your order? Just reply to this email.
   </td></tr>
 </table>

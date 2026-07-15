@@ -10,7 +10,7 @@ export default function Footer() {
           <p>
             Pet furniture that feels like part of home.
             <br />
-            Made for cats, chosen for living rooms.
+            Made for pets, chosen for living rooms.
           </p>
           <div className={styles.social}>
             <a href="#" aria-label="Instagram">
