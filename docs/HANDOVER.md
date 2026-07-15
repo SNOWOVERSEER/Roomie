@@ -452,6 +452,9 @@ Create in Stripe。**不再需要重跑 stripe:setup 回填代码。**
 3. Stripe 托管页自动化：支付方式是折叠 radio
    `input[name='payment-method-accordion-item-title']`（样式隐藏 →
    `check({force:true})`），选完等 `#cardNumber` visible 再填 4242。
+   **付款前必须取消勾选 `#enableStripePass`**（Link "Save my information"
+   默认勾上，点 Pay 会转进手机号验证流程，页面永不跳转——07-15 实测）。
+   地址填完按 Escape 收起 autocomplete 下拉再填城市/州。
 4. Filmstrip / scroll-snap：索引和 scrollTo 都要减 `kids[0].offsetLeft`
    基准，否则 snap 回吸让计数卡死。
 5. `mask-image` 只认 **alpha 通道**——灰度 PNG 蒙版等于没有；验证要验
