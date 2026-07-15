@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Reveal from "@/components/Reveal";
+import SmartImg from "@/components/SmartImg";
 import styles from "./BrandStory.module.css";
 
 export default function BrandStory() {
@@ -37,8 +38,7 @@ export default function BrandStory() {
             aria-pressed={revealed}
             aria-label="Reveal the cat in the room"
           >
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
+            <SmartImg
               src="/story/room-empty.jpg"
               alt="A styled living room with a framed canvas leaning on the wall"
             />

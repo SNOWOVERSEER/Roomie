@@ -1,5 +1,6 @@
 import Link from "next/link";
 import Reveal from "@/components/Reveal";
+import SmartImg from "@/components/SmartImg";
 import { formatCents, getCatalog } from "@/lib/catalog";
 import { getStockItems, productSoldOut } from "@/lib/inventory";
 import WaitlistForm from "@/components/WaitlistForm";
@@ -48,8 +49,7 @@ export default async function TheShelf() {
         <div className={styles.grid}>
           <Reveal className={styles.featured}>
             <Link className={styles.featuredCard} href="/scratcher">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
+              <SmartImg
                 src="/c01/shelf-featured.webp"
                 alt="The Canvas Scratcher at home: a framed canvas leaning by a sofa, cat asleep beside it"
                 loading="lazy"
@@ -80,8 +80,7 @@ export default async function TheShelf() {
               <Reveal key={p.handle} delay={120 + i * 90}>
                 <article className={styles.soonCard}>
                   <div className={styles.soonMedia}>
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img src={p.image} alt="" aria-hidden loading="lazy" />
+                    <SmartImg src={p.image} alt="" aria-hidden loading="lazy" />
                   </div>
                   <div className={styles.soonBody}>
                     <p className={styles.soonNo}>

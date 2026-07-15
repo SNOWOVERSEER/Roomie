@@ -30,6 +30,12 @@
 .track:active {
   cursor: grabbing;
 }
+/* 键盘可达（方向键翻页）；outline 内收避免贴着蒙版被裁 */
+.track:focus-visible {
+  outline: 3px solid rgba(58, 91, 199, 0.55);
+  outline-offset: -3px;
+  border-radius: var(--r-card);
+}
 
 .slide {
   flex: none;

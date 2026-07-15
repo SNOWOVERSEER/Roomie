@@ -5,6 +5,8 @@
   border-radius: calc(var(--r-media) + 2px);
   overflow: hidden;
   box-shadow: var(--shadow-soft);
+  /* 横滑翻页走 pointer 事件，纵向滚动仍交还给页面 */
+  touch-action: pan-y;
   transition:
     transform var(--dur-mid) var(--ease-soft),
     box-shadow var(--dur-mid) var(--ease-out);
@@ -30,6 +32,41 @@
   aspect-ratio: 5 / 4.4;
   overflow: hidden;
   background: var(--cream-warm);
+  /* 横滑跟手位移的回弹（拖动中 JS 会临时关掉这条过渡） */
+  transition: transform 280ms var(--ease-soft);
+}
+
+/* 媒体底下的品牌微光：帧未解码时透出，杜绝溶解到空白 */
+.media::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(
+        100deg,
+        rgba(255, 255, 255, 0) 32%,
+        rgba(255, 255, 255, 0.55) 50%,
+        rgba(255, 255, 255, 0) 68%
+      )
+      no-repeat,
+    color-mix(in srgb, var(--cream-warm) 86%, #e3dccb);
+  background-size:
+    220% 100%,
+    auto;
+  animation: mediaShimmer 1.6s ease-in-out infinite;
+}
+
+@keyframes mediaShimmer {
+  from {
+    background-position:
+      140% 0,
+      0 0;
+  }
+  to {
+    background-position:
+      -130% 0,
+      0 0;
+  }
 }
 
 .media img,
@@ -43,17 +80,32 @@
   transition: scale var(--dur-slow) var(--ease-out);
 }
 
+/* 全帧同相位慢漂移：交叉溶解发生在两张同速微动的照片之间，
+   读作一次呼吸而不是硬切（同时挂载 = 相位天然同步，切换零跳变） */
+.media img {
+  animation: frameDrift 13s ease-in-out infinite alternate;
+}
+
+@keyframes frameDrift {
+  from {
+    transform: scale(1);
+  }
+  to {
+    transform: scale(1.055);
+  }
+}
+
 .frameOn {
   opacity: 1;
   transition:
-    opacity 700ms var(--ease-out),
+    opacity var(--fade, 900ms) var(--ease-out),
     scale var(--dur-slow) var(--ease-out);
 }
 
 .frameOff {
   opacity: 0;
   transition:
-    opacity 700ms var(--ease-out),
+    opacity var(--fade, 900ms) var(--ease-out),
     scale var(--dur-slow) var(--ease-out);
 }
 
@@ -78,22 +130,46 @@
   right: 1rem;
   bottom: 0.9rem;
   display: flex;
+  align-items: center;
   gap: 5px;
 }
 
 .dots i {
   width: 6px;
   height: 6px;
-  border-radius: 50%;
+  border-radius: 999px;
   background: rgba(248, 246, 240, 0.55);
-  transition:
-    background var(--dur-fast) var(--ease-out),
-    transform var(--dur-fast) var(--ease-out);
+  box-shadow: 0 0 6px rgba(18, 39, 94, 0.18);
 }
 
+/* 活动点拉成进度胶囊，填充时长与停留节拍同源（--dwell）——
+   既标位置，也预告下一次切换什么时候来 */
 .dotOn {
-  background: #fff8ee !important;
-  transform: scale(1.25);
+  position: relative;
+  overflow: hidden;
+  width: 24px;
+  background: rgba(248, 246, 240, 0.38);
+}
+
+.dotOn::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: #fff8ee;
+  transform-origin: left;
+  transform: scaleX(0);
+  animation: pillFill var(--dwell, 4600ms) linear forwards;
+}
+
+.dotsPaused .dotOn::after {
+  animation-play-state: paused;
+}
+
+@keyframes pillFill {
+  to {
+    transform: scaleX(1);
+  }
 }
 
 /* ——— 文本 ——— */

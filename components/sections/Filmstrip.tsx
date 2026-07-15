@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import SmartImg from "@/components/SmartImg";
 import styles from "./Filmstrip.module.css";
 
 export interface Slide {
@@ -25,7 +26,16 @@ export default function Filmstrip({
 }) {
   const trackRef = useRef<HTMLUListElement>(null);
   const raf = useRef(0);
-  const drag = useRef({ on: false, startX: 0, startLeft: 0, moved: false });
+  const drag = useRef({
+    on: false,
+    startX: 0,
+    startLeft: 0,
+    moved: false,
+    // 惯性滑行用：最近一次位移的瞬时速度（px/ms，指数平滑）
+    lastX: 0,
+    lastT: 0,
+    vx: 0,
+  });
   const [index, setIndex] = useState(0);
   const [ends, setEnds] = useState({ start: true, end: false });
 
@@ -82,20 +92,51 @@ export default function Filmstrip({
       startX: e.clientX,
       startLeft: el.scrollLeft,
       moved: false,
+      lastX: e.clientX,
+      lastT: e.timeStamp,
+      vx: 0,
     };
     el.setPointerCapture(e.pointerId);
   };
   const onPointerMove = (e: React.PointerEvent) => {
     const el = trackRef.current;
     if (!el || !drag.current.on) return;
-    const dx = e.clientX - drag.current.startX;
-    if (Math.abs(dx) > 6) drag.current.moved = true;
-    el.scrollLeft = drag.current.startLeft - dx;
+    const d = drag.current;
+    const dx = e.clientX - d.startX;
+    if (Math.abs(dx) > 6) d.moved = true;
+    el.scrollLeft = d.startLeft - dx;
+    const dt = e.timeStamp - d.lastT;
+    if (dt > 0) {
+      // 指数平滑的瞬时速度，松手时用它决定滑行距离
+      d.vx = 0.75 * d.vx + 0.25 * ((e.clientX - d.lastX) / dt);
+      d.lastX = e.clientX;
+      d.lastT = e.timeStamp;
+    }
   };
   const endDrag = (e: React.PointerEvent) => {
     if (!drag.current.on) return;
     drag.current.on = false;
     trackRef.current?.releasePointerCapture(e.pointerId);
+    // 松手不再死停：按速度投掷一段距离，再吸附到最近一张，
+    // 让鼠标拖拽有触屏一样的惯性手感
+    const el = trackRef.current;
+    if (!el || !drag.current.moved) return;
+    const projected = el.scrollLeft - drag.current.vx * 220;
+    const max = el.scrollWidth - el.clientWidth;
+    const target = Math.min(Math.max(projected, 0), max);
+    const kids = Array.from(el.children) as HTMLElement[];
+    const base = kids[0]?.offsetLeft ?? 0;
+    let nearest = target;
+    let best = Infinity;
+    for (const k of kids) {
+      const left = Math.min(k.offsetLeft - base, max);
+      const dist = Math.abs(left - target);
+      if (dist < best) {
+        best = dist;
+        nearest = left;
+      }
+    }
+    el.scrollTo({ left: nearest, behavior: "smooth" });
   };
   const onClickCapture = (e: React.MouseEvent) => {
     if (drag.current.moved) {
@@ -115,11 +156,28 @@ export default function Filmstrip({
       <ul
         ref={trackRef}
         className={styles.track}
+        tabIndex={0}
+        aria-label={`${ariaLabel}. Use the arrow keys to browse.`}
         onPointerDown={onPointerDown}
         onPointerMove={onPointerMove}
         onPointerUp={endDrag}
         onPointerCancel={endDrag}
         onClickCapture={onClickCapture}
+        onKeyDown={(e) => {
+          if (e.key === "ArrowRight") {
+            e.preventDefault();
+            goTo(index + 1);
+          } else if (e.key === "ArrowLeft") {
+            e.preventDefault();
+            goTo(index - 1);
+          } else if (e.key === "Home") {
+            e.preventDefault();
+            goTo(0);
+          } else if (e.key === "End") {
+            e.preventDefault();
+            goTo(slides.length - 1);
+          }
+        }}
       >
         {slides.map((s, i) => (
           <li
@@ -128,11 +186,10 @@ export default function Filmstrip({
             aria-label={`${i + 1} of ${slides.length}`}
           >
             <figure>
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
+              <SmartImg
                 src={s.src}
                 alt={s.alt}
-                loading="lazy"
+                loading={i === 0 ? "eager" : "lazy"}
                 draggable={false}
                 style={{ aspectRatio: `${s.w} / ${s.h}` }}
               />
