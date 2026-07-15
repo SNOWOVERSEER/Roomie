@@ -48,15 +48,27 @@ const STATUS_LABEL: Record<OrderStatus, string> = {
   cancelled: "cancelled",
 };
 
+const STATUS_KEYS = new Set<string>([
+  "paid", "shipped", "delivered", "return_requested", "returned", "cancelled",
+]);
+
 export default function OrdersList({
   orders,
   mode,
+  initialFilter,
+  initialQ,
 }: {
   orders: OrderWithEvents[];
   mode: "test" | "live" | "unknown";
+  initialFilter?: string;
+  initialQ?: string;
 }) {
-  const [q, setQ] = useState("");
-  const [filter, setFilter] = useState<OrderStatus | "all">("all");
+  const [q, setQ] = useState(initialQ ?? "");
+  const [filter, setFilter] = useState<OrderStatus | "all">(
+    initialFilter && STATUS_KEYS.has(initialFilter)
+      ? (initialFilter as OrderStatus)
+      : "all",
+  );
 
   const counts = useMemo(() => {
     const c = new Map<OrderStatus, number>();

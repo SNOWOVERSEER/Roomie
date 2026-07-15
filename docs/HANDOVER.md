@@ -349,9 +349,18 @@ ctaNote——hero 的 ctaNote 现在是 `(price) => string` 函数）。结算�
   （server action 后 router.refresh() 仍强制拉新——改这个值要想清楚这两者）。
 - 五页（2026-07-14 订单管理全面化，spec
   `docs/superpowers/specs/2026-07-14-admin-order-management-design.md`）：
-  - **Dashboard（/）**：净营收 KPI（今日/7d/30d，已扣退款）/单量/AOV/
-    累计退款、30 天 SVG 柱状图、Top products、库存警报、最近订单、候补数、
-    待办行（待发货/退货中）。全部服务端 JS 聚合（jsonb 不上 PostgREST 过滤）。
+  - **Dashboard（/）**：SaaS 式交互版（2026-07-15）。服务端一次下发全量
+    lean 数据（orders 精简列 + refund 事件[join order_ref] + waitlist +
+    stock + 商品图映射 + **now 时钟**），交互全在客户端
+    `components/Dashboard.tsx`：周期切换（Today/7d/30d/90d/All，切换零往返）、
+    六 KPI 带上一周期环比（退款/发货时效反向着色）、SVG 图表 Revenue/Orders
+    双口径 + 逐列悬停 tooltip（Today 按小时、All>120 天按月桶）、
+    Needs attention 行动卡（直达 /orders?status=X 预筛选——OrdersList 接
+    initialFilter/initialQ，orders/page.tsx 读 searchParams）、Activity
+    动态流（订单里程碑列派生 + refund 事件 + waitlist，相对时间元素
+    suppressHydrationWarning）、周期化 Top products（画芯 variant 缩略图
+    走 ARTWORKS→flat-0X 约定，同 email itemThumb）。**时间窗一律用服务端
+    下发的 now**（SSR/水合一致，别在客户端 Date.now() 算窗口）。
   - **Orders**：搜索（ref/邮箱/姓名/运单/商品）+ 状态 chips + 分组工作台。
     每单：明细/地址/支付（Stripe Dashboard 直链，test/live 感知）/时间线/
     内部备注（orders.admin_note）/按状态动作。动作 = 发货、送达、
