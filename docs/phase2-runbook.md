@@ -75,26 +75,16 @@ curl -X POST https://roomiepaw.vercel.app/api/shipping \
 - 自动：状态 → `shipped`、记 `shipped_at`、给顾客发「发货邮件」。
 - 送达后（可选）：`-d '{"order_ref":"482916","status":"delivered"}'`。
 - 也接受 `order_number`（内部自增号）或 `session_id`。
-- ⚠️ **生产现状（2026-07-15 合并部署后复测）**：Supabase ✓、waitlist ✓、
-  checkout ✓（test mode 能开出真实结算页）。**待你处理三件**：
-  1. 🚨 **生产 webhook 签名密钥错值（最重要）**：Vercel 的
-     `STRIPE_WEBHOOK_SECRET` 有值但不是生产 endpoint 的签名密钥（大概率
-     env 重贴时贴成了本地 `stripe listen` 的 whsec）。**后果：真实客户在
-     生产站付款后，订单不会入库、确认邮件不会发**（钱照收，Stripe 后台
-     看得到，但你的系统毫无记录）——07-15 实测：Stripe 事件已发出、
-     站点以 bad signature 拒收。历史测试都走本地转发，所以一直没暴露。
-     修法：Stripe Dashboard → Developers → Webhooks → 端点
-     `we_1TsHyPDzmUuzRpRK4IFwjfau` → Reveal **signing secret**（whsec_ 开头）
-     → 粘到 Vercel env 的 `STRIPE_WEBHOOK_SECRET`（Production）→ Redeploy。
-     验证：Stripe Dashboard 该端点页 → 找最近失败的事件 → Resend，
-     显示 200 即通（或让 agent 重跑合成退款验证）。
-  2. **在售价是测试残值**：站上现在显示（并会实收）scratcher AU$149、
+- **生产现状（2026-07-15）**：Supabase ✓、waitlist ✓、checkout ✓、
+  **webhook 全链路 ✓**（签名密钥曾是本地 stripe listen 的值导致事件全被
+  拒收——店主已换成 Stripe Dashboard 端点签名密钥，合成退款实测 5 秒
+  同步回库；`charge.refunded` 已订阅，Dashboard 手工退款会自动同步）。
+  **待你处理两件**：
+  1. **在售价是测试残值**：站上现在显示（并会实收）scratcher AU$149、
      print AU$42——07-13 改价测试的遗留。恢复：admin → Products →
      scratcher 改回 **89**、print 改回 **35**（各一次行内改价，秒生效）。
-  3. `/api/shipping` 401——生产 `ADMIN_SECRET` 与本地不一致。只影响这条
+  2. `/api/shipping` 401——生产 `ADMIN_SECRET` 与本地不一致。只影响这条
      curl 兜底（admin 后台发货不走它），对齐成本地值即可。
-  （webhook 已补订 `charge.refunded` ✓——密钥修好后，Stripe Dashboard
-  手工退款会自动同步回订单表。）
 
 ### 改价 / 库存 / 上下架 / 上新（全在 admin → Products）
 
