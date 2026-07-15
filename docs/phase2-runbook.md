@@ -144,9 +144,11 @@ returned；`refunded_cents` 是累计已退款（分）。
 选原因 → Refund。自动打 Stripe（按 payment intent）、记时间线、给顾客发
 退款邮件（"5 到 10 个工作日到账"话术）。部分退款不改订单状态，只在
 单头加 partly refunded 徽章。
-fallback：Stripe Dashboard → Payments → Refund（注意：Dashboard 手工退款
-要同步回订单表，需要生产 webhook 订阅了 `charge.refunded`——跑一次
-`npm run stripe:setup` 会自动补订；admin 里退款不依赖这个）。
+fallback：Stripe Dashboard → Payments → Refund。Dashboard 手工退款会经
+webhook 自动同步回订单表**并记进时间线/Activity**（07-15 已订阅
+`charge.refunded` 并实测 5 秒同步）；区别是**不会给顾客发邮件**——
+要通知顾客就走 admin 的 Refund（退款+记录+品牌邮件一步到位），或事后
+用 Email customer 自由撰写。
 
 ### 退货（已发货/已送达后）
 
