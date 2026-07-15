@@ -98,6 +98,31 @@
   color: var(--orange-deep);
 }
 
+/* 提示动词按输入能力切换：触屏说 tap，细指针说 hover */
+.hintTap {
+  display: none;
+}
+
+@media (hover: none) {
+  .hintHover {
+    display: none;
+  }
+  .hintTap {
+    display: inline;
+  }
+}
+
+@media (max-width: 640px) {
+  .hint {
+    font-size: 0.78rem;
+    padding: 0.4rem 0.8rem;
+    left: 0.8rem;
+    bottom: 0.8rem;
+    right: 0.8rem;
+    text-align: center;
+  }
+}
+
 .hintOff {
   opacity: 0;
   transform: translateY(6px);

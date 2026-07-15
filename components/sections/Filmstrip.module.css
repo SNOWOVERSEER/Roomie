@@ -11,8 +11,8 @@
   gap: clamp(0.9rem, 1.8vw, 1.4rem);
   overflow-x: auto;
   padding: 0.4rem var(--gutter) 1rem;
-  scroll-snap-type: x proximity;
-  scroll-padding-inline-start: var(--gutter);
+  /* 不用 scroll-snap：拖拽/惯性要像真胶片一样自由滑动停在任意处，
+     只有箭头按钮才做整张对齐（scrollTo 显式定位） */
   scrollbar-width: none;
   cursor: grab;
   /* 两端渐隐，滚到尽头时由按钮态揭示 */
@@ -39,7 +39,6 @@
 
 .slide {
   flex: none;
-  scroll-snap-align: start;
 }
 
 .slide img {

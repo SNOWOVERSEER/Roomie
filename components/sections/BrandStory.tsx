@@ -49,7 +49,10 @@ export default function BrandStory() {
               className={`${styles.catLayer} ${revealed ? styles.show : ""}`}
             />
             <span className={`${styles.hint} ${revealed ? styles.hintOff : ""}`}>
-              this room has a scratcher in it. <em>hover to meet the owner</em>
+              this room has a scratcher in it.{" "}
+              {/* 触屏没有 hover：两份文案按能力选一（CSS hover: none 切换） */}
+              <em className={styles.hintHover}>hover to meet the owner</em>
+              <em className={styles.hintTap}>tap to meet the owner</em>
             </span>
           </button>
         </Reveal>

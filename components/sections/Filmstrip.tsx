@@ -26,6 +26,7 @@ export default function Filmstrip({
 }) {
   const trackRef = useRef<HTMLUListElement>(null);
   const raf = useRef(0);
+  const glide = useRef(0);
   const drag = useRef({
     on: false,
     startX: 0,
@@ -36,6 +37,33 @@ export default function Filmstrip({
     lastT: 0,
     vx: 0,
   });
+
+  const cancelGlide = useCallback(() => {
+    cancelAnimationFrame(glide.current);
+  }, []);
+
+  /* 松手后的自由惯性：摩擦衰减，停在任意位置（不吸附整张）——
+     手感对齐触屏原生动量滚动 */
+  const startGlide = useCallback((v0: number) => {
+    cancelAnimationFrame(glide.current);
+    let v = v0; // px/ms，正 = 手往右挥（内容回退）
+    let last = performance.now();
+    const step = (t: number) => {
+      const el = trackRef.current;
+      if (!el) return;
+      const dt = Math.min(t - last, 48);
+      last = t;
+      el.scrollLeft -= v * dt;
+      v *= Math.pow(0.94, dt / 16.7);
+      const max = el.scrollWidth - el.clientWidth;
+      const atEdge =
+        (el.scrollLeft <= 0 && v > 0) || (el.scrollLeft >= max && v < 0);
+      if (!atEdge && Math.abs(v) > 0.02) {
+        glide.current = requestAnimationFrame(step);
+      }
+    };
+    glide.current = requestAnimationFrame(step);
+  }, []);
   const [index, setIndex] = useState(0);
   const [ends, setEnds] = useState({ start: true, end: false });
 
@@ -64,18 +92,26 @@ export default function Filmstrip({
       cancelAnimationFrame(raf.current);
       raf.current = requestAnimationFrame(measure);
     };
+    // 用户直接滚动（触屏/滚轮）时中断惯性，避免两股力打架
+    const onUserScroll = () => cancelGlide();
     el.addEventListener("scroll", onScroll, { passive: true });
+    el.addEventListener("wheel", onUserScroll, { passive: true });
+    el.addEventListener("touchstart", onUserScroll, { passive: true });
     window.addEventListener("resize", onScroll);
     return () => {
       el.removeEventListener("scroll", onScroll);
+      el.removeEventListener("wheel", onUserScroll);
+      el.removeEventListener("touchstart", onUserScroll);
       window.removeEventListener("resize", onScroll);
       cancelAnimationFrame(raf.current);
+      cancelAnimationFrame(glide.current);
     };
-  }, [measure]);
+  }, [measure, cancelGlide]);
 
   const goTo = (i: number) => {
     const el = trackRef.current;
     if (!el) return;
+    cancelGlide();
     const kids = Array.from(el.children) as HTMLElement[];
     const k = Math.min(Math.max(i, 0), kids.length - 1);
     const base = kids[0]?.offsetLeft ?? 0;
@@ -87,6 +123,7 @@ export default function Filmstrip({
     if (e.pointerType !== "mouse") return;
     const el = trackRef.current;
     if (!el) return;
+    cancelGlide(); // 滑行中再抓住 = 即停（真实胶片手感）
     drag.current = {
       on: true,
       startX: e.clientX,
@@ -117,26 +154,10 @@ export default function Filmstrip({
     if (!drag.current.on) return;
     drag.current.on = false;
     trackRef.current?.releasePointerCapture(e.pointerId);
-    // 松手不再死停：按速度投掷一段距离，再吸附到最近一张，
-    // 让鼠标拖拽有触屏一样的惯性手感
-    const el = trackRef.current;
-    if (!el || !drag.current.moved) return;
-    const projected = el.scrollLeft - drag.current.vx * 220;
-    const max = el.scrollWidth - el.clientWidth;
-    const target = Math.min(Math.max(projected, 0), max);
-    const kids = Array.from(el.children) as HTMLElement[];
-    const base = kids[0]?.offsetLeft ?? 0;
-    let nearest = target;
-    let best = Infinity;
-    for (const k of kids) {
-      const left = Math.min(k.offsetLeft - base, max);
-      const dist = Math.abs(left - target);
-      if (dist < best) {
-        best = dist;
-        nearest = left;
-      }
+    // 松手不死停也不吸附：带出速度就自由滑行、摩擦收尾（像拨动实物胶片）
+    if (drag.current.moved && Math.abs(drag.current.vx) > 0.05) {
+      startGlide(drag.current.vx);
     }
-    el.scrollTo({ left: nearest, behavior: "smooth" });
   };
   const onClickCapture = (e: React.MouseEvent) => {
     if (drag.current.moved) {

@@ -1,7 +1,10 @@
 /* ============ 详情页共用布局（两个 PDP 共享，一处改动两页同步） ============ */
 
 .page {
-  animation: pageIn 460ms var(--ease-out) both;
+  /* fill 只能用 backwards：forward 填充会让 transform 永远"挂"在
+     元素上（计算值恒等矩阵），把 fixed 后代（移动端粘性购买条）
+     圈进页面坐标系 —— 购买条会沉到页底永不可见（2026-07-15 踩坑） */
+  animation: pageIn 460ms var(--ease-out) backwards;
 }
 
 @keyframes pageIn {
@@ -133,6 +136,14 @@
   align-items: center;
   gap: 1.2rem;
   flex-wrap: wrap;
+}
+
+/* 窄屏：主 CTA 占满一行，拇指命中面积拉满 */
+@media (max-width: 640px) {
+  .buyRow :global(.btnPrimary) {
+    flex: 1 1 100%;
+    justify-content: center;
+  }
 }
 
 .price {

@@ -502,6 +502,17 @@ Create in Stripe。**不再需要重跑 stripe:setup 回填代码。**
    不要信 Claude in-app Browser pane 滚动后的截图（合成层过期，只有
    整页首帧可靠）。断言 computed style / DOM 文本 + 截图双保险，
    **截图必须实际用 Read 看**，别只看断言过了。
+3. **入场动画的 fill-mode 不许 forward 填充有 transform 的关键帧**
+   （`both`/`forwards`）：动画结束后 transform 计算值恒等矩阵仍挂在
+   元素上 → 该元素成了 fixed 后代的 containing block。实锤案例：
+   `pdp .page` 的 pageIn 用 `both`，移动端粘性购买条 fixed 定位被圈进
+   页面坐标、沉底永不可见（2026-07-15 修，改 `backwards` 即愈）。
+   凡"fixed 元素不见了/位置怪"，先查祖先 transform/filter。
+4. **Supabase 瞬时时钟抖动**（机器睡醒 "JWT issued at future"）：
+   layout 关键读取已包 `retryOnClockSkew`（600ms 重试一次，
+   lib/supabase-admin.ts）。曾让首个请求 500，客户端在错误态恢复途中
+   报 removeChild of null（用户实遇；故障注入已复现链路）。
+   新增 layout 级读取时记得同样包一层。
 3. Stripe 托管页自动化：支付方式是折叠 radio
    `input[name='payment-method-accordion-item-title']`（样式隐藏 →
    `check({force:true})`），选完等 `#cardNumber` visible 再填 4242。
@@ -547,6 +558,7 @@ Create in Stripe。**不再需要重跑 stripe:setup 回填代码。**
 | 07-14 | **admin 订单管理全面化**：六态状态机（+取消/退货流）、Stripe 退款（部分/全额，refunded_cents 存权威累计值）、order_events 时间线、联系客户/重发邮件、Dashboard 统计、Customers、订单 CSV、装箱单。原则：退款先行（退款失败则取消/收货不落库）、里程碑不双写 | 用户全权委托；spec `2026-07-14-admin-order-management-design.md`，25 项 e2e 验证含真实 test-mode 退款 |
 | 07-15 | **admin-platform 合并 main 上生产**（用户拍板）：全站 DB 化 + admin 后台 + SaaS Dashboard 一并落地；结算回跳 URL 加固（publicOrigin，生产拒信 localhost）。合并顺带修好生产结算（旧代码硬编码着 07-13 事故中被归档的 price id；DB 化后读现行 id 自愈）。**发现在售价为 149/42 测试残值，正典 89/35，定价属产品决策留给店主在 admin 恢复** | ff `c7d8e40..56f7ef7`；生产验证见 runbook 现状 |
 | 07-15 晚 | **品牌口径纠偏（cat→pets，红线见 §3）+ 活动栏位与 Roomie letter 10% 发码上线（§7.6）+ 轮播/加载体验打磨**（门户卡同相位漂移交叉溶解、横滑翻页、进度胶囊；胶片惯性吸附+键盘；SmartImg 微光加载） | 用户全权委托；spec `2026-07-15-promo-slot-...-design.md`，21 项 Playwright e2e 全绿 |
+| 07-15 深夜 | **手感返工（用户复评）**：胶片撤销 scroll-snap 改自由惯性（rAF 摩擦衰减，抓住即停，箭头才整张对齐）；门户卡拖拽改连续可逆（跟手位移+候选帧随进度渐显，过阈/甩动落定，否则平滑退回）；猫屋卡视频废除 hover 门控（各端进入视野即播）。顺带修两个存量 bug：pageIn fill-mode 吃掉移动端粘性购买条（§9.3）、Supabase 时钟抖动 500（§9.4，removeChild 报错根因）。移动端细化：BrandStory 提示按输入能力说 tap/hover、PDP 主 CTA 窄屏全宽、活动条关闭钮热区 36px | 24 项 e2e 全绿 |
 
 ---
 

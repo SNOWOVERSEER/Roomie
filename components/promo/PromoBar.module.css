@@ -61,13 +61,14 @@
 
 .x {
   position: absolute;
-  right: clamp(0.55rem, 2vw, 1.15rem);
+  right: clamp(0.35rem, 1.6vw, 1rem);
   top: 50%;
   translate: 0 -50%;
   display: grid;
   place-items: center;
-  width: 27px;
-  height: 27px;
+  /* 视觉小、热区大：触控目标 ≥36px */
+  width: 36px;
+  height: 36px;
   border-radius: 50%;
   color: color-mix(in srgb, var(--cream) 72%, transparent);
   transition:
