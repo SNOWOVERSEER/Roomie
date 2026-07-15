@@ -1,4 +1,4 @@
-import { getSupabaseAdmin } from "./supabase-admin";
+import { getSupabaseAdmin, retryOnClockSkew } from "./supabase-admin";
 import { ARTWORKS } from "./heroConfig";
 import { getCatalog, isSoldOut, type CatalogItem } from "./catalog";
 
@@ -25,10 +25,12 @@ export interface StockItem {
 export const LOW_STOCK_AT = 10;
 
 export async function getStockItems(): Promise<Map<string, StockItem>> {
-  const { data, error } = await getSupabaseAdmin()
-    .from("stock_items")
-    .select("id,label,stock,available,sort")
-    .order("sort", { ascending: true });
+  const { data, error } = await retryOnClockSkew(() =>
+    getSupabaseAdmin()
+      .from("stock_items")
+      .select("id,label,stock,available,sort")
+      .order("sort", { ascending: true }),
+  );
   if (error) throw new Error(`stock_items 读取失败: ${error.message}`);
   return new Map((data as StockItem[]).map((i) => [i.id, i]));
 }

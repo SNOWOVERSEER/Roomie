@@ -1,4 +1,8 @@
-import { getSupabaseAdmin, type ProductRow } from "./supabase-admin";
+import {
+  getSupabaseAdmin,
+  retryOnClockSkew,
+  type ProductRow,
+} from "./supabase-admin";
 
 /*
  * 商品唯一事实源 = Supabase products 表（admin-platform，2026-07-13 起）。
@@ -39,10 +43,12 @@ const fromRow = (r: ProductRow): CatalogItem => ({
 
 /** 全量商品（含未上架），sort 升序。DB 不可达时抛错 → 页面 error boundary。 */
 export async function getCatalog(): Promise<CatalogItem[]> {
-  const { data, error } = await getSupabaseAdmin()
-    .from("products")
-    .select("*")
-    .order("sort", { ascending: true });
+  const { data, error } = await retryOnClockSkew(() =>
+    getSupabaseAdmin()
+      .from("products")
+      .select("*")
+      .order("sort", { ascending: true }),
+  );
   if (error) throw new Error(`products 读取失败: ${error.message}`);
   return (data as ProductRow[]).map(fromRow);
 }

@@ -87,6 +87,29 @@ export interface ProductRow {
   updated_at: string;
 }
 
+/*
+ * Supabase 瞬时时钟抖动（机器睡醒后本机时钟落后，JWT iat 被判在未来，
+ * 几百 ms 到几秒内自愈）。这曾让 layout 的首个请求 500：错误页 →
+ * dev 就地恢复途中客户端报 removeChild of null。只对这一种错误做一次
+ * 短退避重试；其它错误照旧交给调用方（error boundary）。
+ */
+const CLOCK_SKEW_RE = /issued at future|issued in the future/i;
+
+export async function retryOnClockSkew<
+  R extends { error: { message: string } | null },
+>(run: () => PromiseLike<R>): Promise<R> {
+  const first = await run();
+  if (first.error && CLOCK_SKEW_RE.test(first.error.message)) {
+    console.warn(
+      "[supabase] 时钟抖动瞬时错误，600ms 后重试一次:",
+      first.error.message,
+    );
+    await new Promise((r) => setTimeout(r, 600));
+    return await run();
+  }
+  return first;
+}
+
 let client: SupabaseClient | null = null;
 
 export function getSupabaseAdmin(): SupabaseClient {
