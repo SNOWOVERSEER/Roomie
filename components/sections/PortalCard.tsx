@@ -9,7 +9,7 @@ import styles from "./PortalCard.module.css";
  * 媒体两种活法：
  *  - cycle：进入视口后照片轮替。自动挡 = 交叉溶解 + 全帧同相位慢漂移，
  *    活动圆点是随停留时长填充的进度胶囊；手动挡 = 连续可逆拖拽——
- *    下一张随拖动进度渐显、媒体跟手位移，过阈值（或甩动够快）落定切换，
+ *    当前帧与候选帧首尾相接并 1:1 跟手，过阈值（或甩动够快）落定切换，
  *    不够则平滑退回，绝无"弹回再硬切"。未加载完的帧绝不切入。
  *  - video：进入视口即播、离开暂停（所有指针类型一视同仁——
  *    hover 门控对触屏用户等于永不播放，已废除）。
@@ -50,10 +50,11 @@ export default function PortalCard({
   const swipe = useRef({
     on: false,
     dragging: false,
+    settling: false,
     x0: 0,
     y0: 0,
     dx: 0,
-    commitDx: 120,
+    width: 420,
     candidate: -1,
     consumed: false,
     lastX: 0,
@@ -92,16 +93,10 @@ export default function PortalCard({
     return () => io.disconnect();
   }, []);
 
-  // 照片轮替（悬停或拖拽中暂停；手动翻页重置节拍）
+  // 每次重新进入视口都从一枚全新的时间胶囊开始，和自动切图计时同相位。
   useEffect(() => {
-    if (media.kind !== "cycle" || !inView || hovered) return;
-    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
-    const t = setInterval(() => {
-      if (swipe.current.dragging) return;
-      setFrame((f) => nextLoaded(f, 1));
-    }, DWELL);
-    return () => clearInterval(t);
-  }, [media, inView, hovered, cycleKey, nextLoaded]);
+    if (inView) setCycleKey((key) => key + 1);
+  }, [inView]);
 
   // 视频：进入视口播放 / 离开暂停（触屏与桌面同一逻辑）
   useEffect(() => {
@@ -116,35 +111,41 @@ export default function PortalCard({
   useEffect(() => () => window.clearTimeout(settleTimer.current), []);
 
   /* ―― 连续可逆拖拽（鼠标与触屏同一路；touch-action: pan-y 保住纵向滚动）――
-     拖动中直接写 DOM（media 位移 + 候选帧透明度），不走 React 渲染，
-     每一像素都跟手；松手才回到 React 状态机。 */
+     拖动中直接写 DOM，让当前帧与候选帧首尾相接、同步位移，不走 React 渲染；
+     每一像素都跟手，松手后两帧一起落定或一起回位。 */
 
-  const candidateImg = () =>
-    swipe.current.candidate >= 0
-      ? imgRefs.current[swipe.current.candidate]
-      : null;
+  const imageAt = useCallback(
+    (index: number) => (index >= 0 ? imgRefs.current[index] : null),
+    [],
+  );
 
-  const clearCandidateInline = () => {
-    const img = candidateImg();
-    if (img) {
-      img.style.opacity = "";
-      img.style.transition = "";
-      img.style.zIndex = "";
-    }
-  };
+  const clearImageInline = useCallback((img: HTMLImageElement | null) => {
+    if (!img) return;
+    img.style.opacity = "";
+    img.style.transition = "";
+    img.style.transform = "";
+    img.style.zIndex = "";
+    img.style.willChange = "";
+    img.style.animation = "";
+  }, []);
 
   const onPointerDown = (e: React.PointerEvent) => {
-    if (media.kind !== "cycle" || !e.isPrimary) return;
+    if (
+      media.kind !== "cycle" ||
+      !e.isPrimary ||
+      swipe.current.settling
+    )
+      return;
     window.clearTimeout(settleTimer.current);
     const w = mediaRef.current?.clientWidth ?? 420;
     swipe.current = {
       on: true,
       dragging: false,
+      settling: false,
       x0: e.clientX,
       y0: e.clientY,
       dx: 0,
-      // 提交阈值：跟卡宽走但设上限，桌面大卡不用拖半屏
-      commitDx: Math.min(Math.max(w * 0.28, 64), 150),
+      width: w,
       candidate: -1,
       consumed: false,
       lastX: e.clientX,
@@ -162,7 +163,6 @@ export default function PortalCard({
       if (Math.abs(dx) > 10 && Math.abs(dx) > Math.abs(dy) * 1.2) {
         s.dragging = true;
         rootRef.current?.setPointerCapture(e.pointerId);
-        if (mediaRef.current) mediaRef.current.style.transition = "none";
       } else if (Math.abs(dy) > 16) {
         s.on = false; // 纵向意图：让给页面滚动
         return;
@@ -170,6 +170,7 @@ export default function PortalCard({
         return;
       }
     }
+    e.preventDefault();
     s.dx = dx;
     const dt = e.timeStamp - s.lastT;
     if (dt > 0) {
@@ -182,68 +183,169 @@ export default function PortalCard({
     const dir: 1 | -1 = dx < 0 ? 1 : -1;
     const cand = nextLoaded(frame, dir);
     if (cand !== s.candidate) {
-      clearCandidateInline();
+      clearImageInline(imageAt(s.candidate));
       s.candidate = cand !== frame ? cand : -1;
-      const img = candidateImg();
+      const img = imageAt(s.candidate);
       if (img) {
         img.style.transition = "none";
-        img.style.zIndex = "2";
+        img.style.opacity = "1";
+        img.style.zIndex = "3";
+        img.style.willChange = "transform";
+        img.style.animation = "none";
       }
     }
 
-    const progress = Math.min(1, Math.abs(dx) / s.commitDx);
-    const m = mediaRef.current;
-    if (m) {
-      const shift =
-        Math.sign(dx) * Math.min(Math.abs(dx) * 0.5, s.commitDx * 0.62);
-      m.style.transform = `translateX(${shift}px)`;
-    }
-    const img = candidateImg();
-    if (img) img.style.opacity = String(progress * 0.98);
+    const current = imageAt(frame);
+    const img = imageAt(s.candidate);
+    if (!current || !img) return;
+
+    current.style.transition = "none";
+    current.style.zIndex = "2";
+    current.style.willChange = "transform";
+    current.style.animation = "none";
+
+    // 图片与指针 1:1 跟手；拖过一整张后才加入轻微阻尼，避免露出空白。
+    const distance = Math.abs(dx);
+    const shift =
+      distance <= s.width
+        ? dx
+        : Math.sign(dx) * (s.width + (distance - s.width) * 0.14);
+    const candidateOffset = dir === 1 ? s.width : -s.width;
+    current.style.transform = `translate3d(${shift}px, 0, 0)`;
+    img.style.transform = `translate3d(${shift + candidateOffset}px, 0, 0)`;
   };
 
-  const endSwipe = () => {
+  const endSwipe = (allowCommit: boolean) => {
     const s = swipe.current;
     if (!s.on) return;
     s.on = false;
     if (!s.dragging) return;
     s.dragging = false;
-    s.consumed = Math.abs(s.dx) > 12; // 拖过的手势不当作点击进详情页
+    s.consumed = Math.abs(s.dx) > 12;
 
-    const m = mediaRef.current;
-    if (m) {
-      m.style.transition = ""; // 恢复 CSS 里的回弹过渡
-      m.style.transform = "";
+    const current = imageAt(frame);
+    const img = imageAt(s.candidate);
+    if (!current || !img) {
+      clearImageInline(current);
+      clearImageInline(img);
+      return;
     }
 
-    const progress = Math.min(1, Math.abs(s.dx) / s.commitDx);
-    const flung = progress > 0.35 && Math.abs(s.vx) > 0.45;
-    const img = candidateImg();
-    const commit = s.candidate >= 0 && !!img && (progress >= 1 || flung || progress >= 0.62);
+    const progress = Math.min(1, Math.abs(s.dx) / s.width);
+    const flung = Math.abs(s.dx) > 24 && Math.abs(s.vx) > 0.42;
+    const commit = allowCommit && (progress >= 0.24 || flung);
+    const dir: 1 | -1 = s.dx < 0 ? 1 : -1;
+    const candidateOffset = dir === 1 ? s.width : -s.width;
+    const duration = commit ? 360 : 300;
+    const transition = `transform ${duration}ms cubic-bezier(0.22, 0.72, 0.2, 1)`;
 
-    if (commit && img) {
+    s.settling = true;
+    current.style.transition = transition;
+    img.style.transition = transition;
+
+    if (commit) {
       const target = s.candidate;
-      img.style.transition = "opacity 240ms cubic-bezier(0.22, 0.61, 0.21, 1)";
-      img.style.opacity = "1";
+      const exitX = dir === 1 ? -s.width : s.width;
+      window.requestAnimationFrame(() => {
+        current.style.transform = `translate3d(${exitX}px, 0, 0)`;
+        img.style.transform = "translate3d(0, 0, 0)";
+      });
       settleTimer.current = window.setTimeout(() => {
         setFrame(target);
         setCycleKey((k) => k + 1);
-        // 等 React 把 frameOn 类落到候选帧上再撤内联，避免一帧闪空
         settleTimer.current = window.setTimeout(() => {
-          const el = imgRefs.current[target];
-          if (el) {
-            el.style.opacity = "";
-            el.style.transition = "";
-            el.style.zIndex = "";
-          }
-        }, 90);
-      }, 250);
-    } else if (img) {
-      img.style.transition = "opacity 200ms cubic-bezier(0.22, 0.61, 0.21, 1)";
-      img.style.opacity = "0";
-      settleTimer.current = window.setTimeout(clearCandidateInline, 230);
+          clearImageInline(current);
+          clearImageInline(imageAt(target));
+          s.candidate = -1;
+          s.settling = false;
+        }, 70);
+      }, duration + 30);
+    } else {
+      window.requestAnimationFrame(() => {
+        current.style.transform = "translate3d(0, 0, 0)";
+        img.style.transform = `translate3d(${candidateOffset}px, 0, 0)`;
+      });
+      settleTimer.current = window.setTimeout(() => {
+        clearImageInline(current);
+        clearImageInline(img);
+        s.candidate = -1;
+        s.settling = false;
+      }, duration + 30);
     }
   };
+
+  // 时间胶囊走满后也走同一条双帧滑轨，不再只切 React 索引。
+  useEffect(() => {
+    if (media.kind !== "cycle" || !inView || hovered) return;
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+
+    const timer = window.setTimeout(() => {
+      const s = swipe.current;
+      if (s.dragging || s.settling) return;
+
+      const target = nextLoaded(frame, 1);
+      if (target === frame) {
+        setCycleKey((key) => key + 1);
+        return;
+      }
+
+      const current = imageAt(frame);
+      const incoming = imageAt(target);
+      if (!current || !incoming) return;
+
+      const width = mediaRef.current?.clientWidth ?? 420;
+      const duration = 680;
+      const transition = `transform ${duration}ms cubic-bezier(0.22, 0.72, 0.2, 1)`;
+
+      s.settling = true;
+      s.candidate = target;
+      s.width = width;
+
+      current.style.animation = "none";
+      current.style.transition = "none";
+      current.style.transform = "translate3d(0, 0, 0)";
+      current.style.zIndex = "2";
+      current.style.willChange = "transform";
+
+      incoming.style.animation = "none";
+      incoming.style.transition = "none";
+      incoming.style.transform = `translate3d(${width}px, 0, 0)`;
+      incoming.style.opacity = "1";
+      incoming.style.zIndex = "3";
+      incoming.style.willChange = "transform";
+
+      // 先提交首尾相接的起点，再在下一帧启动完整滑入。
+      void incoming.offsetWidth;
+      current.style.transition = transition;
+      incoming.style.transition = transition;
+      window.requestAnimationFrame(() => {
+        current.style.transform = `translate3d(${-width}px, 0, 0)`;
+        incoming.style.transform = "translate3d(0, 0, 0)";
+      });
+
+      settleTimer.current = window.setTimeout(() => {
+        setFrame(target);
+        setCycleKey((key) => key + 1);
+        settleTimer.current = window.setTimeout(() => {
+          clearImageInline(current);
+          clearImageInline(imageAt(target));
+          s.candidate = -1;
+          s.settling = false;
+        }, 70);
+      }, duration + 30);
+    }, DWELL);
+
+    return () => window.clearTimeout(timer);
+  }, [
+    clearImageInline,
+    cycleKey,
+    frame,
+    hovered,
+    imageAt,
+    inView,
+    media.kind,
+    nextLoaded,
+  ]);
 
   return (
     <Link
@@ -257,11 +359,15 @@ export default function PortalCard({
         // 触屏的 tap 也会触发 pointerenter，悬停暂停只给细指针
         if (window.matchMedia("(hover: hover)").matches) setHovered(true);
       }}
-      onPointerLeave={() => setHovered(false)}
+      onPointerLeave={() => {
+        if (!window.matchMedia("(hover: hover)").matches) return;
+        setHovered(false);
+        setCycleKey((key) => key + 1);
+      }}
       onPointerDown={onPointerDown}
       onPointerMove={onPointerMove}
-      onPointerUp={endSwipe}
-      onPointerCancel={endSwipe}
+      onPointerUp={() => endSwipe(true)}
+      onPointerCancel={() => endSwipe(false)}
       onDragStart={(e) => e.preventDefault()}
       onClickCapture={(e) => {
         if (swipe.current.consumed) {
@@ -271,15 +377,20 @@ export default function PortalCard({
         }
       }}
     >
-      <div className={styles.media} ref={mediaRef}>
+      <div
+        className={`${styles.media} ${
+          media.kind === "cycle" ? styles.cycleMedia : ""
+        }`}
+        ref={mediaRef}
+      >
         {media.kind === "cycle" ? (
           media.images.map((im, i) => (
             // eslint-disable-next-line @next/next/no-img-element
             <img
               key={im.src}
               src={im.src}
-              alt={i === 0 ? im.alt : ""}
-              aria-hidden={i !== 0}
+              alt={i === frame ? im.alt : ""}
+              aria-hidden={i !== frame}
               loading="lazy"
               decoding="async"
               draggable={false}
@@ -307,7 +418,9 @@ export default function PortalCard({
         {tag && <span className={styles.tag}>{tag}</span>}
         {media.kind === "cycle" && (
           <span
-            className={`${styles.dots} ${hovered ? styles.dotsPaused : ""}`}
+            className={`${styles.dots} ${
+              hovered || !inView ? styles.dotsPaused : ""
+            }`}
             aria-hidden
           >
             {media.images.map((im, i) => (

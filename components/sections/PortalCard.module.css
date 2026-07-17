@@ -32,8 +32,15 @@
   aspect-ratio: 5 / 4.4;
   overflow: hidden;
   background: var(--cream-warm);
-  /* 横滑跟手位移的回弹（拖动中 JS 会临时关掉这条过渡） */
-  transition: transform 280ms var(--ease-soft);
+}
+
+.cycleMedia {
+  cursor: grab;
+  user-select: none;
+}
+
+.card:active .cycleMedia {
+  cursor: grabbing;
 }
 
 /* 媒体底下的品牌微光：帧未解码时透出，杜绝溶解到空白 */
