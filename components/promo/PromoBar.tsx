@@ -4,7 +4,14 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { usePromo } from "./PromoProvider";
+import PawTokenBurst from "./PawTokenBurst";
 import styles from "./PromoBar.module.css";
+
+type Emitter = {
+  active: boolean;
+  x: number;
+  y: number;
+};
 
 /*
  * 活动栏位：细窄一条，坐在固定导航栈的最上沿。
@@ -20,6 +27,11 @@ export default function PromoBar() {
   const pathname = usePathname();
   const [tucked, setTucked] = useState(false);
   const [closing, setClosing] = useState(false);
+  const [emitter, setEmitter] = useState<Emitter>({
+    active: false,
+    x: 0,
+    y: 0,
+  });
 
   useEffect(() => {
     const onScroll = () => setTucked(window.scrollY > 12);
@@ -27,6 +39,13 @@ export default function PromoBar() {
     window.addEventListener("scroll", onScroll, { passive: true });
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
+
+  useEffect(() => {
+    if (!tucked && !closing) return;
+    setEmitter((current) =>
+      current.active ? { ...current, active: false } : current,
+    );
+  }, [closing, tucked]);
 
   if (!campaign) return null;
   if (pathname === "/cart" || pathname.startsWith("/checkout")) return null;
@@ -37,6 +56,30 @@ export default function PromoBar() {
     setClosing(true);
     window.setTimeout(dismiss, 440);
   };
+
+  const startEmitter = (target: HTMLElement) => {
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+
+    const rect = target.getBoundingClientRect();
+    setEmitter({
+      active: true,
+      x: rect.left + rect.width / 2,
+      y: rect.bottom - 2,
+    });
+  };
+
+  const stopEmitter = () => {
+    setEmitter((current) =>
+      current.active ? { ...current, active: false } : current,
+    );
+  };
+
+  const openPromoSubscribe = () => {
+    stopEmitter();
+    openSubscribe("promo-bar");
+  };
+
+  const ctaContent = <span className={styles.ctaText}>{campaign.cta}</span>;
 
   return (
     <div
@@ -50,13 +93,21 @@ export default function PromoBar() {
             <button
               type="button"
               className={styles.cta}
-              onClick={() => openSubscribe("promo-bar")}
+              onClick={openPromoSubscribe}
+              onMouseEnter={(event) => startEmitter(event.currentTarget)}
+              onMouseLeave={stopEmitter}
             >
-              {campaign.cta}
+              {ctaContent}
             </button>
           ) : (
-            <Link className={styles.cta} href={campaign.href ?? "/"}>
-              {campaign.cta}
+            <Link
+              className={styles.cta}
+              href={campaign.href ?? "/"}
+              onClick={stopEmitter}
+              onMouseEnter={(event) => startEmitter(event.currentTarget)}
+              onMouseLeave={stopEmitter}
+            >
+              {ctaContent}
             </Link>
           )}
           <button
@@ -77,6 +128,7 @@ export default function PromoBar() {
           </button>
         </div>
       </div>
+      <PawTokenBurst active={emitter.active} x={emitter.x} y={emitter.y} />
     </div>
   );
 }

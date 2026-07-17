@@ -2,6 +2,9 @@
 
 /* grid-rows 0fr/1fr 收放：内容自然高度，收起时导航整体顺滑上移 */
 .wrap {
+  position: relative;
+  z-index: 1;
+  isolation: isolate;
   display: grid;
   grid-template-rows: 1fr;
   transition: grid-template-rows 420ms var(--ease-out);
@@ -30,6 +33,8 @@
 }
 
 .msg {
+  position: relative;
+  z-index: 3;
   min-width: 0;
   font-size: 0.88rem;
   font-weight: 600;
@@ -40,7 +45,11 @@
 }
 
 .cta {
+  position: relative;
+  z-index: 3;
   flex: none;
+  display: inline-grid;
+  place-items: center;
   font-family: inherit;
   font-weight: 700;
   font-size: 0.8rem;
@@ -54,13 +63,24 @@
     background var(--dur-fast) var(--ease-out);
 }
 
+.ctaText {
+  position: relative;
+  z-index: 2;
+}
+
 .cta:hover {
-  transform: translateY(-1px);
   background: var(--orange-deep);
+  animation: shakeOutTokens 560ms cubic-bezier(0.2, 0.78, 0.22, 1) both;
+}
+
+.cta:active {
+  animation: none;
+  transform: translateY(0) scale(0.98);
 }
 
 .x {
   position: absolute;
+  z-index: 3;
   right: clamp(0.35rem, 1.6vw, 1rem);
   top: 50%;
   translate: 0 -50%;
@@ -81,6 +101,30 @@
   color: var(--cream);
 }
 
+@keyframes shakeOutTokens {
+  0% {
+    transform: translateY(0) scale(1) rotate(0);
+  }
+  16% {
+    transform: translateY(1px) scale(1.015, 0.965) rotate(0);
+  }
+  31% {
+    transform: translate(-1.3px, -1px) scale(1.02) rotate(-1.45deg);
+  }
+  46% {
+    transform: translate(1.5px, -2px) scale(1.025) rotate(1.2deg);
+  }
+  61% {
+    transform: translate(-0.8px, -1.5px) scale(1.025) rotate(-0.7deg);
+  }
+  77% {
+    transform: translate(0.45px, -1px) scale(1.025) rotate(0.3deg);
+  }
+  100% {
+    transform: translateY(-1px) scale(1.025) rotate(0);
+  }
+}
+
 @media (max-width: 640px) {
   .bar {
     gap: 0.6rem;
@@ -91,5 +135,12 @@
   }
   .cta {
     font-size: 0.73rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cta:hover {
+    animation: none;
+    transform: none;
   }
 }

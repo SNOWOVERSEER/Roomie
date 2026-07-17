@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { HERO_COPY } from "@/lib/heroConfig";
 import type { FreezeSteps } from "./Hero";
@@ -33,18 +34,51 @@ export default function HeroCopy({ beats, steps, priceText }: Props) {
 
         <div className={`${styles.ctaRow} ${steps.cta ? styles.on : ""}`}>
           {/* 引流进详情页（下单在 /scratcher），不再直接加购 */}
-          <Link className="btnPrimary" href="/scratcher">
-            {HERO_COPY.cta}
-            <svg viewBox="0 0 20 20" width="17" height="17" aria-hidden>
-              <path
-                d="M4 10h11m-4.5-4.5L15 10l-4.5 4.5"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2.4"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-            </svg>
+          <Link
+            className={`btnPrimary ${styles.heroCta}`}
+            href="/scratcher"
+            aria-label={HERO_COPY.cta}
+          >
+            <span className={styles.ctaMover} aria-hidden>
+              <span className={styles.ctaCat}>
+                <Image
+                  src="/interaction/roomie-pushing-cat.png"
+                  alt=""
+                  width={240}
+                  height={135}
+                  priority
+                />
+              </span>
+              <span className={styles.ctaMiniFrame}>
+                <Image
+                  src="/hero/art/flat-01.png"
+                  alt=""
+                  width={70}
+                  height={100}
+                  priority
+                />
+              </span>
+            </span>
+
+            <span className={styles.ctaLabel} aria-hidden>
+              <span className={styles.ctaLong}>{HERO_COPY.cta}</span>
+              <span className={styles.ctaShort}>Shop the Scratcher</span>
+              <svg
+                className={styles.ctaArrow}
+                viewBox="0 0 20 20"
+                width="17"
+                height="17"
+              >
+                <path
+                  d="M4 10h11m-4.5-4.5L15 10l-4.5 4.5"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2.4"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+              </svg>
+            </span>
           </Link>
           <span className={styles.ctaNote}>{HERO_COPY.ctaNote(priceText)}</span>
         </div>

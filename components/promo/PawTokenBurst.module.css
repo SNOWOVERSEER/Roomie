@@ -1,0 +1,163 @@
+.layer {
+  position: fixed;
+  inset: 0;
+  z-index: 1;
+  display: block;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.token {
+  position: absolute;
+  width: var(--token-size);
+  height: var(--token-size);
+  opacity: 0;
+  transform-origin: center;
+  will-change: transform, opacity;
+}
+
+.sprite {
+  position: relative;
+  display: block;
+  width: 100%;
+  height: 100%;
+  filter: drop-shadow(0 4px 4px rgba(20, 30, 54, 0.22));
+  transform-origin: center;
+}
+
+.view {
+  position: absolute;
+  inset: 0;
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: contain;
+  opacity: 0;
+  animation-duration: var(--turn-duration);
+  animation-delay: var(--turn-delay);
+  animation-timing-function: linear;
+  animation-iteration-count: infinite;
+  will-change: opacity;
+}
+
+.reverse .view {
+  animation-direction: reverse;
+}
+
+.faceA,
+.faceB {
+  background-image: url("/interaction/paw-token-front.png");
+}
+
+.angleA,
+.angleB {
+  background-image: url("/interaction/paw-token.png");
+}
+
+.edge {
+  background-image: url("/interaction/paw-token-edge.png");
+}
+
+.faceB,
+.angleB {
+  transform: scaleX(-1);
+}
+
+.faceA {
+  animation-name: faceA;
+}
+
+.angleA {
+  animation-name: angleA;
+}
+
+.edge {
+  animation-name: edge;
+}
+
+.angleB {
+  animation-name: angleB;
+}
+
+.faceB {
+  animation-name: faceB;
+}
+
+@keyframes faceA {
+  0%,
+  17% {
+    opacity: 1;
+  }
+  19%,
+  98% {
+    opacity: 0;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+
+@keyframes angleA {
+  0%,
+  16% {
+    opacity: 0;
+  }
+  18%,
+  36% {
+    opacity: 1;
+  }
+  38%,
+  100% {
+    opacity: 0;
+  }
+}
+
+@keyframes edge {
+  0%,
+  35% {
+    opacity: 0;
+  }
+  37%,
+  61% {
+    opacity: 1;
+  }
+  63%,
+  100% {
+    opacity: 0;
+  }
+}
+
+@keyframes angleB {
+  0%,
+  60% {
+    opacity: 0;
+  }
+  62%,
+  80% {
+    opacity: 1;
+  }
+  82%,
+  100% {
+    opacity: 0;
+  }
+}
+
+@keyframes faceB {
+  0%,
+  79% {
+    opacity: 0;
+  }
+  81%,
+  97% {
+    opacity: 1;
+  }
+  99%,
+  100% {
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .layer {
+    display: none;
+  }
+}

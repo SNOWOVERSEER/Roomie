@@ -144,6 +144,189 @@
     transform 560ms var(--ease-soft);
 }
 
+.heroCta {
+  position: relative;
+  justify-content: center;
+  width: min(25rem, 100%);
+  min-height: 3.55rem;
+  padding-inline: 1.45em;
+  gap: 0;
+  overflow: hidden;
+  isolation: isolate;
+}
+
+.ctaLabel {
+  position: relative;
+  z-index: 2;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6em;
+  white-space: nowrap;
+  transform: translate3d(0, 0, 0);
+  transition: transform 260ms cubic-bezier(0.22, 1, 0.36, 1);
+  will-change: transform;
+}
+
+.ctaShort {
+  display: none;
+}
+
+.ctaArrow {
+  flex: none;
+  transition: transform 220ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.ctaMover {
+  position: absolute;
+  z-index: 1;
+  left: 0.24rem;
+  bottom: 0;
+  width: 7.45rem;
+  height: 3.5rem;
+  opacity: 0;
+  transform: translate3d(-8rem, 0.16rem, 0) rotate(-1.4deg);
+  transform-origin: 50% 100%;
+  transition:
+    transform 360ms cubic-bezier(0.16, 1, 0.3, 1),
+    opacity 160ms ease-out;
+  will-change: transform, opacity;
+}
+
+.ctaCat {
+  position: absolute;
+  z-index: 2;
+  left: 0;
+  bottom: 0;
+  width: 7.2rem;
+  aspect-ratio: 720 / 405;
+  transform-origin: 78% 78%;
+  will-change: transform;
+}
+
+.ctaCat img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.ctaMiniFrame {
+  position: absolute;
+  z-index: 1;
+  left: 5.53rem;
+  bottom: 0.34rem;
+  width: 1.76rem;
+  aspect-ratio: 1400 / 2000;
+  padding: 0.12rem;
+  border: 1px solid #75461f;
+  background: linear-gradient(
+    135deg,
+    #f0c98e 0%,
+    #bd7a36 42%,
+    #e4ad67 72%,
+    #8f5727 100%
+  );
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 239, 203, 0.55),
+    0 1px 2px rgba(60, 33, 14, 0.2);
+  transform-origin: 50% 100%;
+  will-change: transform;
+}
+
+.ctaMiniFrame img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.heroCta:hover .ctaLabel,
+.heroCta:focus .ctaLabel,
+.heroCta:focus-visible .ctaLabel {
+  transform: translate3d(2.55rem, 0, 0);
+  transition-duration: 460ms;
+}
+
+.heroCta:hover .ctaArrow,
+.heroCta:focus .ctaArrow,
+.heroCta:focus-visible .ctaArrow {
+  transform: translate3d(0.32rem, 0, 0);
+  transition-duration: 360ms;
+}
+
+.heroCta:hover .ctaMover,
+.heroCta:focus .ctaMover,
+.heroCta:focus-visible .ctaMover {
+  opacity: 1;
+  transform: translate3d(0, 0, 0) rotate(0deg);
+  transition-duration: 520ms, 120ms;
+}
+
+.heroCta:hover .ctaCat,
+.heroCta:focus .ctaCat,
+.heroCta:focus-visible .ctaCat {
+  animation:
+    catBrace 760ms cubic-bezier(0.22, 1, 0.36, 1) 30ms both,
+    catBreathe 1.7s ease-in-out 790ms infinite alternate;
+}
+
+.heroCta:hover .ctaMiniFrame,
+.heroCta:focus .ctaMiniFrame,
+.heroCta:focus-visible .ctaMiniFrame {
+  animation: framePush 780ms cubic-bezier(0.22, 1, 0.36, 1) 120ms both;
+}
+
+.heroCta:active .ctaMover {
+  transform: translate3d(0.18rem, 0.08rem, 0) scale(0.97);
+}
+
+@keyframes catBrace {
+  0% {
+    transform: translate3d(-0.42rem, 0.07rem, 0) rotate(-1deg)
+      scale(0.97, 1.02);
+  }
+  36% {
+    transform: translate3d(-0.08rem, 0.09rem, 0) rotate(-0.35deg)
+      scale(0.985, 0.975);
+  }
+  62% {
+    transform: translate3d(0.22rem, -0.02rem, 0) rotate(0.35deg)
+      scale(1.025, 0.985);
+  }
+  82% {
+    transform: translate3d(0.12rem, 0.01rem, 0) rotate(-0.1deg)
+      scale(0.995, 1.005);
+  }
+  100% {
+    transform: translate3d(0.16rem, 0, 0) rotate(0deg) scale(1);
+  }
+}
+
+@keyframes catBreathe {
+  from {
+    transform: translate3d(0.16rem, 0, 0) scale(1);
+  }
+  to {
+    transform: translate3d(0.17rem, -0.03rem, 0) scale(1.002, 0.994);
+  }
+}
+
+@keyframes framePush {
+  0%,
+  22% {
+    transform: translate3d(-0.16rem, 0.02rem, 0) rotate(-1.7deg);
+  }
+  64% {
+    transform: translate3d(0.22rem, -0.02rem, 0) rotate(0.7deg);
+  }
+  82% {
+    transform: translate3d(0.13rem, 0.01rem, 0) rotate(-0.25deg);
+  }
+  100% {
+    transform: translate3d(0.16rem, 0, 0) rotate(0deg);
+  }
+}
+
 .ctaNote {
   font-size: 0.86rem;
   font-weight: 700;
@@ -267,6 +450,42 @@
   .copySettled {
     transform: none;
   }
+
+  .heroCta:hover .ctaLabel,
+  .heroCta:focus .ctaLabel,
+  .heroCta:focus-visible .ctaLabel {
+    transform: translate3d(1.7rem, 0, 0);
+  }
+
+  .ctaMover {
+    left: 0.18rem;
+    width: 6.2rem;
+    height: 3.25rem;
+  }
+
+  .ctaCat {
+    width: 6rem;
+  }
+
+  .ctaMiniFrame {
+    left: 4.62rem;
+    width: 1.48rem;
+  }
+}
+
+@media (max-width: 460px) {
+  .heroCta {
+    font-size: 0.98rem;
+    padding-inline: 1.15em;
+  }
+
+  .ctaLong {
+    display: none;
+  }
+
+  .ctaShort {
+    display: inline;
+  }
 }
 
 /* reduced-motion：全局规则已把过渡压到 0，这里再关掉循环动画 */
@@ -280,5 +499,18 @@
   .pawA,
   .pawB {
     opacity: 1;
+  }
+
+  .ctaMover {
+    display: none;
+  }
+
+  .heroCta:hover .ctaLabel,
+  .heroCta:focus .ctaLabel,
+  .heroCta:focus-visible .ctaLabel,
+  .heroCta:hover .ctaArrow,
+  .heroCta:focus .ctaArrow,
+  .heroCta:focus-visible .ctaArrow {
+    transform: none;
   }
 }
