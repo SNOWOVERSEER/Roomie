@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { ARTWORKS } from "@/lib/heroConfig";
 import { formatCents } from "@/lib/catalog";
 import { useCart } from "@/components/CartContext";
+import PartnerMark from "@/components/PartnerMark";
 import WaitlistForm from "@/components/WaitlistForm";
 import pdp from "./pdp.module.css";
 import styles from "./ScratcherShop.module.css";
@@ -353,6 +354,12 @@ export default function ScratcherShop({ state }: { state: ShopState }) {
                 </ul>
               </>
             )}
+
+            {/* 品牌铭牌：面板收尾一行，在售/下架都在（口径 HANDOVER §1.1） */}
+            <p className={pdp.provenance}>
+              <span>Made with our partner workshop</span>
+              <PartnerMark className={pdp.provenanceMark} />
+            </p>
           </div>
         </div>
       </div>

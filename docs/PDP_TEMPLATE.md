@@ -17,10 +17,10 @@ waitlist 面板换成购买面板，其余区块尽量保留。
 | # | 区块 | 必选 | 实现参考 | 备注 |
 |---|---|---|---|---|
 | 1 | Crumb 面包屑 | ★ | `pdp/Crumb.tsx` | "The Canvas Series — <piece>"，返回 `/#canvas` |
-| 2 | Shop 主舞台 | ★ | `pdp/ScratcherShop.tsx` | 图库主图+缩略 / 粘性购买面板 / 移动端底部粘性购买条。每个商品写自己的 *Shop 客户端组件，面板与底条共享选中态 |
+| 2 | Shop 主舞台 | ★ | `pdp/ScratcherShop.tsx` | 图库主图+缩略 / 粘性购买面板 / 移动端底部粘性购买条。每个商品写自己的 *Shop 客户端组件，面板与底条共享选中态。**品牌铭牌行 = 面板最后一行**（见下） |
 | 3 | Why it works 卖点 | ★ | `pdp.points` | 2×2 编号 01–04，标题+短句 |
 | 4 | Up close 工艺 |  | `pdp.craftGrid` | 微距实拍三联，中列下沉 |
-| 5 | The blueprint 结构/尺寸 |  | `pdp.bpGrid` + `pdp/SpecDrawing.tsx` | 热点图+图例+自绘 SVG 规格线稿（规格图宁可自绘也不修供应商截图，见 HANDOVER §6）。**品牌铭牌行放这里**（见下） |
+| 5 | The blueprint 结构/尺寸 |  | `pdp.bpGrid` + `pdp/SpecDrawing.tsx` | 热点图+图例+自绘 SVG 规格线稿（规格图宁可自绘也不修供应商截图，见 HANDOVER §6） |
 | 6 | 特色机制区 |  | scratcher 的 The swap | 讲该商品的核心机制（换画/折叠/清洗等），三步式+实拍 |
 | 7 | Shot at home 胶片 |  | `sections/Filmstrip.tsx` | 实拍生活场景横滑 |
 | 8 | CrossSell | ★ | `pdp/CrossSell.tsx` | 互指系列内另一商品，tone 按页面明暗选 |
@@ -30,9 +30,9 @@ waitlist 面板换成购买面板，其余区块尽量保留。
 | # | 区块 | 必选 | 实现参考 | 备注 |
 |---|---|---|---|---|
 | 1 | Crumb 面包屑 | ★ | 同上 | |
-| 2 | Shop 主舞台 | ★ | `pdp/HouseShop.tsx` | 大媒体（进视口自动播视频）+ waitlist 面板（常开 WaitlistForm） |
+| 2 | Shop 主舞台 | ★ | `pdp/HouseShop.tsx` | 大媒体（进视口自动播视频）+ waitlist 面板（常开 WaitlistForm）。**品牌铭牌行 = 面板最后一行**（见下） |
 | 3 | Off the set 剧照 |  | `HouseShop.module.css .stills` | 三联图+图注 |
-| 4 | How the run works 流程 | ★ | `pdp.steps` | 三步：留邮箱 → 怎么造 → 怎么轮到你。**品牌铭牌行放本区末尾** |
+| 4 | How the run works 流程 | ★ | `pdp.steps` | 三步：留邮箱 → 怎么造 → 怎么轮到你 |
 | 5 | CrossSell | ★ | 同上 | 指回在售商品 |
 
 ## 品牌铭牌行（露出口径见 HANDOVER §1.1）
@@ -41,9 +41,9 @@ GlugGlug 制造的商品，PDP 放**一行**低调铭牌，组件
 `components/PartnerMark.tsx`（衬线字标+g 圆徽，`--pm-mark`/`--pm-bg`
 按底色配色），样式 `pdp.provenance`：
 
-- 模板 A：blueprint 规格线稿卡（`.bpSpec`）内部末尾，图纸"签名栏"位置；
-- 模板 B：流程区（How the run works）末尾；
-- 文案句式：`Woven and framed / Built with our partner workshop + 字标`；
+- 位置（两套模板一致，2026-07-19 用户定）：**Shop 主舞台面板的最后一行**
+  （panelNotes 之后、面板收尾处），在售/下架分支之外——面板任何状态都带；
+- 文案句式：`Made with our partner workshop + 字标`；
 - **绝不**进 hero、标题、卖点、metadata/OG、邮件——那是首要宣传位；
 - footer Partners 列是全站统一露出位，商品页不重复承担。
 

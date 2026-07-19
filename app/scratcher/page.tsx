@@ -13,7 +13,6 @@ import Reveal from "@/components/Reveal";
 import Filmstrip, { type Slide } from "@/components/sections/Filmstrip";
 import Crumb from "@/components/pdp/Crumb";
 import CrossSell from "@/components/pdp/CrossSell";
-import PartnerMark from "@/components/PartnerMark";
 import ScratcherShop from "@/components/pdp/ScratcherShop";
 import SpecDrawing from "@/components/pdp/SpecDrawing";
 import pdp from "@/components/pdp/pdp.module.css";
@@ -276,11 +275,6 @@ export default async function ScratcherPage() {
                 </ol>
                 <Reveal as="div" className={pdp.bpSpec} delay={300}>
                   <SpecDrawing className={pdp.bpSpecSvg} />
-                  {/* 品牌铭牌：放图纸"签名栏"位置，低调交代出身 */}
-                  <p className={pdp.provenance}>
-                    <span>Woven and framed with our partner workshop</span>
-                    <PartnerMark className={pdp.provenanceMark} />
-                  </p>
                 </Reveal>
               </div>
             </div>

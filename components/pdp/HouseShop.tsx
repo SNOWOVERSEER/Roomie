@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { formatCents } from "@/lib/catalog";
+import PartnerMark from "@/components/PartnerMark";
 import WaitlistForm from "@/components/WaitlistForm";
 import pdp from "./pdp.module.css";
 import styles from "./HouseShop.module.css";
@@ -111,6 +112,12 @@ export default function HouseShop({ priceCents }: { priceCents: number }) {
               </li>
               <li>Waitlist is first in line when the run opens. That's all.</li>
             </ul>
+
+            {/* 品牌铭牌：面板收尾一行（与 /scratcher 同位，口径 HANDOVER §1.1） */}
+            <p className={pdp.provenance}>
+              <span>Made with our partner workshop</span>
+              <PartnerMark className={pdp.provenanceMark} />
+            </p>
           </div>
         </div>
       </div>

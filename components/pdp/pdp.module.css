@@ -398,10 +398,10 @@
   margin-top: 1.1rem;
   padding-top: 0.85rem;
   border-top: 1.5px dashed color-mix(in srgb, var(--ink) 26%, transparent);
-  width: fit-content;
   display: flex;
+  flex-wrap: wrap; /* 窄面板里字标整体折行左对齐，不被推到右端 */
   align-items: center;
-  gap: 0.55rem;
+  gap: 0.3rem 0.55rem;
   font-size: 0.86rem;
   color: color-mix(in srgb, var(--ink-soft) 82%, transparent);
 }
