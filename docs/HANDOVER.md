@@ -76,9 +76,12 @@ https://roomiepaw.vercel.app 。本地一笔沙盒订单（№ 1001）已全流�
   - "straight off the set — no actors, just residents"
   - 空购物篮："The wall is still bare — and somebody has claws."
 - 计数/编号用 `№`（№ 01 / 06），全站统一。
-- 价格写法 `AU$89`；税话术 "GST included"；运费话术围绕
-  「AU$26 flat · free over AU$188 · Australia only」展开（常量见
-  `lib/catalog.ts` SHIPPING，对客页面 /shipping-returns）。
+- 价格写法 `AU$89`；税话术 "GST included"；运费话术**分层**（07-19 定稿）：
+  品牌层（footer/FinalCta/页面 metadata/terms 概述）只说 "ships
+  Australia-wide" / "shown before you pay"，**不出现金额**；26/188 只
+  出现在购买流程事实层（PDP 面板、购物车抽屉、checkout）与政策页
+  （callout 带 "for our current pieces" 限定）。常量见 `lib/catalog.ts`
+  SHIPPING，对客页面 /shipping-returns；多档模型定稿见 §7 运费段。
 - **官方名称是 RoomiePaw**（2026-07-12 用户明确）：metadata、aria、
   页脚版权、邮件发件人一律 RoomiePaw；logo 图形仍是 "Roomie" 字标 +
   爪印（那是视觉资产，不是名称）。
@@ -276,6 +279,15 @@ Resend 发交易邮件。服务端逻辑全部在 API Routes（无 Edge Function
   的唯一事实源**（admin-platform 分支起；原 `lib/catalog.ts` 常量已退役，
   该文件现在是读取入口 `getCatalog()/getCatalogMap()` + 运费常量）；
   `/api/checkout` 服务端 re-derive + 校验库存，客户端只被信任"买什么买几个"。
+- **多档运费模型（2026-07-19 用户拍板，首个大件 SKU 进库时才实现，
+  别提前建）**：每商品自带运费值（products 表加字段，admin 可编辑），
+  订单运费 = **订单内运费最高那一件的运费**（max 规则，不逐件叠加）；
+  免邮线 188 **只对纯标准件订单生效**，含大件订单不参与免邮。实现时把
+  `SHIPPING` 常量升级成 `quoteShipping(items)` 单点函数（购物车运费行、
+  免邮差额提示、Stripe shipping_options、orders.shipping_cents、邮件行
+  全部走它）；大件 PDP 面板价格旁标 "Delivery AU$XX"。已知取舍：同单
+  两件大件按 max 会让掉一件运费，量小可接受，频繁出现再加"同档第二件
+  附加费"。现售三件（抓板/替芯/house）全是标准档，模型退化为现状。
 - **webhook 幂等**：`orders.stripe_session_id` unique + upsert
   ignoreDuplicates；写库失败 → 500（Stripe 重试），邮件失败只记日志。
 - **orders / waitlist 两表 RLS 开、零策略**：只有 `sb_secret` 服务端可达。
@@ -566,7 +578,7 @@ Create in Stripe。**不再需要重跑 stripe:setup 回填代码。**
 | 07-15 晚 | **品牌口径纠偏（cat→pets，红线见 §3）+ 活动栏位与 Roomie letter 10% 发码上线（§7.6）+ 轮播/加载体验打磨**（门户卡同相位漂移交叉溶解、横滑翻页、进度胶囊；胶片惯性吸附+键盘；SmartImg 微光加载） | 用户全权委托；spec `2026-07-15-promo-slot-...-design.md`，21 项 Playwright e2e 全绿 |
 | 07-15 深夜 | **手感返工（用户复评）**：胶片撤销 scroll-snap 改自由惯性（rAF 摩擦衰减，抓住即停，箭头才整张对齐）；门户卡拖拽改连续可逆（跟手位移+候选帧随进度渐显，过阈/甩动落定，否则平滑退回）；猫屋卡视频废除 hover 门控（各端进入视野即播）。顺带修两个存量 bug：pageIn fill-mode 吃掉移动端粘性购买条（§9.3）、Supabase 时钟抖动 500（§9.4，removeChild 报错根因）。移动端细化：BrandStory 提示按输入能力说 tap/hover、PDP 主 CTA 窄屏全宽、活动条关闭钮热区 36px | 24 项 e2e 全绿 |
 | 07-19 | 模块间距/进场感知优化：section clamp 下限收紧（拉回 §4.3 规范量级）、Canvas→Shelf 断口独收（叙事最连续处最紧）、Reveal 预热触发（视口下方 10%）+ 时长归 `--dur-mid`、FinalCta 文案直出（唯一不走 Reveal 的进场，杜绝深底"整屏纯蓝"） | 移动端最大间隙 22%→16% 屏高 |
-| 07-19 | **运费宣传收敛（用户指示，预备大件品类）**：26/188 从品牌层全部撤下（footer/FinalCta 去金额、cart 与 scratcher metadata 去金额、terms 概述句改"per-order shipping shown before you pay"），只留在购买流程事实层（PDP 面板价格旁、购物车抽屉、checkout 逻辑不动）；政策页 callout 加 "for our current pieces" 限定 + 大件"按商品页标注运费"预告句。多档运费模型（倾向按最高件计费）待用户拍板后实现 | 现售三件仍是 26/188，事实层不变 |
+| 07-19 | **运费宣传收敛（用户指示，预备大件品类）**：26/188 从品牌层全部撤下（footer/FinalCta 去金额、cart 与 scratcher metadata 去金额、terms 概述句改"per-order shipping shown before you pay"），只留在购买流程事实层（PDP 面板价格旁、购物车抽屉、checkout 逻辑不动）；政策页 callout 加 "for our current pieces" 限定 + 大件"按商品页标注运费"预告句。**多档运费模型同日拍板**：按最高件计费 + 免邮线仅纯标准件订单，首个大件 SKU 进库时实现（口径全文见 §7 设计决策段） | 现售三件仍是 26/188，事实层不变 |
 | 07-19 | **供应商红线松绑（用户拍板）**：GlugGlug 以 partner workshop 身份低调露出——footer Partners 列 + 两 PDP 铭牌行（PartnerMark 组件，字体栈重建字标不抠图）；像素级 de-logo 与首要宣传位禁令不变（§1.1）。**PDP 结构沉淀为模板** `docs/PDP_TEMPLATE.md`（A 在售购买型=/scratcher、B 预告候补型=/house，含铭牌规范与新商品接入 checklist） | 新商品详情页从模板起步 |
 
 ---
