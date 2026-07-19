@@ -38,8 +38,11 @@ export default function BrandStory() {
             aria-pressed={revealed}
             aria-label="Reveal the cat in the room"
           >
+            {/* 无猫版不是独立生成图：hero 视频末帧为底、猫区用首帧像素补
+                （平移对齐+光配+羽化），与 room-cat.jpg 逐像素同景，切换零跳动。
+                管线见 HANDOVER 决策日志 07-19 */}
             <SmartImg
-              src="/story/room-empty.jpg"
+              src="/story/room-empty-2.jpg"
               alt="A styled living room with a framed canvas leaning on the wall"
             />
             {/* eslint-disable-next-line @next/next/no-img-element */}
