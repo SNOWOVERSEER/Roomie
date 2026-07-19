@@ -7,7 +7,7 @@
       rgba(18, 39, 94, 0) 55%
     ),
     var(--navy);
-  padding: clamp(4.5rem, 8vw, 7.5rem) 0 clamp(5rem, 9vw, 8rem);
+  padding: clamp(3.25rem, 8vw, 7.5rem) 0 clamp(3.5rem, 9vw, 8rem);
 }
 
 .inner {

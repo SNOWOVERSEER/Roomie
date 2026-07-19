@@ -2,8 +2,8 @@
   opacity: 0;
   transform: translateY(18px);
   transition:
-    opacity 680ms var(--ease-out),
-    transform 680ms var(--ease-out);
+    opacity var(--dur-mid) var(--ease-out),
+    transform var(--dur-mid) var(--ease-out);
 }
 
 .in {

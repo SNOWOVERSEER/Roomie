@@ -35,7 +35,9 @@ export default function Reveal({
           io.disconnect();
         }
       },
-      { threshold: 0.18, rootMargin: "0px 0px -6% 0px" },
+      /* 视口下方 10% 就预热触发：快滑（fling）停下时内容已在浮现途中，
+         大间距 + 未进场内容叠出"整屏空白"的窗口才不会出现 */
+      { threshold: 0.06, rootMargin: "0px 0px 10% 0px" },
     );
     io.observe(el);
     return () => io.disconnect();

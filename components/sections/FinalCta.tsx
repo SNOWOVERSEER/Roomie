@@ -1,10 +1,12 @@
 import Link from "next/link";
 import { formatCents } from "@/lib/catalog";
 import { getProductStatuses } from "@/lib/inventory";
-import Reveal from "@/components/Reveal";
 import styles from "./FinalCta.module.css";
 
-/* 收束段：夜色一拍，把两条购买动线最后各递一次。下单动作都在详情页。 */
+/* 收束段：夜色一拍，把两条购买动线最后各递一次。下单动作都在详情页。
+   本段是站内唯一不走 Reveal 的进场（对 HANDOVER 4.4 的刻意例外）：
+   深色整幅背景铺满视口而文字还没浮现时会成为"整屏纯蓝"，
+   最后一次转化不能有不可见的窗口。 */
 export default async function FinalCta() {
   const scr = (await getProductStatuses()).get("canvas-scratcher");
   const scrLabel = scr?.offSale
@@ -15,14 +17,12 @@ export default async function FinalCta() {
   return (
     <section className={styles.section}>
       <div className={`shell ${styles.inner}`}>
-        <Reveal>
-          <h2 className={styles.heading}>Take one home</h2>
-          <p className={styles.sub}>
-            The print that scratches, or the den that hides. Both wear the
-            same swap-able canvas.
-          </p>
-        </Reveal>
-        <Reveal delay={110} className={styles.row}>
+        <h2 className={styles.heading}>Take one home</h2>
+        <p className={styles.sub}>
+          The print that scratches, or the den that hides. Both wear the
+          same swap-able canvas.
+        </p>
+        <div className={styles.row}>
           <Link className="btnPrimary" href="/scratcher">
             {scrLabel}
           </Link>
@@ -39,13 +39,11 @@ export default async function FinalCta() {
               />
             </svg>
           </Link>
-        </Reveal>
-        <Reveal delay={190}>
-          <p className={styles.fine}>
-            Ships AU-wide, free over AU$188 · prints swap in minutes · more
-            pieces on the bench
-          </p>
-        </Reveal>
+        </div>
+        <p className={styles.fine}>
+          Ships AU-wide, free over AU$188 · prints swap in minutes · more
+          pieces on the bench
+        </p>
       </div>
     </section>
   );

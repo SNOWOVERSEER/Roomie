@@ -1,5 +1,5 @@
 .section {
-  padding: clamp(4.5rem, 8vw, 8rem) 0;
+  padding: clamp(3.25rem, 8vw, 8rem) 0;
   background: var(--cream-warm);
 }
 

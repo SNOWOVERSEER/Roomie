@@ -1,5 +1,7 @@
 .section {
-  padding: clamp(4.5rem, 8vw, 7.5rem) 0;
+  /* 顶部收紧：与 CanvasCollection 尾部是同一条商业动线（主产品→下一批），
+     断口要小于其他模块边界 */
+  padding: clamp(3rem, 5.5vw, 5rem) 0 clamp(3.25rem, 8vw, 7.5rem);
   background: linear-gradient(
     to bottom,
     var(--cream),
