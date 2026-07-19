@@ -231,9 +231,10 @@ IMG_43xx 白底正拍模板）、`Glug视频/`（9 条 9:16 竖版）。成品�
 ### 6.1 上新画作 SOP
 
 1. 供应商白底正拍（IMG_43xx 同模板）放进源目录；
-2. `tools/extract_flats.py` 加一行映射 → 跑 → 产出 `flat-0X.png`（1400×2000）
-   （饱和度掩膜找画布内沿；检测不合理自动回退共识框——波光这种浅色
-   闪光画面必踩）；
+2. `tools/extract_flats.py` 加一行映射 → 跑 → 产出 `tools/flats/flat-0X.png`
+   （1400×2000；饱和度掩膜找画布内沿；检测不合理自动回退共识框——波光
+   这种浅色闪光画面必踩）。flat 是管线中间产物，**不放 public**（07-19
+   前误放 public/hero/art/ 白部署了 ~21MB）；
 3. `python3 tools/make_artworks.py` → 合成 `art-0X.png` + 重写 frame-rect.json；
 4. `lib/heroConfig.ts` ARTWORKS 加一项（英文名找用户定或自拟）；
 5. PDP 预览图：白底正拍裁剪 `crop=(80,797,1240,2074)` + LaMa 修掉框顶
