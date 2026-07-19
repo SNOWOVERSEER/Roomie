@@ -20,7 +20,7 @@ import pdp from "@/components/pdp/pdp.module.css";
 export const metadata: Metadata = {
   title: "The Canvas Scratcher · RoomiePaw",
   description:
-    "A framed loop-pile canvas that leans on your wall like art and scratches like a post. Solid pine, six swap-able prints, free AU shipping over AU$188.",
+    "A framed loop-pile canvas that leans on your wall like art and scratches like a post. Solid pine, six swap-able prints, ships Australia-wide.",
 };
 
 /*

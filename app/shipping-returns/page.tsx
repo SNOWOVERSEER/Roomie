@@ -5,7 +5,7 @@ import styles from "@/components/policy/PolicyPage.module.css";
 export const metadata: Metadata = {
   title: "Shipping & returns · RoomiePaw",
   description:
-    "Australia-wide shipping: AU$26 flat, free over AU$188. Thirty-day returns, and Australian Consumer Law guarantees always apply.",
+    "Australia-wide tracked shipping. Thirty-day returns, and Australian Consumer Law guarantees always apply.",
 };
 
 /* TODO(用户复核)：发货时效与退货窗口为合理默认值，正式上线前请店主确认 */
@@ -15,16 +15,19 @@ export default function ShippingReturnsPage() {
     <PolicyPage
       eyebrow="The practical bit"
       title="Shipping & returns"
-      lede="Short version: we ship Australia-wide, shipping is free once your order passes AU$188, and if something isn't right we'll sort it."
+      lede="Short version: we ship Australia-wide, you see the exact cost before you pay, and if something isn't right we'll sort it."
       updated="12 July 2026"
     >
       <h2>Shipping</h2>
       <p className={styles.callout}>
-        Australia only · AU$26 flat per order · free over AU$188
+        Australia only · AU$26 flat for our current pieces · free over AU$188
       </p>
       <p>
         Every order ships from our Melbourne studio, tracked with Australia
-        Post or Sendle. We only ship within Australia for now. International
+        Post or Sendle. As bigger furniture joins the roomful, bulkier pieces
+        will carry their own delivery rate, shown right on their page.
+        Whatever is in the basket, you see the exact shipping cost before you
+        pay. We only ship within Australia for now. International
         friends: join a waitlist and tell us where you are, it genuinely helps
         us plan.
       </p>

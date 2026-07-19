@@ -99,8 +99,7 @@ export default function Footer() {
       <div className={`shell ${styles.fine}`}>
         <span>© 2026 RoomiePaw · Melbourne, AU</span>
         <span className={styles.demo}>
-          secure checkout by Stripe · GST included · free AU shipping over
-          AU$188
+          secure checkout by Stripe · GST included · ships Australia-wide
         </span>
       </div>
     </footer>

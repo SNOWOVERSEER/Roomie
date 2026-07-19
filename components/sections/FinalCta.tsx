@@ -41,8 +41,7 @@ export default async function FinalCta() {
           </Link>
         </div>
         <p className={styles.fine}>
-          Ships AU-wide, free over AU$188 · prints swap in minutes · more
-          pieces on the bench
+          Ships AU-wide · prints swap in minutes · more pieces on the bench
         </p>
       </div>
     </section>

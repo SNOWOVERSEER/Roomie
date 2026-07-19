@@ -46,8 +46,8 @@ export default function TermsPage() {
       <p>
         Covered in detail on the{" "}
         <a href="/shipping-returns">Shipping &amp; returns</a> page: Australia
-        only, AU$26 flat, free over AU$188, 30-day change of mind, and full
-        remedies for faulty items. Our goods come with guarantees that cannot
+        only, per-order shipping shown before you pay, 30-day change of mind,
+        and full remedies for faulty items. Our goods come with guarantees that cannot
         be excluded under the Australian Consumer Law, and nothing in these
         terms limits them.
       </p>
