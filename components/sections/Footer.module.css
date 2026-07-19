@@ -75,7 +75,6 @@
 
 .partnerMark {
   --pm-mark: color-mix(in srgb, var(--cream) 82%, transparent);
-  --pm-bg: var(--navy);
   font-size: 1.05rem;
 }
 

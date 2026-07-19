@@ -151,7 +151,7 @@ https://roomiepaw.vercel.app 。本地一笔沙盒订单（№ 1001）已全流�
 | 虚线分隔 | `border-top: 1.5px dashed color-mix(...26%)` |
 | 圆点列表 | `.panelNotes li::before` 橙色 6px 圆点 |
 | 步骤条 01/02/03 | `pdp.module.css` `.steps`（counter + 半透明大数字） |
-| 合作品牌标 | `components/PartnerMark.tsx`（衬线字标+g 圆徽，字体栈重建非抠图；`--pm-mark`/`--pm-bg` 按底色配色；铭牌行样式 `pdp.provenance`） |
+| 合作品牌标 | `components/PartnerMark.tsx`（官方猫耳 g 圆标=内嵌 SVG path，PIL 几何重建+potrace 矢量化，**evenodd** 挖洞透底色、fill=currentColor 任意底自适应；字标 Georgia 栈；主色变量 `--pm-mark`；铭牌行样式 `pdp.provenance`） |
 | 纸吊牌 | hero 的 tagCard（`ArtworkSwitcher.module.css`） |
 | 画芯选择器 | `ScratcherShop.module.css` `.picks/.pick/.picked`（橙描边选中） |
 | 规格双卡 | `.formats/.format/.formatOn` |
