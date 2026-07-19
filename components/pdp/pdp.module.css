@@ -506,7 +506,9 @@ a.crossCard:hover {
   border-radius: var(--r-card);
 }
 
+/* Link 里只能用 span，分行靠这里的 display:block */
 .crossKicker {
+  display: block;
   font-family: var(--font-display), sans-serif;
   font-weight: 700;
   font-size: 0.8rem;
@@ -516,6 +518,7 @@ a.crossCard:hover {
 }
 
 .crossTitle {
+  display: block;
   margin-top: 0.3rem;
   font-family: var(--font-display), sans-serif;
   font-weight: 800;
@@ -524,6 +527,7 @@ a.crossCard:hover {
 }
 
 .crossBlurb {
+  display: block;
   margin-top: 0.35rem;
   font-size: 0.95rem;
   opacity: 0.78;
