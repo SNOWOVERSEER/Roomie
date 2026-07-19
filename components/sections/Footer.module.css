@@ -7,8 +7,8 @@
 
 .grid {
   display: grid;
-  grid-template-columns: 1.4fr 0.8fr 0.8fr;
-  gap: clamp(2rem, 5vw, 4rem);
+  grid-template-columns: 1.3fr 0.7fr 0.7fr 1fr;
+  gap: clamp(1.6rem, 4vw, 3.5rem);
 }
 
 .brand p {
@@ -65,6 +65,25 @@
 
 .col a:hover {
   color: var(--orange);
+}
+
+.partner {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.partnerMark {
+  --pm-mark: color-mix(in srgb, var(--cream) 82%, transparent);
+  --pm-bg: var(--navy);
+  font-size: 1.05rem;
+}
+
+.partner > span {
+  font-size: 0.84rem;
+  line-height: 1.55;
+  color: color-mix(in srgb, var(--cream) 55%, transparent);
+  max-width: 24ch;
 }
 
 .fine {

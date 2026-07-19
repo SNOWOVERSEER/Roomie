@@ -1,0 +1,25 @@
+.mark {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5em;
+  font-family: Georgia, "Times New Roman", Times, serif;
+  font-weight: 700;
+  letter-spacing: 0.015em;
+  color: var(--pm-mark, var(--ink-soft));
+  white-space: nowrap;
+}
+
+.badge {
+  display: inline-grid;
+  place-items: center;
+  width: 1.4em;
+  height: 1.4em;
+  border-radius: 50%;
+  background: var(--pm-mark, var(--ink-soft));
+  color: var(--pm-bg, var(--cream-warm));
+  font-size: 0.92em;
+  line-height: 1;
+  flex: none;
+  /* 徽章里的 g 光学居中：衬线 g 的降部偏下，微抬 */
+  padding-bottom: 0.12em;
+}

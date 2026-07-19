@@ -393,6 +393,23 @@
   max-width: 34rem;
 }
 
+/* 品牌铭牌行：图纸签名栏语境的低调 provenance（口径 HANDOVER §1.1） */
+.provenance {
+  margin-top: 1.1rem;
+  padding-top: 0.85rem;
+  border-top: 1.5px dashed color-mix(in srgb, var(--ink) 26%, transparent);
+  width: fit-content;
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  font-size: 0.86rem;
+  color: color-mix(in srgb, var(--ink-soft) 82%, transparent);
+}
+
+.provenanceMark {
+  font-size: 0.95rem;
+}
+
 /* ——— 换画步骤配图 ——— */
 .stepMedia {
   border-radius: var(--r-card);

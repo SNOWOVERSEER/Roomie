@@ -6,6 +6,7 @@ import Reveal from "@/components/Reveal";
 import Crumb from "@/components/pdp/Crumb";
 import CrossSell from "@/components/pdp/CrossSell";
 import HouseShop from "@/components/pdp/HouseShop";
+import PartnerMark from "@/components/PartnerMark";
 import pdp from "@/components/pdp/pdp.module.css";
 import shop from "@/components/pdp/HouseShop.module.css";
 
@@ -98,6 +99,11 @@ export default async function HousePage() {
                 <p>The waitlist hears first and chooses their number first.</p>
               </Reveal>
             </ol>
+            {/* 品牌铭牌：流程区末尾低调交代出身（与 /scratcher 蓝图区同款） */}
+            <Reveal as="p" className={pdp.provenance} delay={260}>
+              <span>Built with our partner workshop</span>
+              <PartnerMark className={pdp.provenanceMark} />
+            </Reveal>
           </div>
         </section>
 

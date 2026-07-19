@@ -21,10 +21,14 @@ https://roomiepaw.vercel.app 。本地一笔沙盒订单（№ 1001）已全流�
 
 ## 1. 红线（违反 = 事故，先读这节）
 
-1. **供应商品牌（GlugGlug）绝不能出现在站点任何地方**——图片像素、
-   视频帧、文案、alt、DOM、metadata 全算。所有已发布素材都经过
-   de-logo 处理（见 §6）。新素材上站前必须目检 + 全分辨率查一遍。
-   历史注意：用户曾说过"logo 没事"，后因合作性质变化**收回**，一律按最严执行。
+1. **供应商品牌（GlugGlug）只以「partner workshop」身份低调露出**
+   （2026-07-19 用户拍板，推翻 07-11 的全禁版）。允许且**仅允许**两处：
+   footer 的 Partners 列 + 各 PDP 的品牌铭牌行（`components/PartnerMark.tsx`，
+   位置规范见 `docs/PDP_TEMPLATE.md`）。其余照旧全禁：产品图/视频**像素里**
+   的 logo（de-logo 管线不变，§6，新素材上站前仍须目检）、hero/标题/卖点
+   等首要宣传位、metadata/OG、邮件。理由：产品确属 GlugGlug（中国小众
+   品牌，AU 无认知），提及是诚实姿态但不做首要宣传。
+   历史摇摆：07-11 早"logo 没事"→ 07-11 晚全禁 → 07-19 松绑为本口径。
 2. **站点文案纯英文**。中文只允许出现在代码注释、内部文档（本文这类）。
    画作中文名（晴野/波光/叶舟/森光/窗影/红果）只存在于内部语境，
    站上用英文名（Sunny Field / Wave Light / Leaf Boat / Forest Light /
@@ -131,8 +135,9 @@ https://roomiepaw.vercel.app 。本地一笔沙盒订单（№ 1001）已全流�
   `--ease-soft: cubic-bezier(.34,1.2,.64,1)`（**轻微过冲**，用于位移/浮起）。
   **禁止** bounce/elastic/linear。
 - 时长：`--dur-fast:240ms / --dur-mid:420ms / --dur-slow:640ms`。
-- 进场统一走 `components/Reveal.tsx`（IntersectionObserver 一次性上浮浮现），
-  同组元素 delay 错峰 **80–120ms**。
+- 进场统一走 `components/Reveal.tsx`（IntersectionObserver 一次性上浮浮现，
+  视口下方 10% 预热触发），同组元素 delay 错峰 **80–120ms**。
+  唯一例外 FinalCta：深色整幅收束段，文案直出不走进场（原因见组件内注释）。
 - hover 语汇：`translateY(-2px)`（按钮/卡片）＋阴影加深；active `scale(0.98)`。
 - 大动效只放在高价值时刻（hero 定格编排、抽屉滑入），不撒微交互。
 - `prefers-reduced-motion`：globals 里全局 0.01ms 降级 + 组件内显式分支
@@ -146,6 +151,7 @@ https://roomiepaw.vercel.app 。本地一笔沙盒订单（№ 1001）已全流�
 | 虚线分隔 | `border-top: 1.5px dashed color-mix(...26%)` |
 | 圆点列表 | `.panelNotes li::before` 橙色 6px 圆点 |
 | 步骤条 01/02/03 | `pdp.module.css` `.steps`（counter + 半透明大数字） |
+| 合作品牌标 | `components/PartnerMark.tsx`（衬线字标+g 圆徽，字体栈重建非抠图；`--pm-mark`/`--pm-bg` 按底色配色；铭牌行样式 `pdp.provenance`） |
 | 纸吊牌 | hero 的 tagCard（`ArtworkSwitcher.module.css`） |
 | 画芯选择器 | `ScratcherShop.module.css` `.picks/.pick/.picked`（橙描边选中） |
 | 规格双卡 | `.formats/.format/.formatOn` |
@@ -559,6 +565,8 @@ Create in Stripe。**不再需要重跑 stripe:setup 回填代码。**
 | 07-15 | **admin-platform 合并 main 上生产**（用户拍板）：全站 DB 化 + admin 后台 + SaaS Dashboard 一并落地；结算回跳 URL 加固（publicOrigin，生产拒信 localhost）。合并顺带修好生产结算（旧代码硬编码着 07-13 事故中被归档的 price id；DB 化后读现行 id 自愈）。**发现在售价为 149/42 测试残值，正典 89/35，定价属产品决策留给店主在 admin 恢复** | ff `c7d8e40..56f7ef7`；生产验证见 runbook 现状 |
 | 07-15 晚 | **品牌口径纠偏（cat→pets，红线见 §3）+ 活动栏位与 Roomie letter 10% 发码上线（§7.6）+ 轮播/加载体验打磨**（门户卡同相位漂移交叉溶解、横滑翻页、进度胶囊；胶片惯性吸附+键盘；SmartImg 微光加载） | 用户全权委托；spec `2026-07-15-promo-slot-...-design.md`，21 项 Playwright e2e 全绿 |
 | 07-15 深夜 | **手感返工（用户复评）**：胶片撤销 scroll-snap 改自由惯性（rAF 摩擦衰减，抓住即停，箭头才整张对齐）；门户卡拖拽改连续可逆（跟手位移+候选帧随进度渐显，过阈/甩动落定，否则平滑退回）；猫屋卡视频废除 hover 门控（各端进入视野即播）。顺带修两个存量 bug：pageIn fill-mode 吃掉移动端粘性购买条（§9.3）、Supabase 时钟抖动 500（§9.4，removeChild 报错根因）。移动端细化：BrandStory 提示按输入能力说 tap/hover、PDP 主 CTA 窄屏全宽、活动条关闭钮热区 36px | 24 项 e2e 全绿 |
+| 07-19 | 模块间距/进场感知优化：section clamp 下限收紧（拉回 §4.3 规范量级）、Canvas→Shelf 断口独收（叙事最连续处最紧）、Reveal 预热触发（视口下方 10%）+ 时长归 `--dur-mid`、FinalCta 文案直出（唯一不走 Reveal 的进场，杜绝深底"整屏纯蓝"） | 移动端最大间隙 22%→16% 屏高 |
+| 07-19 | **供应商红线松绑（用户拍板）**：GlugGlug 以 partner workshop 身份低调露出——footer Partners 列 + 两 PDP 铭牌行（PartnerMark 组件，字体栈重建字标不抠图）；像素级 de-logo 与首要宣传位禁令不变（§1.1）。**PDP 结构沉淀为模板** `docs/PDP_TEMPLATE.md`（A 在售购买型=/scratcher、B 预告候补型=/house，含铭牌规范与新商品接入 checklist） | 新商品详情页从模板起步 |
 
 ---
 
@@ -578,5 +586,6 @@ npx tsc --noEmit                 # 应零错误
    `/api/checkout` 通（不必付款）。付款全链路要先起 `stripe listen`（§8）。
 4. /house：waitlist 输错邮箱看行内报错，输对看成功态。
 5. 翻一遍 §1 红线，然后放心动手。
+6. 要做新商品详情页：先读 `docs/PDP_TEMPLATE.md`，从模板 A/B 起步。
 
 有不确定的先问用户（中文），小事自己定但在交付说明里讲清楚。

@@ -1,4 +1,5 @@
 import RoomieLogo from "@/components/RoomieLogo";
+import PartnerMark from "@/components/PartnerMark";
 import styles from "./Footer.module.css";
 
 export default function Footer() {
@@ -84,6 +85,15 @@ export default function Footer() {
           <a href="/terms">Terms</a>
           <a href="mailto:hello@roomiepaw.com.au">hello@roomiepaw.com.au</a>
         </nav>
+
+        {/* 合作品牌位：每个品牌一个 .partner 块，新品牌往下加 */}
+        <div className={styles.col}>
+          <h3>Partners</h3>
+          <div className={styles.partner}>
+            <PartnerMark className={styles.partnerMark} />
+            <span>The workshop behind the Canvas Series.</span>
+          </div>
+        </div>
       </div>
 
       <div className={`shell ${styles.fine}`}>
