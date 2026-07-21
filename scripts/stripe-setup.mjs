@@ -8,9 +8,9 @@
  *
  * 用法：npm run stripe:setup（读 .env.local 的 STRIPE_SECRET_KEY）
  *
- * ⚠️ 2026-07-21 起价格事实源是 Supabase products 表（live 账户已按表值
- * 14900/4200/18900 建好 price 并回填）。本脚本 SKU 段的 8900/3500 是
- * DB 化前的旧值，直接重跑会建出孤儿 Price——重跑前先与表值对齐。
+ * 2026-07-21 起价格事实源是 Supabase products 表（live 账户已按表值
+ * 14900/4200/18900 建好 price 并回填，本脚本金额已对齐表值——幂等匹配
+ * 会复用现有 live price）。改价后重跑前记得同步这里的金额。
  */
 import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
@@ -32,7 +32,7 @@ const SKUS = [
     name: "The Canvas Scratcher",
     description:
       "A framed loop-pile canvas that leans on your wall like art and scratches like a post. Solid pine, swap-able prints.",
-    unitAmount: 8900,
+    unitAmount: 14900,
     image: `${SITE}/c01/print-01.webp`,
   },
   {
@@ -40,7 +40,7 @@ const SKUS = [
     name: "Swap-in Print",
     description:
       "A fresh loop-pile canvas for the frame you already have. Fits every Canvas Series frame.",
-    unitAmount: 3500, // TODO 占位价，与 lib/catalog.ts 同步改
+    unitAmount: 4200,
     image: `${SITE}/c01/print-02.webp`,
   },
   // canvas-house：首批走 waitlist 不可购（2026-07-12）。开售时把 SKU 加回
