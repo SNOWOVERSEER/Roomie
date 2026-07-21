@@ -305,7 +305,7 @@ export default function ScratcherShop({ state }: { state: ShopState }) {
                       title={p.art.title}
                     >
                       {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img src={`/hero/art/flat-0${p.i + 1}.png`} alt="" />
+                      <img src={`/hero/art/flat-0${p.i + 1}-s.jpg`} alt="" />
                       {p.st.soldOut ? (
                         <i className={styles.pickTag} aria-hidden>
                           out

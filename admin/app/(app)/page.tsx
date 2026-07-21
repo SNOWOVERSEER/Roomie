@@ -46,10 +46,10 @@ export default async function DashboardPage() {
   for (const p of (productsQ.data ?? []) as { handle: string; image: string }[]) {
     if (p.image?.startsWith("/")) images[p.handle] = `${SITE}${p.image}`;
   }
-  // 画芯 variant → 平面稿缩略图（与邮件 itemThumb 同一约定）
+  // 画芯 variant → 平面稿缩略图（与邮件 itemThumb 同一约定，-s.jpg 缩略版）
   const artThumbs: Record<string, string> = {};
   ARTWORKS.forEach((a, i) => {
-    artThumbs[a.title] = `${SITE}/hero/art/flat-0${i + 1}.png`;
+    artThumbs[a.title] = `${SITE}/hero/art/flat-0${i + 1}-s.jpg`;
   });
 
   const refunds: DashRefund[] = (

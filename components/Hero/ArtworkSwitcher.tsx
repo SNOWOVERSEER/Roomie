@@ -155,7 +155,7 @@ export default function ArtworkSwitcher({ rect, active, revealed }: Props) {
               <span className={styles.miniInner}>
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
-                  src={`/hero/art/flat-0${i + 1}.png`}
+                  src={`/hero/art/flat-0${i + 1}-s.jpg`}
                   alt=""
                   draggable={false}
                   className={styles.miniFace}

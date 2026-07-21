@@ -51,7 +51,7 @@ export default function HeroCopy({ beats, steps, priceText }: Props) {
               </span>
               <span className={styles.ctaMiniFrame}>
                 <Image
-                  src="/hero/art/flat-01.png"
+                  src="/hero/art/flat-01-s.jpg"
                   alt=""
                   width={70}
                   height={100}

@@ -53,7 +53,8 @@ function itemThumb(
   catalog: Map<string, CatalogItem>,
 ): string | null {
   const i = ARTWORKS.findIndex((a) => a.title === it.variant);
-  if (i >= 0) return `${base()}/hero/art/flat-0${i + 1}.png`;
+  /* -s.jpg 缩略版：邮件端不能上 3-4MB 原稿；jpg 而非 webp 是迁就 Outlook */
+  if (i >= 0) return `${base()}/hero/art/flat-0${i + 1}-s.jpg`;
   const cat = catalog.get(it.handle);
   return cat?.image ? `${base()}${cat.image}` : null;
 }

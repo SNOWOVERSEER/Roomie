@@ -235,12 +235,14 @@ IMG_43xx 白底正拍模板）、`Glug视频/`（9 条 9:16 竖版）。成品�
 1. 供应商白底正拍（IMG_43xx 同模板）放进源目录；
 2. `tools/extract_flats.py` 加一行映射 → 跑 → 产出 `tools/flats/flat-0X.png`
    （1400×2000；饱和度掩膜找画布内沿；检测不合理自动回退共识框——波光
-   这种浅色闪光画面必踩）。**flat 必须在 public/hero/art/**——它不只是
-   make_artworks 的输入，还是站点资产：hero 备用画芯堆
-   （ArtworkSwitcher）、购物车行缩略图（cart/lineImage.ts）、邮件
-   itemThumb（lib/email.ts）都按 `flat-0${i+1}` 模板拼接引用（07-19 清理
-   曾据字面 grep 误判"未引用"挪走 → 生产 404 事故；**判死资产必须 grep
-   文件名前缀**，模板拼接抓不到完整文件名）；
+   这种浅色闪光画面必踩），随后跑 `tools/make_flat_thumbs.py` 生成
+   `flat-0X-s.jpg`（420×600 缩略版）。**两种都必须在 public/hero/art/**：
+   全尺寸 png 是 make_artworks 的合成输入；`-s.jpg` 是站点缩略资产——
+   hero 备用画芯堆（ArtworkSwitcher）、购物车行缩略图（cart/
+   lineImage.ts）、邮件 itemThumb（lib/email.ts）都按 `flat-0${i+1}-s.jpg`
+   模板拼接引用（jpg 不用 webp 是迁就 Outlook 邮件端）。教训（07-19 清理
+   曾据字面 grep 误判 flat"未引用"挪走 → 生产 404 事故）：**判死资产必须
+   grep 文件名前缀**，模板拼接抓不到完整文件名；
 3. `python3 tools/make_artworks.py` → 合成 `art-0X.png` + 重写 frame-rect.json；
 4. `lib/heroConfig.ts` ARTWORKS 加一项（英文名找用户定或自拟）；
 5. PDP 预览图：白底正拍裁剪 `crop=(80,797,1240,2074)` + LaMa 修掉框顶
