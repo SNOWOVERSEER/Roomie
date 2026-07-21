@@ -44,7 +44,7 @@ export default async function AppLayout({
             Stripe {mode}
           </span>
           <a
-            href="https://roomiepaw.vercel.app"
+            href="https://roomiepaw.com.au"
             target="_blank"
             rel="noreferrer"
           >

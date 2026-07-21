@@ -15,8 +15,9 @@ export const env = {
   publicUrl: process.env.NEXT_PUBLIC_URL ?? "",
 };
 
-/** 客户端生产环境的规范地址（改域名只动这里 + .env.example） */
-export const PROD_ORIGIN = "https://roomiepaw.vercel.app";
+/** 客户端生产环境的规范地址（改域名只动这里 + .env.example；
+ * 2026-07-19 起正典域名 roomiepaw.com.au，vercel.app 仍作别名服务） */
+export const PROD_ORIGIN = "https://roomiepaw.com.au";
 
 /**
  * 站点对外源（结算回跳等客户可见 URL 用）：

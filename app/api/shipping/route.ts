@@ -9,7 +9,7 @@ import { sendShippingNotice } from "@/lib/email";
  * 日常发货首选本地 admin（直连 Supabase+Resend，见 admin/lib/orderActions.ts）；
  * 本接口保留作 curl fallback。用法见 docs/phase2-runbook.md：
  *
- *   curl -X POST https://roomiepaw.vercel.app/api/shipping \
+ *   curl -X POST https://roomiepaw.com.au/api/shipping \
  *     -H "Authorization: Bearer $ADMIN_SECRET" -H "Content-Type: application/json" \
  *     -d '{"order_ref":"482916","tracking_number":"XX123","carrier":"auspost"}'
  *

@@ -13,7 +13,7 @@ import Dashboard, {
  * `now` 由服务端下发：SSR 与水合用同一时钟，杜绝边界抖动。
  */
 
-const SITE = "https://roomiepaw.vercel.app";
+const SITE = "https://roomiepaw.com.au";
 
 export default async function DashboardPage() {
   const [ordersQ, refundsQ, stockQ, wlQ, productsQ] = await Promise.all([

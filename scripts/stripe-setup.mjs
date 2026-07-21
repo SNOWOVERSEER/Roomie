@@ -1,6 +1,6 @@
 /*
  * Stripe 资源幂等初始化：3 个 SKU 的 Product+Price（AUD、含税价）
- * + 生产 Webhook endpoint（roomiepaw.vercel.app/api/webhook）。
+ * + 生产 Webhook endpoint（roomiepaw.com.au/api/webhook；现存 vercel.app 端点仍有效，重跑才会按新域名建）。
  *
  * 幂等键：product.metadata.roomie_handle。重复跑只读不建。
  * 换 live key 重跑一遍，即得生产环境的 Price ID（回填 lib/catalog.ts）
@@ -20,7 +20,7 @@ for (const line of readFileSync(path.join(root, ".env.local"), "utf8").split("\n
 }
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
-const SITE = "https://roomiepaw.vercel.app";
+const SITE = "https://roomiepaw.com.au";
 
 const SKUS = [
   {

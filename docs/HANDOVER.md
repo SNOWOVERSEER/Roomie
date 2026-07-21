@@ -14,8 +14,10 @@
 Roomie 是墨尔本自有品牌宠物家居店（白牌），当前只有一条产品线
 **The Canvas Series**（画布猫抓板 AU$89 + 单卖画芯 AU$35 占位 + 猫屋
 waitlist 候补中）。Next.js App Router 全栈：前端 + Stripe 收款 +
-Supabase 订单/候补 + Resend 邮件，Vercel（syd1）经 GitHub CI/CD 部署到
-https://roomiepaw.vercel.app 。本地一笔沙盒订单（№ 1001）已全流程走通。
+Supabase 订单/候补 + Resend 邮件，Vercel（syd1）经 GitHub CI/CD 部署，
+正典域名 **https://roomiepaw.com.au**（2026-07-19 绑定；roomiepaw.vercel.app
+仍作别名服务，Stripe webhook 端点留在其上）。本地一笔沙盒订单（№ 1001）
+已全流程走通。
 
 ---
 
@@ -325,8 +327,9 @@ Resend 发交易邮件。服务端逻辑全部在 API Routes（无 Edge Function
 - Stripe **test mode**：scratcher `price_1TsHxoDzmUuzRpRKdgcL52kJ`(8900) /
   print `price_1TsHxpDzmUuzRpRKRnGBcpHp`(3500) / house
   `price_1TsHxqDzmUuzRpRKebu6oZDS`(18900，暂不可购)。生产 webhook
-  endpoint 已建（`we_1TsHyPDzmUuzRpRK4IFwjfau` → roomiepaw.vercel.app），
-  whsec 已交用户配 Vercel。沙盒支付方式只有 Card/Klarna/Zip，
+  endpoint 已建（`we_1TsHyPDzmUuzRpRK4IFwjfau` → roomiepaw.vercel.app；
+  07-19 换正典域名后**故意保留在 vercel.app**——server-to-server 不受
+  影响，换端点得重配 whsec），whsec 已交用户配 Vercel。沙盒支付方式只有 Card/Klarna/Zip，
   **Afterpay 与 Stripe Tax 需 Dashboard 手动开**（runbook checklist）。
 - Supabase：项目 `wfqhqxojuaudycdrkjpy`（悉尼），迁移记录在
   `schema_migrations`；本地迁移 `npm run db:migrate`（直连是 IPv6-only
@@ -579,6 +582,7 @@ Create in Stripe。**不再需要重跑 stripe:setup 回填代码。**
 | 07-15 晚 | **品牌口径纠偏（cat→pets，红线见 §3）+ 活动栏位与 Roomie letter 10% 发码上线（§7.6）+ 轮播/加载体验打磨**（门户卡同相位漂移交叉溶解、横滑翻页、进度胶囊；胶片惯性吸附+键盘；SmartImg 微光加载） | 用户全权委托；spec `2026-07-15-promo-slot-...-design.md`，21 项 Playwright e2e 全绿 |
 | 07-15 深夜 | **手感返工（用户复评）**：胶片撤销 scroll-snap 改自由惯性（rAF 摩擦衰减，抓住即停，箭头才整张对齐）；门户卡拖拽改连续可逆（跟手位移+候选帧随进度渐显，过阈/甩动落定，否则平滑退回）；猫屋卡视频废除 hover 门控（各端进入视野即播）。顺带修两个存量 bug：pageIn fill-mode 吃掉移动端粘性购买条（§9.3）、Supabase 时钟抖动 500（§9.4，removeChild 报错根因）。移动端细化：BrandStory 提示按输入能力说 tap/hover、PDP 主 CTA 窄屏全宽、活动条关闭钮热区 36px | 24 项 e2e 全绿 |
 | 07-19 | 模块间距/进场感知优化：section clamp 下限收紧（拉回 §4.3 规范量级）、Canvas→Shelf 断口独收（叙事最连续处最紧）、Reveal 预热触发（视口下方 10%）+ 时长归 `--dur-mid`、FinalCta 文案直出（唯一不走 Reveal 的进场，杜绝深底"整屏纯蓝"） | 移动端最大间隙 22%→16% 屏高 |
+| 07-19 | **正典域名切到 roomiepaw.com.au**（用户在 Vercel 绑定后代码配套）：`lib/env.ts PROD_ORIGIN`（Stripe 回跳/邮件资产/metadataBase 的统一兜底）、admin 链接与 Dashboard SITE、stripe-setup 脚本 SITE、.env.example 注释全部切新域名；新增 `app/robots.ts` + `app/sitemap.ts`（API/cart/checkout 不进索引）。**Stripe webhook 端点故意留在 vercel.app**（server-to-server 不受域名切换影响，换端点要重配 whsec，不折腾）。待用户：Vercel env `NEXT_PUBLIC_URL` 改 `https://roomiepaw.com.au` 后 Redeploy（不改则 publicOrigin 仍信旧 env 值）；Resend 验证 roomiepaw.com.au 发件域名（验证前订单邮件只能发店主自己邮箱） | vercel.app 仍作别名 |
 | 07-19 | BrandStory 换图两轮（用户两次复评）：两张独立 AI 图切换跳动 → v1 用 hero 视频首帧+末帧（3:2 裁切 top=70），但 10s AI 视频累积变形（画框推移/画芯漂移/光变）仍被看出 → **v2 根治：只用末帧做底，猫区域用首帧像素补**（补丁管线 scratchpad patch_cat.py：手描猫多边形 mask 含尾巴贴墙影、MaxFilter 21 外扩+高斯 9 羽化——羽化半透会透出高对比毛色，边界要吃足；非猫区 SSD 网格搜索平移对齐 dy=-9；mask 外环带每通道均值比光配 ~0.95；成品 room-empty-2.jpg，两图除猫外逐像素相同）。教训：AI 视频取"同景两帧"必须做补丁合成，跨 10s 直取两帧过不了眼；public/hero/poster-first.jpg 不是真首帧（单独生成的海报变体），提帧从视频本体取 | 切换零跳动 |
 | 07-19 | **运费宣传收敛（用户指示，预备大件品类）**：26/188 从品牌层全部撤下（footer/FinalCta 去金额、cart 与 scratcher metadata 去金额、terms 概述句改"per-order shipping shown before you pay"），只留在购买流程事实层（PDP 面板价格旁、购物车抽屉、checkout 逻辑不动）；政策页 callout 加 "for our current pieces" 限定 + 大件"按商品页标注运费"预告句。**多档运费模型同日拍板**：按最高件计费 + 免邮线仅纯标准件订单，首个大件 SKU 进库时实现（口径全文见 §7 设计决策段） | 现售三件仍是 26/188，事实层不变 |
 | 07-19 | **供应商红线松绑（用户拍板）**：GlugGlug 以 partner workshop 身份低调露出——footer Partners 列 + 两 PDP 铭牌行（PartnerMark 组件，字体栈重建字标不抠图）；像素级 de-logo 与首要宣传位禁令不变（§1.1）。**PDP 结构沉淀为模板** `docs/PDP_TEMPLATE.md`（A 在售购买型=/scratcher、B 预告候补型=/house，含铭牌规范与新商品接入 checklist） | 新商品详情页从模板起步 |
