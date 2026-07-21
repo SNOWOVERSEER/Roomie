@@ -3,7 +3,7 @@ import { getCatalogMap, canBuy, shippingCentsFor } from "@/lib/catalog";
 import { componentsFor, getStockItems } from "@/lib/inventory";
 import { ARTWORKS } from "@/lib/heroConfig";
 import { getStripe } from "@/lib/stripe";
-import { env, publicOrigin } from "@/lib/env";
+import { env, publicOrigin, PROD_ORIGIN } from "@/lib/env";
 
 /* variant 只可能是画名（白名单校验，非法值剥离）——它会进订单快照与
    邮件模板，绝不能是自由字符串（HTML 注入面）。猫屋编号 variant 待开售时扩。 */
@@ -11,8 +11,8 @@ const VALID_VARIANTS = new Set<string>(ARTWORKS.map((a) => a.title));
 
 /*
  * POST /api/checkout —— 创建 Stripe Checkout Session（托管结算页）。
- * 价格一律按 products 表的 Price ID 服务端 re-derive，
- * 客户端只被信任「买什么、买几个」。
+ * 价格一律按 products 表的 price_cents 服务端 re-derive（行项目走
+ * price_data 动态生成，见下），客户端只被信任「买什么、买几个」。
  * 库存校验两层：商品级（products.stock，非 BOM 商品）+ 组件级
  * （stock_items，BOM 展开聚合：画框/各画芯）→ 不足或退役 → 409 sold_out。
  */
@@ -109,13 +109,42 @@ export async function POST(req: NextRequest) {
   );
   const shipCents = shippingCentsFor(subtotalCents);
 
+  /* 行项目用 price_data 动态生成而非预建 Price：托管页行名/图要反映
+     所选画芯（"The Canvas Scratcher · Wave Light" + 对应画芯白底图），
+     固定 Price 做不到（2026-07-21 用户在 live 首单截图指出）。金额仍是
+     服务端从 products 表 re-derive，客户端只报 handle/variant/qty。
+     products 表的 stripe_price_id 自此不再被结算引用（admin 改价仍维护）。
+     图片 host 固定生产域名：Stripe 服务端抓图，localhost 它够不着。 */
+  const lineName = (l: (typeof lines)[number]) =>
+    l.variant ? `${l.item.title} · ${l.variant}` : l.item.title;
+  const lineImage = (l: (typeof lines)[number]) => {
+    const i = l.variant
+      ? ARTWORKS.findIndex((a) => a.title === l.variant)
+      : -1;
+    const path = i >= 0 ? `/c01/print-0${i + 1}.webp` : l.item.image;
+    return path ? `${PROD_ORIGIN}${path}` : null;
+  };
+
   try {
     const session = await getStripe().checkout.sessions.create({
       mode: "payment",
-      line_items: lines.map((l) => ({
-        price: l.item.stripePriceId!,
-        quantity: l.qty,
-      })),
+      line_items: lines.map((l) => {
+        const img = lineImage(l);
+        return {
+          quantity: l.qty,
+          price_data: {
+            currency: "aud",
+            unit_amount: l.item.priceCents,
+            // 未注册 GST 期间 automatic_tax 关着，此字段无感；注册后开税时必需
+            tax_behavior: "inclusive",
+            product_data: {
+              name: lineName(l),
+              ...(img ? { images: [img] } : {}),
+              metadata: { roomie_handle: l.item.handle },
+            },
+          },
+        };
+      }),
       shipping_address_collection: { allowed_countries: ["AU"] },
       shipping_options: [
         {
