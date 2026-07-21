@@ -7,6 +7,10 @@
  * 与生产 whsec（配到 Vercel）。
  *
  * 用法：npm run stripe:setup（读 .env.local 的 STRIPE_SECRET_KEY）
+ *
+ * ⚠️ 2026-07-21 起价格事实源是 Supabase products 表（live 账户已按表值
+ * 14900/4200/18900 建好 price 并回填）。本脚本 SKU 段的 8900/3500 是
+ * DB 化前的旧值，直接重跑会建出孤儿 Price——重跑前先与表值对齐。
  */
 import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
