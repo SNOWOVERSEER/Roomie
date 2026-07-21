@@ -5,7 +5,7 @@
 逐图用「列/行饱和占比」找画布内缘；若某图检测失败（如波光上半部
 浅色闪光区饱和度低），回退到其余图的共识框（模板逐像素对齐）。
 
-产出：tools/flats/flat-01..06.png（1400×2000，管线 composite 的原生输入尺寸）
+产出：public/hero/art/flat-01..06.png（1400×2000，管线 composite 的原生输入尺寸）
 顺序与 lib/heroConfig.ts ARTWORKS 对齐。
 """
 import pathlib
@@ -14,7 +14,7 @@ from PIL import Image, ImageFilter
 
 ROOT = pathlib.Path(__file__).parent.parent
 SRC = ROOT / 'GlugGlug30天发文计划'
-OUT = ROOT / 'tools' / 'flats'  # 管线中间产物，不进 public（曾误放导致 ~21MB 白部署）
+OUT = ROOT / 'public' / 'hero' / 'art'  # flat 是站点资产（hero 画芯堆/购物车/邮件缩略图都引用），必须在 public
 
 # (源文件, 输出名) —— 顺序 = ARTWORKS 顺序
 ORDER = [

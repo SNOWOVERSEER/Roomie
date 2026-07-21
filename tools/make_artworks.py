@@ -410,7 +410,7 @@ def composite(flat_img, name):
 # 有偏差，定格后前端用溶解把真色画作盖上（用户反馈 2026-07-13）。
 # 注：平面稿自带真实圈绒纹理，视频烘焙的 grain 叠加系数在 composite 内为 0.85，
 # 若观感过密可在此处对 flat 轻微高斯（0.6）预柔化。
-FLAT_DIR = ROOT / 'tools' / 'flats'
+FLAT_DIR = ROOT / 'public' / 'hero' / 'art'
 for _i in range(1, 7):
     _flat = Image.open(str(FLAT_DIR / f'flat-0{_i}.png')).convert('RGB')
     if _flat.size != (FA_W, FA_H):
