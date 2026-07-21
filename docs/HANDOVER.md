@@ -51,7 +51,7 @@ Supabase 订单/候补 + Resend 邮件，Vercel（syd1）经 GitHub CI/CD 部署
   改成"waitlist"就是用户直接拍板推翻实现）。
 - 交付习惯：做完给**截图证据**（SendUserFile），说明验证了什么。
 - 占位内容一律标 `TODO` 并在总结里提醒（现存：画芯 AU$35 价格、
-  猫屋开售时间/价、Resend 正式发件域名、footer 帮助页链接是 `#`）。
+  猫屋开售时间/价、footer 帮助页链接是 `#`；Resend 发件域名 07-21 已就绪，见 §7）。
 - **用户品味（重要，多次校准过）**：
   - 讨厌"通用组件感"的悬浮 UI（胶囊工具条、圆圈箭头按钮之类）。
   - 喜欢**融入场景的实物化控件**：靠墙的备用画芯就是切换器、
@@ -340,7 +340,7 @@ Resend 发交易邮件。服务端逻辑全部在 API Routes（无 Edge Function
 - Supabase：项目 `wfqhqxojuaudycdrkjpy`（悉尼），迁移记录在
   `schema_migrations`；本地迁移 `npm run db:migrate`（直连是 IPv6-only
   会 ENOTFOUND，脚本自动退 `aws-0-ap-southeast-2.pooler` ✓）。
-- Resend：域名未验证 → 只能从 `onboarding@resend.dev` 发给账户本人邮箱。
+- Resend（07-21 起新账户，旧账户绑了店主另一域名）：`roomiepaw.com.au` 已验证（东京区，DKIM/SPF 三条 DNS 在，根域收信 MX 刻意未配——留给未来邮箱服务），发件人 `RoomiePaw <hello@roomiepaw.com.au>`，客户邮件可达；本地 .env.local 已换新 key+from，**Vercel env 的 RESEND_API_KEY/RESEND_FROM 由店主同步 + Redeploy**。首封实测邮件已从 hello@ 发出。
 - 测试订单 **№ 1001**（paid→shipped→delivered 全走过，真实邮件已发）。
 - **待用户**：把交付的 env 清单贴进 Vercel → 允许 push 部署。
 
