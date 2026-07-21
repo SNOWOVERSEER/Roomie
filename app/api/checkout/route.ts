@@ -132,6 +132,8 @@ export async function POST(req: NextRequest) {
         },
       ],
       allow_promotion_codes: true, // 优惠券在 Stripe Dashboard 建（规格决策）
+      /* 店主未注册 GST（2026-07-21）：注册前 STRIPE_TAX_ENABLED 不得开，
+         站内也不出现任何 GST 字样 */
       ...(env.stripeTaxEnabled ? { automatic_tax: { enabled: true } } : {}),
       metadata: { cart: cartMeta },
       success_url: `${base}/checkout/success?session_id={CHECKOUT_SESSION_ID}`,

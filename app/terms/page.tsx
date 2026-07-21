@@ -4,7 +4,7 @@ import PolicyPage from "@/components/policy/PolicyPage";
 export const metadata: Metadata = {
   title: "Terms of sale · RoomiePaw",
   description:
-    "The terms for buying from RoomiePaw: AUD pricing with GST included, shipping and returns, and your Australian Consumer Law rights.",
+    "The terms for buying from RoomiePaw: AUD pricing, shipping and returns, and your Australian Consumer Law rights.",
   robots: { index: false },
 };
 
@@ -26,7 +26,7 @@ export default function TermsPage() {
 
       <h2>Prices and payment</h2>
       <ul>
-        <li>All prices are in Australian dollars and include GST.</li>
+        <li>All prices are in Australian dollars.</li>
         <li>
           Payment is processed by Stripe at checkout. Your order is confirmed
           once payment succeeds, and you'll receive an email with an order

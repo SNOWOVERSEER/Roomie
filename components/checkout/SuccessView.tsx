@@ -139,7 +139,7 @@ export default function SuccessView() {
               </b>
             </div>
             <div className={styles.totalRow}>
-              <span>Total · GST included</span>
+              <span>Total</span>
               <strong>{formatCents(order.amount_total)}</strong>
             </div>
             {order.items.some((it) => it.handle === "canvas-house") && (

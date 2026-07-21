@@ -78,7 +78,10 @@ Supabase 订单/候补 + Resend 邮件，Vercel（syd1）经 GitHub CI/CD 部署
   - "straight off the set — no actors, just residents"
   - 空购物篮："The wall is still bare — and somebody has claws."
 - 计数/编号用 `№`（№ 01 / 06），全站统一。
-- 价格写法 `AU$89`；税话术 "GST included"；运费话术**分层**（07-19 定稿）：
+- 价格写法 `AU$89`；**税话术：无**（店主未注册 GST，2026-07-21 起全站
+  不出现 GST 字样、单据不称 tax invoice、Stripe Tax 不开；注册 GST 后
+  才恢复——届时装箱单补 ABN+GST 行、STRIPE_TAX_ENABLED 才可开）；
+  运费话术**分层**（07-19 定稿）：
   品牌层（footer/FinalCta/页面 metadata/terms 概述）只说 "ships
   Australia-wide" / "shown before you pay"，**不出现金额**；26/188 只
   出现在购买流程事实层（PDP 面板、购物车抽屉、checkout）与政策页
@@ -336,7 +339,8 @@ Resend 发交易邮件。服务端逻辑全部在 API Routes（无 Edge Function
   endpoint 已建（`we_1TsHyPDzmUuzRpRK4IFwjfau` → roomiepaw.vercel.app；
   07-19 换正典域名后**故意保留在 vercel.app**——server-to-server 不受
   影响，换端点得重配 whsec），whsec 已交用户配 Vercel。沙盒支付方式只有 Card/Klarna/Zip，
-  **Afterpay 与 Stripe Tax 需 Dashboard 手动开**（runbook checklist）。
+  **Afterpay 需 Dashboard 手动开**（runbook checklist）；Stripe Tax
+  在店主注册 GST 前**禁止开**（07-21 口径，见 §3）。
 - Supabase：项目 `wfqhqxojuaudycdrkjpy`（悉尼），迁移记录在
   `schema_migrations`；本地迁移 `npm run db:migrate`（直连是 IPv6-only
   会 ENOTFOUND，脚本自动退 `aws-0-ap-southeast-2.pooler` ✓）。
@@ -588,6 +592,8 @@ Create in Stripe。**不再需要重跑 stripe:setup 回填代码。**
 | 07-15 晚 | **品牌口径纠偏（cat→pets，红线见 §3）+ 活动栏位与 Roomie letter 10% 发码上线（§7.6）+ 轮播/加载体验打磨**（门户卡同相位漂移交叉溶解、横滑翻页、进度胶囊；胶片惯性吸附+键盘；SmartImg 微光加载） | 用户全权委托；spec `2026-07-15-promo-slot-...-design.md`，21 项 Playwright e2e 全绿 |
 | 07-15 深夜 | **手感返工（用户复评）**：胶片撤销 scroll-snap 改自由惯性（rAF 摩擦衰减，抓住即停，箭头才整张对齐）；门户卡拖拽改连续可逆（跟手位移+候选帧随进度渐显，过阈/甩动落定，否则平滑退回）；猫屋卡视频废除 hover 门控（各端进入视野即播）。顺带修两个存量 bug：pageIn fill-mode 吃掉移动端粘性购买条（§9.3）、Supabase 时钟抖动 500（§9.4，removeChild 报错根因）。移动端细化：BrandStory 提示按输入能力说 tap/hover、PDP 主 CTA 窄屏全宽、活动条关闭钮热区 36px | 24 项 e2e 全绿 |
 | 07-19 | 模块间距/进场感知优化：section clamp 下限收紧（拉回 §4.3 规范量级）、Canvas→Shelf 断口独收（叙事最连续处最紧）、Reveal 预热触发（视口下方 10%）+ 时长归 `--dur-mid`、FinalCta 文案直出（唯一不走 Reveal 的进场，杜绝深底"整屏纯蓝"） | 移动端最大间隙 22%→16% 屏高 |
+| 07-21 | **去 GST 化（店主未注册 GST，ABN 个体经营）**：全站客户可见处（footer/购物车整页与抽屉/success 页/terms 两处/订单邮件合计行）与 admin（装箱单、CSV 注释）的 "GST included" 全部移除，总额行只写 Total；装箱单不称 tax invoice；checkout 加注释禁开 STRIPE_TAX_ENABLED。注册 GST 后按 §3 恢复 | 合规修正 |
+| 07-21 | **Resend 切新账户 + 发件域名就绪**：roomiepaw.com.au 已验证（东京区），发件人 hello@roomiepaw.com.au 实测发信成功；根域收信 MX 刻意未配（留给未来邮箱服务）；本地 .env.local 新 key+from 已配，Vercel env 两项由店主同步 | 客户邮件可达 |
 | 07-19 | **正典域名切到 roomiepaw.com.au**（用户在 Vercel 绑定后代码配套）：`lib/env.ts PROD_ORIGIN`（Stripe 回跳/邮件资产/metadataBase 的统一兜底）、admin 链接与 Dashboard SITE、stripe-setup 脚本 SITE、.env.example 注释全部切新域名；新增 `app/robots.ts` + `app/sitemap.ts`（API/cart/checkout 不进索引）。**Stripe webhook 端点故意留在 vercel.app**（server-to-server 不受域名切换影响，换端点要重配 whsec，不折腾）。待用户：Vercel env `NEXT_PUBLIC_URL` 改 `https://roomiepaw.com.au` 后 Redeploy（不改则 publicOrigin 仍信旧 env 值）；Resend 验证 roomiepaw.com.au 发件域名（验证前订单邮件只能发店主自己邮箱） | vercel.app 仍作别名 |
 | 07-19 | BrandStory 换图两轮（用户两次复评）：两张独立 AI 图切换跳动 → v1 用 hero 视频首帧+末帧（3:2 裁切 top=70），但 10s AI 视频累积变形（画框推移/画芯漂移/光变）仍被看出 → **v2 根治：只用末帧做底，猫区域用首帧像素补**（补丁管线 scratchpad patch_cat.py：手描猫多边形 mask 含尾巴贴墙影、MaxFilter 21 外扩+高斯 9 羽化——羽化半透会透出高对比毛色，边界要吃足；非猫区 SSD 网格搜索平移对齐 dy=-9；mask 外环带每通道均值比光配 ~0.95；成品 room-empty-2.jpg，两图除猫外逐像素相同）。教训：AI 视频取"同景两帧"必须做补丁合成，跨 10s 直取两帧过不了眼；public/hero/poster-first.jpg 不是真首帧（单独生成的海报变体），提帧从视频本体取 | 切换零跳动 |
 | 07-19 | **运费宣传收敛（用户指示，预备大件品类）**：26/188 从品牌层全部撤下（footer/FinalCta 去金额、cart 与 scratcher metadata 去金额、terms 概述句改"per-order shipping shown before you pay"），只留在购买流程事实层（PDP 面板价格旁、购物车抽屉、checkout 逻辑不动）；政策页 callout 加 "for our current pieces" 限定 + 大件"按商品页标注运费"预告句。**多档运费模型同日拍板**：按最高件计费 + 免邮线仅纯标准件订单，首个大件 SKU 进库时实现（口径全文见 §7 设计决策段） | 现售三件仍是 26/188，事实层不变 |

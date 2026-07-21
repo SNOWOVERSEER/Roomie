@@ -1,7 +1,7 @@
 import { db } from "@/lib/db";
 import type { OrderRow } from "@/lib/types";
 
-/* 订单 CSV 导出（对账口径：金额一律元、GST 含内；middleware 已做认证门） */
+/* 订单 CSV 导出（对账口径：金额一律元；未注册 GST，金额无税务成分；middleware 已做认证门） */
 export async function GET() {
   const { data, error } = await db()
     .from("orders")

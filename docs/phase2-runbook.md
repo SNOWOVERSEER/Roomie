@@ -170,7 +170,7 @@ webhook 自动同步回订单表**并记进时间线/Activity**（07-15 已订�
 ### 装箱单
 
 **admin → Orders → 该单 → Packing slip ↗** → 打印（黑白 A4，含价格与
-GST included 行）。TODO：拿到 ABN 后加一行就能兼作 tax invoice。
+总额行）。店主未注册 GST：单据不标 GST、不称 tax invoice；注册后再恢复。
 
 ### 数据统计 / 客户
 
@@ -240,8 +240,9 @@ Create in Stripe → put on sale。图片本体先走仓库 `public/` 素材管�
      （webhook endpoint 用 live key 重跑 `npm run stripe:setup` 创建）
    - [ ] Dashboard 开启 **Afterpay/Clearpay**（Settings → Payment methods；
      sandbox 里当前只有 Card/Klarna/Zip）
-   - [ ] 开启 **Stripe Tax**（Settings → Tax，填墨尔本发货地址，登记 GST）
-     → Vercel 设 `STRIPE_TAX_ENABLED=1`（价格已按 GST 含内配置 `tax_behavior: inclusive`）
+   - [ ] **仅当注册 GST 后**：开启 Stripe Tax（Settings → Tax，填墨尔本
+     发货地址）→ Vercel 设 `STRIPE_TAX_ENABLED=1`，并恢复站内 GST 话术
+     与装箱单 ABN+GST 行（见 HANDOVER §3）。未注册前此步跳过，开关保持关闭
 2. **Resend**：
    - [ ] Domains 里验证 `roomiepaw.com.au`（加 DNS 记录）
    - [ ] `RESEND_FROM` 换成如 `Roomie <orders@roomiepaw.com.au>`

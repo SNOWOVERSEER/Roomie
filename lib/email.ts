@@ -11,8 +11,8 @@ import type { OrderItem, OrderRow } from "./supabase-admin";
  * 其余回落 Trebuchet MS）。logo 用 public/brand/email-logo.png（站点字标渲染）。
  *
  * 无 RESEND_API_KEY 时静默降级：只记日志不发送，主流程不受影响。
- * TODO(上线)：Resend 验证 roomiepaw.com.au 后把 RESEND_FROM 换正式发件人；
- * 验证前 onboarding@resend.dev 只能发给账户本人邮箱。
+ * 发件域名 roomiepaw.com.au 已验证（2026-07-21，发件人 hello@），
+ * 本地与 Vercel 的 RESEND_FROM 保持一致。
  */
 
 const C = {
@@ -128,7 +128,7 @@ function itemsTable(order: OrderRow, catalog: Map<string, CatalogItem>): string 
     <td align="right" style="padding:14px 0 0;font:700 13.5px/1.4 ${DISPLAY};color:${C.ink};white-space:nowrap;">${shipLabel}</td>
   </tr>
   <tr>
-    <td colspan="2" style="padding:10px 0 0;font:800 16px/1.3 ${DISPLAY};color:${C.ink};">Total · GST included</td>
+    <td colspan="2" style="padding:10px 0 0;font:800 16px/1.3 ${DISPLAY};color:${C.ink};">Total</td>
     <td align="right" style="padding:10px 0 0;font:800 16px/1.3 ${DISPLAY};color:${C.ink};white-space:nowrap;">${formatCents(order.amount_total)}</td>
   </tr>
 </table>`;

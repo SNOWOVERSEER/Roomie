@@ -3,8 +3,9 @@ import { formatCents, type OrderRow } from "@/lib/types";
 import PrintButton from "@/components/PrintButton";
 
 /*
- * 装箱单（打印用）：黑白、A4 友好。价格含 GST。
- * TODO(上线)：拿到 ABN 后在页脚补 ABN 行，即可兼作 tax invoice。
+ * 装箱单（打印用）：黑白、A4 友好。
+ * 店主未注册 GST（ABN 个体经营）：单据不标 GST、不称 tax invoice；
+ * 注册 GST 后再恢复（届时页脚补 ABN + GST 行才可作 tax invoice）。
  */
 
 export default async function SlipPage({
@@ -120,7 +121,7 @@ export default async function SlipPage({
             <td>{o.shipping_cents === 0 ? "Free" : formatCents(o.shipping_cents)}</td>
           </tr>
           <tr>
-            <td colSpan={4}><b>Total · GST included</b></td>
+            <td colSpan={4}><b>Total</b></td>
             <td><b>{formatCents(o.amount_total)}</b></td>
           </tr>
         </tbody>

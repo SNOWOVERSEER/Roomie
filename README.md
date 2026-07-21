@@ -45,7 +45,7 @@ secretly a scratcher, and the print is swappable.*
 | Styling | CSS Modules + CSS custom properties |
 | Motion | Native `<video>` events + CSS transitions (no animation lib) |
 | Fonts | Baloo 2 (display) · Nunito Sans (body) — via `next/font` |
-| Payments | Stripe Checkout (hosted) — cards, Afterpay, promo codes, GST |
+| Payments | Stripe Checkout (hosted) — cards, Afterpay, promo codes |
 | Orders | Supabase (PostgreSQL) — written by the Stripe webhook |
 | Email | Resend — order confirmation + shipping notice |
 | Deploy target | Vercel (region `syd1`), GitHub CI/CD |

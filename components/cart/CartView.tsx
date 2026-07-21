@@ -135,7 +135,7 @@ export default function CartView() {
                 </p>
               )}
               <p className={styles.taxNote}>
-                GST included. Cards &amp; Afterpay at checkout.
+                Cards &amp; Afterpay at checkout.
               </p>
               <div className={styles.totalRow}>
                 <span>Total</span>

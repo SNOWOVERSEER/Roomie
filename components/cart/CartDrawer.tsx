@@ -169,8 +169,7 @@ export default function CartDrawer({
                 </p>
               )}
               <p className={styles.finePrint}>
-                Free shipping over {formatCents(SHIPPING.freeOverCents)} · GST
-                included · cards &amp; Afterpay
+                Free shipping over {formatCents(SHIPPING.freeOverCents)} · cards &amp; Afterpay
               </p>
               <button
                 className={`btnPrimary ${styles.checkoutBtn}`}
