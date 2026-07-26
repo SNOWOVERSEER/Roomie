@@ -1,9 +1,21 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
-  <rect width="64" height="64" rx="15" fill="#E8863C"/>
-  <g transform="translate(32 36) rotate(14)" fill="#F6F2E9">
-    <ellipse cx="0" cy="7" rx="11" ry="9"/>
-    <ellipse cx="-12.5" cy="-6" rx="5" ry="6.6" transform="rotate(-22 -12.5 -6)"/>
-    <ellipse cx="-1" cy="-11" rx="5" ry="6.6"/>
-    <ellipse cx="10.5" cy="-6.5" rx="4.8" ry="6.2" transform="rotate(20 10.5 -6.5)"/>
-  </g>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1080 1080">
+  <rect width="1080" height="1080" fill="#e8863c"/>
+  <!--
+    Favicon = the RoomieLogo paw (components/RoomieLogo.tsx) in the cream-on-orange
+    colourway — same path data as the wordmark's paw, so the two can't drift apart.
+    Traced 1:1 off the supplied 1080px artwork: rotate 20°, scale 14, cream layer at
+    (512.29, 534.30), navy under-layer offset (-22, -47). viewBox stays at 1080 so
+    every number here is the measurement itself.
+  -->
+  <defs>
+    <g id="paw">
+      <path d="M-1.6 3.2 Q7 1 10.4 8.4 Q13 15 5.4 17.2 Q-8.4 20.6 -9.6 12.4 Q-10.2 7 -1.6 3.2Z"/>
+      <ellipse cx="-10.5" cy="-4.5" rx="4.4" ry="5.6" transform="rotate(-26 -10.5 -4.5)"/>
+      <ellipse cx="-0.5" cy="-8.5" rx="4.4" ry="5.8" transform="rotate(-4 -0.5 -8.5)"/>
+      <ellipse cx="9.5" cy="-5.5" rx="4.2" ry="5.4" transform="rotate(20 9.5 -5.5)"/>
+      <ellipse cx="16.5" cy="2.5" rx="3.4" ry="4.4" transform="rotate(52 16.5 2.5)"/>
+    </g>
+  </defs>
+  <use href="#paw" fill="#12275e" transform="translate(490.29 487.3) rotate(20) scale(14)"/>
+  <use href="#paw" fill="#edeae3" transform="translate(512.29 534.3) rotate(20) scale(14)"/>
 </svg>
