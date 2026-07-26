@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Baloo_2, Nunito_Sans } from "next/font/google";
 import { cookies } from "next/headers";
+import { Analytics } from "@vercel/analytics/next";
 import "./globals.css";
 import { getCatalog } from "@/lib/catalog";
 import { PROD_ORIGIN } from "@/lib/env";
@@ -98,6 +99,7 @@ export default async function RootLayout({
             {children}
           </PromoProvider>
         </CartProvider>
+        <Analytics />
       </body>
     </html>
   );
