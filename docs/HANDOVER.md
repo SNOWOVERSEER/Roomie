@@ -436,6 +436,13 @@ ctaNote——hero 的 ctaNote 现在是 `(price) => string` 函数）。结算�
     **联系客户**（自由主题+正文，品牌壳）、重发确认/发货邮件、装箱单
     （/orders/[ref]/slip 可打印，ABN TODO）、Export CSV（对账列）。
   - **Products（/products）**：原首页整体平移（改价/上下架/文案/库存，机制不变）。
+    **Stripe sync 面板（2026-07-26）**：只读体检每行 price/product（存在性、
+    active、金额币种、product id 是否为 price 实际挂靠的 product）+ 按行
+    Repair。口径 = **DB 为准，Stripe 跟随**：product id 回填真值 / product
+    反归档 / price 依 DB 重建（顺序同 updatePrice：建新 → 回写 → 归档旧）；
+    纯占位行不建对象，"有 product 无 price" 只整理 product 侧（建价仍走
+    Create in Stripe，开售动作要显式）。权威说明在 admin/lib/actions.ts
+    同步段注释；e2e 含漂移注入自愈（scratchpad e2e-stripe-sync.mjs 模式）。
   - **Customers**：按 email 聚合（单数/累计净消费/每单状态/waitlist 交叉）。
   - **Waitlist**（分组 + CSV 导出）。
 - **订单状态机**：paid → shipped → delivered 主线；paid → cancelled（退单）；
@@ -595,6 +602,7 @@ Create in Stripe。**不再需要重跑 stripe:setup 回填代码。**
 | 07-21 | **Stripe 切 live（用户换新账户）**：live Product+Price 按 products 表现值建好（scratcher 14900 `price_1TvbXOD8GWW1QP9nCvWJPkHk` / print 4200 `price_1TvbXPD8GWW1QP9nNn0mkxip` / house 18900 `price_1TvbXQD8GWW1QP9nonMKMYYe`，metadata roomie_handle 幂等约定不变）、live webhook 端点直接建在正典域名（`we_1TvbXgD8GWW1QP9nH4LMGAB0` → roomiepaw.com.au/api/webhook，4 事件）、products 表三行 price id 已回填、本地 .env.local 已换 live sk+prod whsec。本地 live session 创建实测通过。价格 149/42 即店主定价（07-21 确认）；要调价走 admin 改价自动重建；**结算行项目改 price_data 动态生成**（用户 live 首单截图指出行名/图不反映所选画芯）：行名 `title · variant`、图用对应画芯 print-0X.webp（host 固定 PROD_ORIGIN，Stripe 服务端抓图够不着 localhost）、金额仍服务端 re-derive——**products 表的 stripe_price_id 自此不再被结算引用**（admin 改价仍维护，预建 Price 仅作 Dashboard 参考）；pk 未被代码使用（托管 Checkout 只需 sk）；stripe-setup.mjs SKU 段价格已过时，加了警示注释。**Vercel env（sk+whsec）由店主配 + Redeploy，配好前生产结算断**（DB 已切新 price id 而生产 key 还是旧账户）。新账户 Afterpay 需 Dashboard 手动开 | test 账户退役 |
 | 07-21 | **去 GST 化（店主未注册 GST，ABN 个体经营）**：全站客户可见处（footer/购物车整页与抽屉/success 页/terms 两处/订单邮件合计行）与 admin（装箱单、CSV 注释）的 "GST included" 全部移除，总额行只写 Total；装箱单不称 tax invoice；checkout 加注释禁开 STRIPE_TAX_ENABLED。注册 GST 后按 §3 恢复 | 合规修正 |
 | 07-21 | **Resend 切新账户 + 发件域名就绪**：roomiepaw.com.au 已验证（东京区），发件人 hello@roomiepaw.com.au 实测发信成功；根域收信 MX 刻意未配（留给未来邮箱服务）；本地 .env.local 新 key+from 已配，Vercel env 两项由店主同步 | 客户邮件可达 |
+| 07-26 | **切 live 遗留修复：products 表 `stripe_product_id` 仍是旧账户值**（07-21 只回填了 price id）——admin 改价是「同 product 下建新价」，拿旧 id 去新账户建价报 `No such product: 'prod_Us218uKr4ywrar'`；checkout 已 price_data 化不引用该列，生产结算全程无恙，此 bug 只挡店主改价。修复=DB-only 回填（从各行 live price 反查其真实 product，脚本反查不手抄）：scratcher `prod_Us218uKr4ywrar`→`prod_UvSSp7xlk8jfR7`、print `prod_Us214aGJ2LyHIm`→`prod_UvSSa1DmLZt3Jw`、house `null`→`prod_UvSS1XazSLXX1B`；只读审计三行 price/product 全绿。教训：**切 Stripe 账户时 price id 与 product id 要一起回填**（改价/建价路径吃的是 product id）。同日把该类问题产品化：**Products 页新增 Stripe sync 面板**（只读 check + 按行 Repair，DB 为准，详见 §7.5），Playwright e2e 10 项全绿（含漂移注入 → 检出 → Repair 自愈） | 数据回填 + 面板加装 |
 | 07-19 | **正典域名切到 roomiepaw.com.au**（用户在 Vercel 绑定后代码配套）：`lib/env.ts PROD_ORIGIN`（Stripe 回跳/邮件资产/metadataBase 的统一兜底）、admin 链接与 Dashboard SITE、stripe-setup 脚本 SITE、.env.example 注释全部切新域名；新增 `app/robots.ts` + `app/sitemap.ts`（API/cart/checkout 不进索引）。**Stripe webhook 端点故意留在 vercel.app**（server-to-server 不受域名切换影响，换端点要重配 whsec，不折腾）。待用户：Vercel env `NEXT_PUBLIC_URL` 改 `https://roomiepaw.com.au` 后 Redeploy（不改则 publicOrigin 仍信旧 env 值）；Resend 验证 roomiepaw.com.au 发件域名（验证前订单邮件只能发店主自己邮箱） | vercel.app 仍作别名 |
 | 07-19 | BrandStory 换图两轮（用户两次复评）：两张独立 AI 图切换跳动 → v1 用 hero 视频首帧+末帧（3:2 裁切 top=70），但 10s AI 视频累积变形（画框推移/画芯漂移/光变）仍被看出 → **v2 根治：只用末帧做底，猫区域用首帧像素补**（补丁管线 scratchpad patch_cat.py：手描猫多边形 mask 含尾巴贴墙影、MaxFilter 21 外扩+高斯 9 羽化——羽化半透会透出高对比毛色，边界要吃足；非猫区 SSD 网格搜索平移对齐 dy=-9；mask 外环带每通道均值比光配 ~0.95；成品 room-empty-2.jpg，两图除猫外逐像素相同）。教训：AI 视频取"同景两帧"必须做补丁合成，跨 10s 直取两帧过不了眼；public/hero/poster-first.jpg 不是真首帧（单独生成的海报变体），提帧从视频本体取 | 切换零跳动 |
 | 07-19 | **运费宣传收敛（用户指示，预备大件品类）**：26/188 从品牌层全部撤下（footer/FinalCta 去金额、cart 与 scratcher metadata 去金额、terms 概述句改"per-order shipping shown before you pay"），只留在购买流程事实层（PDP 面板价格旁、购物车抽屉、checkout 逻辑不动）；政策页 callout 加 "for our current pieces" 限定 + 大件"按商品页标注运费"预告句。**多档运费模型同日拍板**：按最高件计费 + 免邮线仅纯标准件订单，首个大件 SKU 进库时实现（口径全文见 §7 设计决策段） | 现售三件仍是 26/188，事实层不变 |

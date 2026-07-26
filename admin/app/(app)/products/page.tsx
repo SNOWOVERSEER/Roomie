@@ -2,6 +2,7 @@ import { db } from "@/lib/db";
 import type { ProductRow, StockItemRow } from "@/lib/types";
 import ProductsTable from "@/components/ProductsTable";
 import InventoryTable from "@/components/InventoryTable";
+import StripeSync from "@/components/StripeSync";
 
 export default async function ProductsPage() {
   const [products, items] = await Promise.all([
@@ -14,6 +15,7 @@ export default async function ProductsPage() {
     <>
       <h1>Products</h1>
       <ProductsTable products={(products.data ?? []) as ProductRow[]} />
+      <StripeSync />
       <InventoryTable items={(items.data ?? []) as StockItemRow[]} />
     </>
   );

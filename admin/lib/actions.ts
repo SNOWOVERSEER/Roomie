@@ -1,8 +1,9 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import type Stripe from "stripe";
 import { db } from "@/lib/db";
-import { stripe } from "@/lib/stripe";
+import { stripe, stripeMode } from "@/lib/stripe";
 import { assertAuth } from "@/lib/auth";
 import type { ProductRow } from "@/lib/types";
 
@@ -235,6 +236,188 @@ export async function ensureStripe(handle: string): Promise<Result> {
       .update({ stripe_product_id: productId, stripe_price_id: price.id })
       .eq("handle", handle);
     if (error) return { error: error.message };
+  } catch (e) {
+    return { error: `Stripe: ${e instanceof Error ? e.message : "failed"}` };
+  }
+  revalidatePath("/products");
+  return { ok: true };
+}
+
+/* ―― Stripe 同步体检与修复（2026-07-26，切账户遗留教训产品化）――
+ * 口径：DB（price_cents + 两个 stripe id 列）是唯一事实源，Stripe 跟随。
+ * 结算不引用这些 id（checkout 走 price_data），失同步只挡 admin 改价/建价，
+ * 但要能一眼看出、一键拉齐。check 全程只读；repair 幂等：
+ *   - product id ≠ price 实际挂靠 → DB 回填真值（07-26 事故的修法）
+ *   - product 归档 → 反归档（07-13 事故的止血动作产品化）
+ *   - price 缺失/归档/金额币种不符 → 依 DB 在正确 product 下重建，
+ *     顺序同 updatePrice：建新 → 回写 DB → 归档旧，改价过程不断档
+ *   - 纯占位行（两列皆空）不建任何对象；"有 product 无 price"的待开售行
+ *     只整理 product 侧，建价仍走 Create in Stripe（开售动作要显式）。 */
+
+export type SyncRow = {
+  handle: string;
+  title: string;
+  ok: boolean;
+  issues: string[];
+};
+export type SyncReport = { mode: "test" | "live" | "unknown"; rows: SyncRow[] };
+
+export async function checkStripeSync(): Promise<SyncReport | { error: string }> {
+  await assertAuth();
+  const { data, error } = await db()
+    .from("products")
+    .select("*")
+    .order("sort", { ascending: true });
+  if (error) return { error: error.message };
+  try {
+    const rows = await Promise.all(((data ?? []) as ProductRow[]).map(syncStatus));
+    return { mode: stripeMode(), rows };
+  } catch (e) {
+    return { error: `Stripe: ${e instanceof Error ? e.message : "failed"}` };
+  }
+}
+
+const aud = (cents: number | null) =>
+  cents === null ? "?" : `AU$${(cents / 100).toFixed(2)}`;
+
+async function syncStatus(r: ProductRow): Promise<SyncRow> {
+  const issues: string[] = [];
+  if (!r.stripe_price_id) {
+    // 待开售行：没有 Stripe 对象是常态；只有存着无效/归档 product 才算失同步
+    if (r.stripe_product_id) {
+      try {
+        const prod = await stripe().products.retrieve(r.stripe_product_id);
+        if (!prod.active) issues.push("Stripe product is archived");
+      } catch {
+        issues.push(
+          `stored product ${r.stripe_product_id} does not exist in this Stripe account`,
+        );
+      }
+    }
+  } else {
+    try {
+      const price = await stripe().prices.retrieve(r.stripe_price_id);
+      const parent =
+        typeof price.product === "string" ? price.product : price.product.id;
+      if (!price.active) issues.push("Stripe price is archived");
+      if (price.currency !== "aud")
+        issues.push(`price currency is ${price.currency}, expected aud`);
+      if (price.unit_amount !== r.price_cents)
+        issues.push(
+          `price is ${aud(price.unit_amount)} on Stripe but ${aud(r.price_cents)} in the database`,
+        );
+      if (r.stripe_product_id !== parent)
+        issues.push(
+          `stored product id (${r.stripe_product_id ?? "none"}) is not the product this price belongs to (${parent})`,
+        );
+      try {
+        const prod = await stripe().products.retrieve(parent);
+        if (!prod.active) issues.push("Stripe product is archived");
+      } catch {
+        issues.push(`parent product ${parent} does not exist in this Stripe account`);
+      }
+    } catch {
+      issues.push(
+        `stored price ${r.stripe_price_id} does not exist in this Stripe account`,
+      );
+    }
+  }
+  return { handle: r.handle, title: r.title, ok: issues.length === 0, issues };
+}
+
+export async function repairStripeSync(handle: string): Promise<Result> {
+  await assertAuth();
+  const row = await getRow(handle);
+  if (!row) return { error: "product not found" };
+
+  try {
+    // 待开售行（无 price）：只整理 product 侧，不新建对象
+    if (!row.stripe_price_id) {
+      if (!row.stripe_product_id) return { ok: true };
+      try {
+        const prod = await stripe().products.retrieve(row.stripe_product_id);
+        if (!prod.active) await stripe().products.update(prod.id, { active: true });
+      } catch {
+        // 旧账户残留 id：清空，回到干净占位态
+        const { error } = await db()
+          .from("products")
+          .update({ stripe_product_id: null })
+          .eq("handle", handle);
+        if (error) return { error: error.message };
+      }
+      revalidatePath("/products");
+      return { ok: true };
+    }
+
+    let oldPrice: Stripe.Price | null = null;
+    try {
+      oldPrice = await stripe().prices.retrieve(row.stripe_price_id);
+    } catch {
+      oldPrice = null;
+    }
+
+    // 定准 product：price 的实际挂靠 > 表存值（本账户可查者）> 新建
+    let productId: string | null = oldPrice
+      ? typeof oldPrice.product === "string"
+        ? oldPrice.product
+        : oldPrice.product.id
+      : null;
+    if (!productId && row.stripe_product_id) {
+      try {
+        productId = (await stripe().products.retrieve(row.stripe_product_id)).id;
+      } catch {
+        productId = null;
+      }
+    }
+    if (!productId) {
+      productId = (
+        await stripe().products.create({
+          name: row.title,
+          metadata: { roomie_handle: row.handle },
+        })
+      ).id;
+    } else {
+      const prod = await stripe().products.retrieve(productId);
+      if (!prod.active) await stripe().products.update(productId, { active: true });
+    }
+
+    // price 不达标（缺失/归档/金额币种不符/挂错 product）则依 DB 重建
+    const priceGood =
+      oldPrice !== null &&
+      oldPrice.active &&
+      oldPrice.currency === "aud" &&
+      oldPrice.unit_amount === row.price_cents &&
+      (typeof oldPrice.product === "string"
+        ? oldPrice.product
+        : oldPrice.product.id) === productId;
+
+    let priceId = oldPrice?.id ?? null;
+    let created = false;
+    if (!priceGood) {
+      const p = await stripe().prices.create({
+        product: productId,
+        unit_amount: row.price_cents,
+        currency: "aud",
+      });
+      priceId = p.id;
+      created = true;
+    }
+
+    if (priceId !== row.stripe_price_id || productId !== row.stripe_product_id) {
+      const { error } = await db()
+        .from("products")
+        .update({ stripe_price_id: priceId, stripe_product_id: productId })
+        .eq("handle", handle);
+      if (error) {
+        if (created && priceId) {
+          await stripe().prices.update(priceId, { active: false }).catch(() => {});
+        }
+        return { error: error.message };
+      }
+    }
+    if (created && oldPrice && oldPrice.active) {
+      await stripe().prices.update(oldPrice.id, { active: false }).catch(() => {});
+    }
   } catch (e) {
     return { error: `Stripe: ${e instanceof Error ? e.message : "failed"}` };
   }
