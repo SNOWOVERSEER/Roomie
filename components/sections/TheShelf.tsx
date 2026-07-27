@@ -1,8 +1,8 @@
 import Link from "next/link";
 import Reveal from "@/components/Reveal";
 import SmartImg from "@/components/SmartImg";
-import { formatCents, getCatalog } from "@/lib/catalog";
-import { getStockItems, productSoldOut } from "@/lib/inventory";
+import { formatCents, getCatalogSafe } from "@/lib/catalog";
+import { getStockItemsSafe, productSoldOut } from "@/lib/inventory";
 import WaitlistForm from "@/components/WaitlistForm";
 import styles from "./TheShelf.module.css";
 
@@ -12,9 +12,11 @@ import styles from "./TheShelf.module.css";
  * 暂时下架的在售商品不混进「工作坊在做」叙事，在各自入口标注。
  */
 export default async function TheShelf() {
+  /* DB 短暂不可达时按空清单渲染：本区只是「工作坊在做的下一批」，
+     少几张卡不影响任何购买动线（见 lib/degrade.ts） */
   const [products, stockItems] = await Promise.all([
-    getCatalog(),
-    getStockItems(),
+    getCatalogSafe().then((r) => r ?? []),
+    getStockItemsSafe(),
   ]);
   /* 有专页承接的商品不进 What's next（猫屋的 waitlist 在自己的 PDP） */
   const HAS_OWN_PAGE = new Set([
@@ -29,7 +31,8 @@ export default async function TheShelf() {
     const p = products.find((x) => x.handle === h);
     if (!p) return "";
     if (!p.available) return "waitlist";
-    if (productSoldOut(p, stockItems)) return "sold out";
+    // 库存未知时不冤枉成售罄，只报价格
+    if (stockItems && productSoldOut(p, stockItems)) return "sold out";
     return formatCents(p.priceCents);
   };
 

@@ -3,9 +3,9 @@ import { Baloo_2, Nunito_Sans } from "next/font/google";
 import { cookies } from "next/headers";
 import { Analytics } from "@vercel/analytics/next";
 import "./globals.css";
-import { getCatalog } from "@/lib/catalog";
+import { getCatalogSafe } from "@/lib/catalog";
 import { PROD_ORIGIN } from "@/lib/env";
-import { getStockItems, productSoldOut } from "@/lib/inventory";
+import { getStockItemsSafe, productSoldOut } from "@/lib/inventory";
 import { CartProvider, type ClientCatalogItem } from "@/components/CartContext";
 import PromoProvider from "@/components/promo/PromoProvider";
 import {
@@ -66,9 +66,11 @@ export default async function RootLayout({
 }: Readonly<{ children: React.ReactNode }>) {
   // 客户端购物车的价格快照（上架商品；售罄按组件库存聚合）。
   // 展示用快照，结算金额永远由服务端 re-derive。
+  // DB 短暂不可达时降级而非抛错 —— root layout 一抛错就是整站 500，
+  // 而这两份数据只是购物车的展示快照（见 lib/degrade.ts）。
   const [rows, stockItems, jar] = await Promise.all([
-    getCatalog(),
-    getStockItems(),
+    getCatalogSafe(),
+    getStockItemsSafe(),
     cookies(),
   ]);
 
@@ -81,7 +83,7 @@ export default async function RootLayout({
     act && act.id !== dismissedId && !(act.kind === "subscribe" && subscribed)
       ? act
       : null;
-  const catalog: ClientCatalogItem[] = rows
+  const catalog: ClientCatalogItem[] = (rows ?? [])
     .filter((i) => i.available)
     .map((i) => ({
       handle: i.handle,
@@ -89,7 +91,8 @@ export default async function RootLayout({
       priceCents: i.priceCents,
       image: i.image,
       numbered: i.numbered,
-      soldOut: productSoldOut(i, stockItems),
+      // 库存未知时不冤枉成售罄；结算金额与可售性服务端还会 re-derive
+      soldOut: stockItems ? productSoldOut(i, stockItems) : false,
     }));
   return (
     <html lang="en">

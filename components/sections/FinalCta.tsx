@@ -8,12 +8,16 @@ import styles from "./FinalCta.module.css";
    深色整幅背景铺满视口而文字还没浮现时会成为"整屏纯蓝"，
    最后一次转化不能有不可见的窗口。 */
 export default async function FinalCta() {
-  const scr = (await getProductStatuses()).get("canvas-scratcher");
+  const scr = (await getProductStatuses())?.get("canvas-scratcher");
+  /* scr 为 undefined = DB 短暂不可达（见 lib/degrade.ts）：只掉价格后缀，
+     CTA 本身照出——这是全站最后一次转化，不能因为读不到价格就消失 */
   const scrLabel = scr?.offSale
     ? "The Scratcher · join the waitlist"
     : scr?.soldOut
       ? "The Scratcher · sold out, back soon"
-      : `The Scratcher · ${formatCents(scr?.priceCents ?? 0)}`;
+      : scr
+        ? `The Scratcher · ${formatCents(scr.priceCents)}`
+        : "The Scratcher";
   return (
     <section className={styles.section}>
       <div className={`shell ${styles.inner}`}>

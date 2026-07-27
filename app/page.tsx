@@ -1,4 +1,4 @@
-import { formatCents, getCatalogMap } from "@/lib/catalog";
+import { formatCents, getCatalogMapSafe } from "@/lib/catalog";
 import Nav from "@/components/Nav";
 import Hero from "@/components/Hero/Hero";
 import CanvasCollection from "@/components/sections/CanvasCollection";
@@ -18,10 +18,11 @@ import Footer from "@/components/sections/Footer";
  * 红线：站点任何位置不出现供应商品牌/logo/中文。
  */
 export default async function Page() {
-  const catalog = await getCatalogMap();
-  const scratcherPrice = formatCents(
-    catalog.get("canvas-scratcher")?.priceCents ?? 0,
-  );
+  // DB 短暂不可达时 catalog 为 null（未知）——价格整段隐去，页面照常出，
+  // 绝不退化成 AU$0。见 lib/degrade.ts。
+  const catalog = await getCatalogMapSafe();
+  const scr = catalog?.get("canvas-scratcher");
+  const scratcherPrice = scr ? formatCents(scr.priceCents) : "";
   return (
     <>
       <Nav />

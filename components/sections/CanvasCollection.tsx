@@ -67,19 +67,25 @@ const SLIDES: Slide[] = [
 
 export default async function CanvasCollection() {
   const statuses = await getProductStatuses();
-  const scr = statuses.get("canvas-scratcher");
-  const prt = statuses.get("canvas-print");
-  /* 入口 meta 随状态换文案：下架 → 候补；售罄 → 补货中；正常 → 价格 */
+  const scr = statuses?.get("canvas-scratcher");
+  const prt = statuses?.get("canvas-print");
+  /* 入口 meta 随状态换文案：下架 → 候补；售罄 → 补货中；正常 → 价格。
+     scr/prt 为 undefined = DB 短暂不可达（见 lib/degrade.ts）：
+     只隐去价格，其余文案照出，绝不显示 AU$0 或冤枉成售罄 */
   const scrMeta = scr?.offSale
     ? "off the shelf · waitlist open"
     : scr?.soldOut
       ? "sold out · restocking"
-      : `${formatCents(scr?.priceCents ?? 0)} · shipping now`;
+      : scr
+        ? `${formatCents(scr.priceCents)} · shipping now`
+        : "shipping now";
   const prtMeta = prt?.offSale
     ? "off the shelf for now"
     : prt?.soldOut
       ? "sold out · restocking"
-      : `${formatCents(prt?.priceCents ?? 0)} each · seasonal drops`;
+      : prt
+        ? `${formatCents(prt.priceCents)} each · seasonal drops`
+        : "seasonal drops";
   return (
     <section className={styles.section} id="canvas">
       {/* ——— 产品线刊头 + 清单卡 ——— */}
@@ -143,7 +149,9 @@ export default async function CanvasCollection() {
                 ? "waitlist open"
                 : scr?.soldOut
                   ? "sold out · back soon"
-                  : `${formatCents(scr?.priceCents ?? 0)} · six prints`
+                  : scr
+                    ? `${formatCents(scr.priceCents)} · six prints`
+                    : "six prints"
             }
             title="The Canvas Scratcher"
             blurb="A framed print your cat is allowed to ruin. Slowly, and with great ceremony."
