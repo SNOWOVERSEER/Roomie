@@ -46,6 +46,10 @@ next-env.d.ts
 /GlugGlug30天发文计划/
 /Glug视频/
 
+# Local social-content studio — drafts, generated media, reports, tokens,
+# review state and third-party marketing skills. Intentionally never shipped.
+/roomie-social-studio-local/
+
 # Asset-pipeline scratch renders + intermediates.
 # These are regenerated on every `tools/make_artworks.py` run; only the
 # scripts and the source frame (last-frame.png) belong in version control.
@@ -58,3 +62,7 @@ next-env.d.ts
 /admin/.next/
 /admin/next-env.d.ts
 /admin/tsconfig.tsbuildinfo
+
+# Claude Code marketing studio (batch content, vendor recuts, reports).
+# Local working area only, never shipped with the site.
+/roomie-marketing/
