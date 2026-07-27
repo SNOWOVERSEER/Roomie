@@ -110,13 +110,17 @@ export interface ProductRow {
 const CLOCK_SKEW_RE = /issued at future|issued in the future/i;
 
 /*
- * 退避梯度（ms），累计 ≈ 0.4 / 1.4 / 3.4 秒。
- * 按 07-27 11:02 那次生产日志实测标定：32.451→33.220 共 769ms 内，
- * 8 次尝试（4 首发 + 4 重试）无一成功——是成片窗口，不是零星随机失败
- * （与 PostgREST 缓存系统时间戳 1 秒的机制吻合）。老的 600ms 单次重试
- * 正好落在窗口内，所以必然失败。梯度要能跨过 ~1s 量级的整片窗口。
+ * 退避梯度（ms），累计 ≈ 0.4 / 1.4 秒。
+ *
+ * 标定依据（三次生产事故，越往后样本越准）：
+ *   11:02 窗口 ≥769ms —— 老的单次 600ms 重试正好落在窗口内，必然失败；
+ *   11:49 窗口 ≥3.47s —— 400/1000/2000 整条梯度用尽仍失败，那 3.5 秒
+ *          纯属白等，用户既慢又照样拿到降级页。
+ * 结论：**这东西等不出来**。窗口短（~1s 量级）就接住，窗口长就趁早
+ * 认输把页面吐出去，剩下的交给降级 + 客户端自动补价
+ * （components/DegradedRetry.tsx）。所以砍掉第三级。
  */
-const BACKOFF_MS = [400, 1000, 2000];
+const BACKOFF_MS = [400, 1000];
 
 export async function retryOnClockSkew<
   R extends { error: { message: string } | null },

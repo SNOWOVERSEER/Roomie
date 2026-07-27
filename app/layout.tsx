@@ -7,6 +7,7 @@ import { getCatalogSafe } from "@/lib/catalog";
 import { PROD_ORIGIN } from "@/lib/env";
 import { getStockItemsSafe, productSoldOut } from "@/lib/inventory";
 import { CartProvider, type ClientCatalogItem } from "@/components/CartContext";
+import DegradedRetry from "@/components/DegradedRetry";
 import PromoProvider from "@/components/promo/PromoProvider";
 import {
   activeCampaign,
@@ -102,6 +103,9 @@ export default async function RootLayout({
             {children}
           </PromoProvider>
         </CartProvider>
+        {/* 这一轮是降级渲染 → 后台重跑服务端渲染把价格补回来；
+            成功后本组件就不再被渲染，自动停 */}
+        {(rows === null || stockItems === null) && <DegradedRetry />}
         <Analytics />
       </body>
     </html>
