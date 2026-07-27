@@ -47,6 +47,35 @@
 本地开发：以上同名变量放 `.env.local`（已 gitignore）。
 `SUPABASE_DB_PASSWORD` 只有本地跑迁移需要，Vercel 不配。
 
+## Bot 防护（2026-07-27 起）
+
+分两层。背景：被 Vercel WAF deny/challenge/rate-limit 的流量**不计费**
+（边缘请求/传输/函数全免，官方 2026-05 口径），所以防线建在防火墙层才省配额。
+
+**层 1 · 代码（已上线）**：`app/robots.ts` 对 SEO 工具爬虫（Ahrefs/Semrush/
+MJ12 等，守规矩但爬量大、零价值）全站 disallow；Google/Bing 走通配规则全放行。
+AI 爬虫刻意不写进 robots——由下面 Firewall 的 AI Bots 规则集统一决定。
+
+**层 2 · Vercel Dashboard（店主开关，改动都要 Review Changes → Publish）**：
+项目 → 侧栏 **Firewall** → 侧栏 **Rules**，按此顺序：
+
+1. **先建 bypass 保 webhook**（Custom Rules → New Rule）：名 `bypass-api-webhooks`，
+   条件 Request Path **starts with** `/api/`，动作 **Bypass**。
+   自定义规则先于托管规则集执行——没有这条，Bot Protection 的 JS 挑战会把
+   Stripe（`/api/webhook`）和 Resend（`/api/inbound`）的服务器 POST 拦死，
+   订单不入库、收件不转发。**必须先发布这条再开下面的挑战**。
+   （API 自身安全不靠防火墙：两个 webhook 均验签，shipping 有口令。）
+2. **Bot Management 区 → Bot Protection → Challenge**：非浏览器流量吃 JS 挑战；
+   已验证爬虫（Googlebot/Bingbot，IP+反向 DNS 核验）自动豁免，SEO 无损。
+3. **Bot Management 区 → AI Bots → Deny**（客源在 Google/IG，不靠 AI 训练爬取；
+   想保留 AI 搜索可见性就先 Log 观察一周再定）。
+4. （可选）Custom Rule 挡扫描器噪音：Request Path contains `/wp-` OR contains
+   `.php` OR contains `/.env` → **Deny**。
+5. 应急：遭集中打击时 Firewall 页开 **Attack Mode**。
+
+**注意**：生产 Playwright e2e（headless）可能被 Challenge 拦——跑 e2e 前把
+Bot Protection 临时切 Log（跑完切回），或给自家出口 IP 加 bypass 规则。
+
 ## 日常操作
 
 **首选入口：本地 admin 后台**（admin-platform 起）——
