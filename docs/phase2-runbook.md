@@ -41,6 +41,8 @@
 | `NEXT_PUBLIC_URL` | — | `https://roomiepaw.vercel.app`（绑正式域名后更新） |
 | `ADMIN_SECRET` | 我已生成（见交付文件） | `/api/shipping` 的口令 |
 | `STRIPE_TAX_ENABLED` | — | Dashboard 配好 Stripe Tax 后设 `1`（默认关） |
+| `RESEND_WEBHOOK_SECRET` | Resend webhook 创建时返回（本地 `.env.local` 有存档） | 收件转发 `/api/inbound` 验签；缺失时 503、来信仍存 Resend 不丢 |
+| `INBOUND_FORWARD_TO` | 店主邮箱 | hello@ 来信转发目的地（当前 = 店主 Gmail） |
 
 本地开发：以上同名变量放 `.env.local`（已 gitignore）。
 `SUPABASE_DB_PASSWORD` 只有本地跑迁移需要，Vercel 不配。

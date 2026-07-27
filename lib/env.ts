@@ -11,6 +11,8 @@ export const env = {
   supabaseSecretKey: process.env.SUPABASE_SECRET_KEY ?? "",
   resendApiKey: process.env.RESEND_API_KEY ?? "",
   resendFrom: process.env.RESEND_FROM ?? "RoomiePaw <onboarding@resend.dev>",
+  resendWebhookSecret: process.env.RESEND_WEBHOOK_SECRET ?? "",
+  inboundForwardTo: process.env.INBOUND_FORWARD_TO ?? "",
   adminSecret: process.env.ADMIN_SECRET ?? "",
   publicUrl: process.env.NEXT_PUBLIC_URL ?? "",
 };
