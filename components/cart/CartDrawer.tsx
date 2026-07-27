@@ -8,7 +8,7 @@ import type {
 } from "@/components/CartContext";
 import { formatCents, SHIPPING, shippingCentsFor } from "@/lib/catalog";
 import { useCheckout } from "./useCheckout";
-import { lineImage } from "./lineImage";
+import { lineDisplay } from "./lineDisplay";
 import styles from "./CartDrawer.module.css";
 
 /*
@@ -23,6 +23,7 @@ export default function CartDrawer({
   lines,
   count,
   subtotalCents,
+  catalogUnknown,
   catalog,
   setQty,
   remove,
@@ -32,6 +33,8 @@ export default function CartDrawer({
   lines: CartLine[];
   count: number;
   subtotalCents: number;
+  /** 目录快照缺失（DB 短暂不可达）：金额不可信，隐去金额并挡住结算 */
+  catalogUnknown: boolean;
   catalog: Record<string, ClientCatalogItem>;
   setQty: (key: string, qty: number) => void;
   remove: (key: string) => void;
@@ -101,16 +104,17 @@ export default function CartDrawer({
           <>
             <ul className={styles.lines}>
               {lines.map((l) => {
-                const item = catalog[l.handle];
-                if (!item) return null;
+                const d = lineDisplay(l, catalog[l.handle]);
                 return (
                   <li key={l.key} className={styles.line}>
                     <div className={styles.thumb}>
                       {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img src={lineImage(l, item.image)} alt="" loading="lazy" />
+                      {d.image && (
+                        <img src={d.image} alt="" loading="lazy" />
+                      )}
                     </div>
                     <div className={styles.body}>
-                      <p className={styles.name}>{item.title}</p>
+                      <p className={styles.name}>{d.title}</p>
                       {l.variant && (
                         <p className={styles.variant}>{l.variant}</p>
                       )}
@@ -118,7 +122,7 @@ export default function CartDrawer({
                         <span
                           className={styles.stepper}
                           role="group"
-                          aria-label={`Quantity of ${item.title}${l.variant ? ` ${l.variant}` : ""}`}
+                          aria-label={`Quantity of ${d.title}${l.variant ? ` ${l.variant}` : ""}`}
                         >
                           <button
                             aria-label="One fewer"
@@ -136,15 +140,17 @@ export default function CartDrawer({
                             +
                           </button>
                         </span>
-                        <span className={styles.price}>
-                          {formatCents(item.priceCents * l.qty)}
-                        </span>
+                        {d.priceCents !== null && (
+                          <span className={styles.price}>
+                            {formatCents(d.priceCents * l.qty)}
+                          </span>
+                        )}
                       </div>
                     </div>
                     <button
                       className={styles.remove}
                       onClick={() => remove(l.key)}
-                      aria-label={`Remove ${item.title}${l.variant ? ` ${l.variant}` : ""}`}
+                      aria-label={`Remove ${d.title}${l.variant ? ` ${l.variant}` : ""}`}
                     >
                       ×
                     </button>
@@ -154,27 +160,38 @@ export default function CartDrawer({
             </ul>
 
             <footer className={styles.foot}>
-              <div className={styles.shipRow}>
-                <span>Shipping · AU only</span>
-                <b>{shipCents === 0 ? "Free" : formatCents(shipCents)}</b>
-              </div>
-              <div className={styles.subRow}>
-                <span>Total</span>
-                <strong>{formatCents(subtotalCents + shipCents)}</strong>
-              </div>
-              {shipCents > 0 && (
-                <p className={styles.freeHint}>
-                  {formatCents(SHIPPING.freeOverCents - subtotalCents)} more
-                  and shipping is on us.
+              {/* 目录快照缺失时金额全是 0，显示出来等于报错价 —— 一律隐去，
+                  并挡住结算（服务端本来也会拒，这里省用户一次失败往返）。
+                  见 lib/degrade.ts */}
+              {catalogUnknown ? (
+                <p className={styles.finePrint}>
+                  Prices are updating — give it a moment and refresh.
                 </p>
+              ) : (
+                <>
+                  <div className={styles.shipRow}>
+                    <span>Shipping · AU only</span>
+                    <b>{shipCents === 0 ? "Free" : formatCents(shipCents)}</b>
+                  </div>
+                  <div className={styles.subRow}>
+                    <span>Total</span>
+                    <strong>{formatCents(subtotalCents + shipCents)}</strong>
+                  </div>
+                  {shipCents > 0 && (
+                    <p className={styles.freeHint}>
+                      {formatCents(SHIPPING.freeOverCents - subtotalCents)} more
+                      and shipping is on us.
+                    </p>
+                  )}
+                  <p className={styles.finePrint}>
+                    Free shipping over {formatCents(SHIPPING.freeOverCents)} · cards &amp; Afterpay
+                  </p>
+                </>
               )}
-              <p className={styles.finePrint}>
-                Free shipping over {formatCents(SHIPPING.freeOverCents)} · cards &amp; Afterpay
-              </p>
               <button
                 className={`btnPrimary ${styles.checkoutBtn}`}
                 onClick={checkout}
-                disabled={busy}
+                disabled={busy || catalogUnknown}
               >
                 {busy ? "Opening secure checkout…" : "Checkout securely →"}
               </button>

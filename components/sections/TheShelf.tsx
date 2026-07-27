@@ -61,7 +61,10 @@ export default async function TheShelf() {
               <span className={styles.featuredBody}>
                 <span className={styles.featuredTitle}>The Canvas Series</span>
                 <span className={styles.featuredMeta}>
-                  two pieces, six prints · from {status("canvas-scratcher")}
+                  {/* 价格未知时整段「· from …」一起收掉，不留悬空的破折号 */}
+                  two pieces, six prints
+                  {status("canvas-scratcher") &&
+                    ` · from ${status("canvas-scratcher")}`}
                 </span>
               </span>
             </Link>

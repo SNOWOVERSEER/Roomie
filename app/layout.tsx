@@ -97,7 +97,7 @@ export default async function RootLayout({
   return (
     <html lang="en">
       <body className={`${display.variable} ${body.variable}`}>
-        <CartProvider catalog={catalog}>
+        <CartProvider catalog={catalog} catalogUnknown={rows === null}>
           <PromoProvider campaign={campaign} subscribed={subscribed}>
             {children}
           </PromoProvider>

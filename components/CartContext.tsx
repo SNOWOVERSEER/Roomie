@@ -53,6 +53,8 @@ interface CartState {
   bump: number; // 计数动画触发器
   /** handle → 商品快照（价格/标题/图/售罄），展示层唯一数据源 */
   catalog: Record<string, ClientCatalogItem>;
+  /** 目录快照缺失（DB 短暂不可达）。true 时金额一律不可信，别显示、别结算 */
+  catalogUnknown: boolean;
   add: (handle: string, variant?: string, opts?: AddOptions) => void;
   setQty: (key: string, qty: number) => void;
   remove: (key: string) => void;
@@ -68,6 +70,7 @@ const Ctx = createContext<CartState>({
   subtotalCents: 0,
   bump: 0,
   catalog: {},
+  catalogUnknown: false,
   add: () => {},
   setQty: () => {},
   remove: () => {},
@@ -84,6 +87,10 @@ const keyOf = (handle: string, variant?: string) =>
 function sanitize(
   raw: unknown,
   catalog: Record<string, ClientCatalogItem>,
+  /* true = 目录快照缺失（DB 短暂不可达，见 lib/degrade.ts）。此时**绝不能**
+     拿空目录去筛购物车行——那会把用户的购物车整个清空并写回 localStorage，
+     比原来的错误页伤害更大。未知就原样留着，等下次渲染拿到目录再筛。 */
+  catalogUnknown = false,
 ): CartLine[] {
   if (!Array.isArray(raw)) return [];
   return raw
@@ -92,7 +99,7 @@ function sanitize(
         !!l &&
         typeof l === "object" &&
         typeof (l as CartLine).handle === "string" &&
-        (l as CartLine).handle in catalog &&
+        (catalogUnknown || (l as CartLine).handle in catalog) &&
         typeof (l as CartLine).qty === "number",
     )
     .map((l) => ({
@@ -105,9 +112,12 @@ function sanitize(
 
 export function CartProvider({
   catalog: catalogList,
+  catalogUnknown = false,
   children,
 }: {
   catalog: ClientCatalogItem[];
+  /** DB 短暂不可达导致目录快照缺失。见 lib/degrade.ts */
+  catalogUnknown?: boolean;
   children: React.ReactNode;
 }) {
   const catalog = useMemo(
@@ -129,21 +139,24 @@ export function CartProvider({
   useEffect(() => {
     try {
       const raw = localStorage.getItem(STORAGE_KEY);
-      if (raw) setLines(sanitize(JSON.parse(raw), catalog));
+      if (raw)
+        setLines(sanitize(JSON.parse(raw), catalog, catalogUnknown));
     } catch {
       /* 损坏的存储直接放弃 */
     }
     setHydrated(true);
-  }, [catalog]);
+  }, [catalog, catalogUnknown]);
 
   useEffect(() => {
     if (!hydrated) return;
+    // 目录未知时只读不写：这一轮没有权威目录，不能让降级渲染改写存储
+    if (catalogUnknown) return;
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(lines));
     } catch {
       /* 隐私模式等写失败可忽略 */
     }
-  }, [lines, hydrated]);
+  }, [lines, hydrated, catalogUnknown]);
 
   const showToast = useCallback((title: string, line: string, note: string) => {
     setToast({ title, line, note, key: Date.now() });
@@ -234,6 +247,7 @@ export function CartProvider({
         subtotalCents,
         bump,
         catalog,
+        catalogUnknown,
         add,
         setQty,
         remove,
@@ -250,6 +264,7 @@ export function CartProvider({
         count={count}
         subtotalCents={subtotalCents}
         catalog={catalog}
+        catalogUnknown={catalogUnknown}
         setQty={setQty}
         remove={remove}
       />

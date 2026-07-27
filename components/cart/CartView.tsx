@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useCart } from "@/components/CartContext";
 import { formatCents, SHIPPING, shippingCentsFor } from "@/lib/catalog";
 import { useCheckout } from "./useCheckout";
-import { lineImage } from "./lineImage";
+import { lineDisplay } from "./lineDisplay";
 import styles from "./CartView.module.css";
 
 /*
@@ -14,7 +14,8 @@ import styles from "./CartView.module.css";
  */
 
 export default function CartView() {
-  const { lines, count, subtotalCents, catalog, setQty, remove } = useCart();
+  const { lines, count, subtotalCents, catalog, catalogUnknown, setQty, remove } =
+    useCart();
   const { busy, err, checkout } = useCheckout(lines);
   const shipCents = shippingCentsFor(subtotalCents);
   const totalCents = subtotalCents + shipCents;
@@ -54,33 +55,34 @@ export default function CartView() {
           {/* ——— 行列表 ——— */}
           <ul className={styles.lines}>
             {lines.map((l) => {
-              const item = catalog[l.handle];
-              if (!item) return null;
+              const d = lineDisplay(l, catalog[l.handle]);
               return (
                 <li className={styles.line} key={l.key}>
                   <div className={styles.thumb}>
                     {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img src={lineImage(l, item.image)} alt="" loading="lazy" />
+                    {d.image && <img src={d.image} alt="" loading="lazy" />}
                   </div>
 
                   <div className={styles.lineBody}>
-                    <p className={styles.lineTitle}>{item.title}</p>
+                    <p className={styles.lineTitle}>{d.title}</p>
                     {l.variant && (
                       <p className={styles.lineVariant}>{l.variant}</p>
                     )}
-                    <p className={styles.lineUnit}>
-                      {formatCents(item.priceCents)} each
-                    </p>
+                    {d.priceCents !== null && (
+                      <p className={styles.lineUnit}>
+                        {formatCents(d.priceCents)} each
+                      </p>
+                    )}
                   </div>
 
                   <div className={styles.lineEnd}>
-                    {item.numbered ? (
+                    {d.numbered ? (
                       <span className={styles.oneOfTen}>one of ten</span>
                     ) : (
                       <span
                         className={styles.stepper}
                         role="group"
-                        aria-label={`Quantity of ${item.title}${l.variant ? ` ${l.variant}` : ""}`}
+                        aria-label={`Quantity of ${d.title}${l.variant ? ` ${l.variant}` : ""}`}
                       >
                         <button
                           aria-label="One fewer"
@@ -99,9 +101,11 @@ export default function CartView() {
                         </button>
                       </span>
                     )}
-                    <span className={styles.lineTotal}>
-                      {formatCents(item.priceCents * l.qty)}
-                    </span>
+                    {d.priceCents !== null && (
+                      <span className={styles.lineTotal}>
+                        {formatCents(d.priceCents * l.qty)}
+                      </span>
+                    )}
                     <button
                       className={styles.remove}
                       onClick={() => remove(l.key)}
@@ -118,33 +122,46 @@ export default function CartView() {
           <aside className={styles.summaryCol}>
             <div className={styles.summary}>
               <p className={styles.summaryLabel}>Order summary</p>
-              <dl className={styles.rows}>
-                <div>
-                  <dt>Subtotal</dt>
-                  <dd>{formatCents(subtotalCents)}</dd>
-                </div>
-                <div>
-                  <dt>Shipping · AU only</dt>
-                  <dd>{shipCents === 0 ? "Free" : formatCents(shipCents)}</dd>
-                </div>
-              </dl>
-              {shipCents > 0 && (
-                <p className={styles.freeHint}>
-                  {formatCents(SHIPPING.freeOverCents - subtotalCents)} more
-                  and shipping is on us.
+              {/* 目录快照缺失时金额全是 0（见 lib/degrade.ts）：隐去金额并
+                  挡住结算，别让用户对着 AU$0 按下去 */}
+              {catalogUnknown ? (
+                <p className={styles.taxNote}>
+                  Prices are updating — give it a moment and refresh. Your
+                  basket is safe.
                 </p>
+              ) : (
+                <>
+                  <dl className={styles.rows}>
+                    <div>
+                      <dt>Subtotal</dt>
+                      <dd>{formatCents(subtotalCents)}</dd>
+                    </div>
+                    <div>
+                      <dt>Shipping · AU only</dt>
+                      <dd>
+                        {shipCents === 0 ? "Free" : formatCents(shipCents)}
+                      </dd>
+                    </div>
+                  </dl>
+                  {shipCents > 0 && (
+                    <p className={styles.freeHint}>
+                      {formatCents(SHIPPING.freeOverCents - subtotalCents)} more
+                      and shipping is on us.
+                    </p>
+                  )}
+                  <p className={styles.taxNote}>
+                    Cards &amp; Afterpay at checkout.
+                  </p>
+                  <div className={styles.totalRow}>
+                    <span>Total</span>
+                    <strong>{formatCents(totalCents)}</strong>
+                  </div>
+                </>
               )}
-              <p className={styles.taxNote}>
-                Cards &amp; Afterpay at checkout.
-              </p>
-              <div className={styles.totalRow}>
-                <span>Total</span>
-                <strong>{formatCents(totalCents)}</strong>
-              </div>
               <button
                 className={`btnPrimary ${styles.checkoutBtn}`}
                 onClick={checkout}
-                disabled={busy}
+                disabled={busy || catalogUnknown}
               >
                 {busy ? "Opening secure checkout…" : "Checkout securely →"}
               </button>
