@@ -88,26 +88,52 @@ export interface ProductRow {
 }
 
 /*
- * Supabase 瞬时时钟抖动（机器睡醒后本机时钟落后，JWT iat 被判在未来，
- * 几百 ms 到几秒内自愈）。这曾让 layout 的首个请求 500：错误页 →
- * dev 就地恢复途中客户端报 removeChild of null。只对这一种错误做一次
- * 短退避重试；其它错误照旧交给调用方（error boundary）。
+ * Supabase 瞬时 "JWT issued at future"。
+ *
+ * 2026-07-27 更正根因（旧结论「机器睡醒本机时钟落后」是本地 dev 下得的，
+ * 生产不成立）：本应用发出去的是不透明的 sb_secret_ 令牌，**根本不是 JWT**
+ * （41 字符，无 payload），全项目也不存在任何 JWT 格式的凭证。所以那个 iat
+ * 被判在未来的 JWT，只可能是 Supabase 网关在**每个请求**上现签的短命令牌。
+ *
+ * 而 PostgREST 把系统时间戳缓存 1 秒再拿去校验 iat，于是「现签的令牌」
+ * 天然会撞上「最多落后 1 秒的校验基准」——这就是 PostgREST 的
+ * JWTIssuedAtFuture（PostgREST#1139）。整条链路都在 Supabase 内部，
+ * 本机/Vercel 的时钟不参与，我们既复现不了也修不掉。
+ * （07-27 事故里连续数秒、多个查询全失败，比单纯的微秒级竞态更像是
+ *   Supabase 某个节点持续偏移了一段时间。）
+ *
+ * 能做的只有把这段窗口熬过去：退避重试若干次。实测 07-27 生产事故里
+ * 单次 600ms 重试不够——同一次渲染的多个查询全部落在窗口内，重试一次
+ * 仍失败，root layout 抛错 → 整个首页 500（店主从 Instagram 点进来即中）。
+ * 其它错误照旧交给调用方（error boundary）。
  */
 const CLOCK_SKEW_RE = /issued at future|issued in the future/i;
+
+/*
+ * 退避梯度（ms），累计 ≈ 0.4 / 1.4 / 3.4 秒。
+ * 按 07-27 11:02 那次生产日志实测标定：32.451→33.220 共 769ms 内，
+ * 8 次尝试（4 首发 + 4 重试）无一成功——是成片窗口，不是零星随机失败
+ * （与 PostgREST 缓存系统时间戳 1 秒的机制吻合）。老的 600ms 单次重试
+ * 正好落在窗口内，所以必然失败。梯度要能跨过 ~1s 量级的整片窗口。
+ */
+const BACKOFF_MS = [400, 1000, 2000];
 
 export async function retryOnClockSkew<
   R extends { error: { message: string } | null },
 >(run: () => PromiseLike<R>): Promise<R> {
-  const first = await run();
-  if (first.error && CLOCK_SKEW_RE.test(first.error.message)) {
+  let last = await run();
+  for (let i = 0; i < BACKOFF_MS.length; i++) {
+    if (!last.error || !CLOCK_SKEW_RE.test(last.error.message)) return last;
+    // 抖动窗口内并发查询会一起醒来再一起打，加抖动摊开重试时刻
+    const wait = BACKOFF_MS[i] + Math.floor(Math.random() * 150);
     console.warn(
-      "[supabase] 时钟抖动瞬时错误，600ms 后重试一次:",
-      first.error.message,
+      `[supabase] JWT iat 抖动（Supabase 侧），${wait}ms 后重试 ${i + 1}/${BACKOFF_MS.length}:`,
+      last.error.message,
     );
-    await new Promise((r) => setTimeout(r, 600));
-    return await run();
+    await new Promise((r) => setTimeout(r, wait));
+    last = await run();
   }
-  return first;
+  return last;
 }
 
 let client: SupabaseClient | null = null;

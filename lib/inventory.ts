@@ -1,6 +1,12 @@
+import { cache } from "react";
+import { readOrDegrade } from "./degrade";
 import { getSupabaseAdmin, retryOnClockSkew } from "./supabase-admin";
 import { ARTWORKS } from "./heroConfig";
-import { getCatalog, isSoldOut, type CatalogItem } from "./catalog";
+import {
+  getCatalogSafe,
+  isSoldOut,
+  type CatalogItem,
+} from "./catalog";
 
 /*
  * 组件库存（BOM）：备货单位 = 画框 ×1 + 画芯 ×6（stock_items 表），
@@ -24,7 +30,10 @@ export interface StockItem {
 /** 前台低库存标注阈值（用户定：低于 10 件标 low stock） */
 export const LOW_STOCK_AT = 10;
 
-export async function getStockItems(): Promise<Map<string, StockItem>> {
+/** 单次请求内记忆化，理由同 getCatalog（lib/catalog.ts）。 */
+export const getStockItems = cache(async function getStockItems(): Promise<
+  Map<string, StockItem>
+> {
   const { data, error } = await retryOnClockSkew(() =>
     getSupabaseAdmin()
       .from("stock_items")
@@ -33,7 +42,7 @@ export async function getStockItems(): Promise<Map<string, StockItem>> {
   );
   if (error) throw new Error(`stock_items 读取失败: ${error.message}`);
   return new Map((data as StockItem[]).map((i) => [i.id, i]));
-}
+});
 
 export const itemBuyable = (i?: StockItem): boolean =>
   !!i && i.available && (i.stock === null || i.stock > 0);
@@ -76,16 +85,32 @@ export interface ProductStatus {
   priceCents: number;
 }
 
-export async function getProductStatuses(): Promise<
-  Map<string, ProductStatus>
-> {
-  const [catalog, items] = await Promise.all([getCatalog(), getStockItems()]);
+/** 渲染路径用：读不到返回 null（= 未知）。见 lib/degrade.ts。 */
+export const getStockItemsSafe = cache(
+  async (): Promise<Map<string, StockItem> | null> =>
+    readOrDegrade("stock_items", getStockItems),
+);
+
+/**
+ * landing 各入口的状态源。**读不到返回 null = 未知**，调用方据此
+ * 隐去价格即可，绝不能退化成 AU$0 或「售罄」。
+ */
+export async function getProductStatuses(): Promise<Map<
+  string,
+  ProductStatus
+> | null> {
+  const [catalog, items] = await Promise.all([
+    getCatalogSafe(),
+    getStockItemsSafe(),
+  ]);
+  if (!catalog) return null;
   return new Map(
     catalog.map((p) => [
       p.handle,
       {
         offSale: !p.available,
-        soldOut: productSoldOut(p, items),
+        // 库存未知时不冤枉成售罄（宁可放进详情页，那里会再判一次）
+        soldOut: items ? productSoldOut(p, items) : false,
         priceCents: p.priceCents,
       },
     ]),

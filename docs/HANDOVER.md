@@ -547,11 +547,32 @@ Create in Stripe。**不再需要重跑 stripe:setup 回填代码。**
    `pdp .page` 的 pageIn 用 `both`，移动端粘性购买条 fixed 定位被圈进
    页面坐标、沉底永不可见（2026-07-15 修，改 `backwards` 即愈）。
    凡"fixed 元素不见了/位置怪"，先查祖先 transform/filter。
-4. **Supabase 瞬时时钟抖动**（机器睡醒 "JWT issued at future"）：
-   layout 关键读取已包 `retryOnClockSkew`（600ms 重试一次，
-   lib/supabase-admin.ts）。曾让首个请求 500，客户端在错误态恢复途中
-   报 removeChild of null（用户实遇；故障注入已复现链路）。
-   新增 layout 级读取时记得同样包一层。
+4. **Supabase 偶发 "JWT issued at future" 401**（2026-07-27 大幅更正）：
+   **旧结论「机器睡醒后本机时钟落后」是错的**，那是在本地 dev 下得的。
+   生产实证：本应用发出去的是不透明 `sb_secret_` 令牌（41 字符，**不是
+   JWT**），全项目不存在任何 JWT 格式凭证 —— 那个 `iat` 被判在未来的
+   JWT 只可能是 Supabase 侧现签的。Supabase edge log 证实：`401`、
+   `log_type: edge`、`latency: 0`，请求**根本没进到 DB**，是网关层拒的。
+   本机/Vercel 时钟不参与（实测三方时钟秒级一致）。参考 PostgREST#1139。
+   - **未解之谜**：两次事故的 401 **只打在 `stock_items` 上**，同一瞬间、
+     同一把 key 的 `products` 全部成功。单纯的「时间窗口」解释不了这个。
+     一个未验证的猜想是 undici 连接池把并发请求分到了不同 edge 节点，
+     只有某个节点时钟偏了（能同时解释「只有 stock_items 中招」和
+     「复用同一 socket 的重试也失败」）。**别把它当已知机制用。**
+   - **防线（三层，都已实测）**：① `retryOnClockSkew` 退避
+     400/1000/2000ms + 抖动（老的单次 600ms 正好落在窗口内，必然失败）；
+     ② `cache()` 请求内去重 —— 首页一次渲染从 9 次往返降到 2 次
+     （实测 5×products + 4×stock_items → 各 1 次）；
+     ③ **渲染路径降级**（`lib/degrade.ts`）：读不到就回落上次成功快照，
+     没快照就按「未知」渲染，**绝不 500**。故障注入验证：Supabase 完全
+     不可达时首页仍 200，`AU$0` 与误报售罄均为 0。
+   - **红线**：`null` = 未知，**不等于空**。当空集处理会退化成「AU$0 +
+     满屏售罄」，比错误页更伤转化。库存未知一律不冤枉成售罄。
+   - **边界**：只有渲染路径降级。`/api/checkout`、`/api/webhook`、admin
+     一律沿用会抛错的 `getCatalog()` / `getStockItems()` —— 金额与库存
+     正确性不接受降级。`/scratcher` `/house` `/care` 目前也仍抛错
+     （购买页没有价格就没有意义，报错比装作正常诚实）。
+   - 新增 layout/landing 级读取时，用 `*Safe()` 版本并把 `null` 当未知。
 3. Stripe 托管页自动化：支付方式是折叠 radio
    `input[name='payment-method-accordion-item-title']`（样式隐藏 →
    `check({force:true})`），选完等 `#cardNumber` visible 再填 4242。

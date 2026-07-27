@@ -1,3 +1,5 @@
+import { cache } from "react";
+import { readOrDegrade } from "./degrade";
 import {
   getSupabaseAdmin,
   retryOnClockSkew,
@@ -41,8 +43,19 @@ const fromRow = (r: ProductRow): CatalogItem => ({
   sort: r.sort,
 });
 
-/** 全量商品（含未上架），sort 升序。DB 不可达时抛错 → 页面 error boundary。 */
-export async function getCatalog(): Promise<CatalogItem[]> {
+/**
+ * 全量商品（含未上架），sort 升序。DB 不可达时抛错 → 页面 error boundary。
+ *
+ * `cache()` = React 的**单次请求内**记忆化（不是跨请求缓存，与 layout 的
+ * force-dynamic 不冲突）。首页一次渲染里 layout/page/CanvasCollection/
+ * TheShelf/FinalCta 各自要一份目录，去重前 products 被打 5 次、
+ * stock_items 4 次 —— 9 次往返就是 9 次撞上瞬时故障的机会（也是 07-27
+ * 那次 500 的放大器）。去重后每次渲染各 1 次。
+ * 写库不走这两个读函数（webhook 扣库存用 RPC），不存在读到自己写前快照。
+ */
+export const getCatalog = cache(async function getCatalog(): Promise<
+  CatalogItem[]
+> {
   const { data, error } = await retryOnClockSkew(() =>
     getSupabaseAdmin()
       .from("products")
@@ -51,10 +64,27 @@ export async function getCatalog(): Promise<CatalogItem[]> {
   );
   if (error) throw new Error(`products 读取失败: ${error.message}`);
   return (data as ProductRow[]).map(fromRow);
-}
+});
 
 export async function getCatalogMap(): Promise<Map<string, CatalogItem>> {
   return new Map((await getCatalog()).map((i) => [i.handle, i]));
+}
+
+/**
+ * 渲染路径用：读不到返回 null（= 未知，不是空）。见 lib/degrade.ts。
+ * 结算/webhook/admin 继续用上面会抛错的版本。
+ */
+export const getCatalogSafe = cache(
+  async (): Promise<CatalogItem[] | null> =>
+    readOrDegrade("products", getCatalog),
+);
+
+export async function getCatalogMapSafe(): Promise<Map<
+  string,
+  CatalogItem
+> | null> {
+  const rows = await getCatalogSafe();
+  return rows && new Map(rows.map((i) => [i.handle, i]));
 }
 
 export const isSoldOut = (i: CatalogItem): boolean =>
