@@ -27,6 +27,6 @@
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "pg": "^8.22.0",
-    "typescript": "^5"
+    "typescript": "5.8.2"
   }
 }
