@@ -5,6 +5,7 @@ import { getSupabaseAdmin, retryOnClockSkew } from "./supabase-admin";
 import { ARTWORKS } from "./heroConfig";
 import {
   CATALOG_TAG,
+  CATALOG_TTL_SECONDS,
   getCatalogSafe,
   isSoldOut,
   type CatalogItem,
@@ -48,7 +49,7 @@ async function readStockItems(): Promise<StockItem[]> {
    会变成空对象。Map 在缓存外面现建，成本可忽略。缓存语义同 catalog。 */
 const cachedStockItems = unstable_cache(readStockItems, ["stock-items"], {
   tags: [CATALOG_TAG],
-  revalidate: 300,
+  revalidate: CATALOG_TTL_SECONDS,
 });
 
 /** 单次请求内记忆化 + 跨请求 Data Cache，理由同 getCatalog（lib/catalog.ts）。 */

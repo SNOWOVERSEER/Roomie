@@ -68,7 +68,7 @@ async function readProducts(): Promise<CatalogItem[]> {
  * 唯一漏网的是有人直接在 Supabase 面板改行，那种情况 TTL 内自愈。
  */
 export const CATALOG_TAG = "roomie-catalog";
-const CATALOG_TTL_SECONDS = 300;
+export const CATALOG_TTL_SECONDS = 300;
 
 const cachedProducts = unstable_cache(readProducts, ["products"], {
   tags: [CATALOG_TAG],
