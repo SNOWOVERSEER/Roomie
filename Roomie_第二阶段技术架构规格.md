@@ -107,15 +107,22 @@ MVP 上线前必须完成：
 |---|---|
 | `STRIPE_SECRET_KEY` | 服务端专用 |
 | `STRIPE_WEBHOOK_SECRET` | Webhook 签名验证 |
-| `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY` | 前端可见 |
+| ~~`NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY`~~ | **规划过，从未落地**（见下） |
 | `SUPABASE_URL` | 数据库地址 |
 | `SUPABASE_SECRET_KEY` | 服务端专用（`sb_secret_xxx`），绕过 RLS |
-| `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | 前端可见（`sb_publishable_xxx`） |
+| ~~`NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`~~ | **规划过，从未落地**（见下） |
 | `RESEND_API_KEY` | 邮件发送 |
 | `NEXT_PUBLIC_URL` | 生产域名，用于构建回调 URL |
-| `ADMIN_SECRET` | `/api/shipping` 鉴权 |
+| `ADMIN_SECRET` | `/api/shipping` 鉴权 + 本地 admin 登录口令 |
 
 敏感 key 仅配置在 Vercel Production 环境，不暴露 Preview 环境。
+
+> **两个 publishable key 从未存在**（2026-07-30 核实：全项目零引用、
+> `.env.local` 里也没配）。当初设想的是前端直连，实现时走了全服务端
+> 渲染，两条前端直连路线都没发生：Supabase 的读取全部在服务端（浏览器
+> 对 `supabase.co` **一个请求都不发**，实测生产 HTML 加全部 JS 分片
+> 零命中该域名）；Stripe 用的是托管 Checkout，只需 sk。
+> **照着这张表去写前端直连会走岔路**，现行读取链见 HANDOVER §7。
 
 ---
 

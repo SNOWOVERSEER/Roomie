@@ -314,13 +314,14 @@ Resend 发交易邮件。服务端逻辑全部在 API Routes（无 Edge Function
   **Stripe checkout ✓**（test mode，真实 session 创建成功）。旧部署的结算
   故障根因是「07-13 改价事故归档掉的 price id 还硬编码在旧代码里」——
   DB 化代码读表里的现行 id，合并顺带自愈。
-- **⚠️ 在售价格是测试残值（等店主处理）**：products 表里 scratcher=AU$149、
-  print=AU$42（07-13 后台改价测试的遗留；当时只回滚了 Stripe 归档，没回滚
-  表值），现在生产站显示并会实收这个价。**正典价 AU$89 / AU$35**——
-  admin → Products 两次行内改价即恢复（display 与实收始终一致，无错收
-  风险，只是价签不对）。定价属产品决策，agent 未代改。
-- 生产 `ADMIN_SECRET` 仍与本地不一致（shipping API 401）——只影响 curl
-  兜底，admin 发货直连 Supabase/Resend 不受影响。
+- **在售价格**（2026-07-30 实测生产）：scratcher **AU$159**、print
+  **AU$49**。这条曾长期记着「149/42 是 07-13 测试残值、正典价 89/35」，
+  已作废——07-21 店主确认表值就是定价，之后又自行改过。**定价以
+  products 表为准，别信文档里的数字**；要看现值扫一眼线上页面即可。
+- 生产 `ADMIN_SECRET` 与本地**一致**（2026-07-30 实测：带正确凭证 POST
+  `/api/shipping` 空 body 得到 400 参数校验错误而非 401，证明配了且对得上；
+  空 body 不触及任何订单，是个无副作用的探测法）。此条曾记着「不一致」，
+  已作废。
 - **webhook 全链路已通（07-15 晚）**：`charge.refunded` 已订阅；e2e 曾
   揭穿 Vercel 的 `STRIPE_WEBHOOK_SECRET` 装着本地 stripe listen 的 whsec
   （真实事件全被 bad signature 拒收 = 生产付款不入库不发信；历史测试全走
@@ -394,12 +395,40 @@ restocking / 价格）。**What's next 只放 `!sellable` 且无专页的商品*
 （`TheShelf HAS_OWN_PAGE` 排除 scratcher/print/house——迁移曾让猫屋混入
 该区，R1 修复）。
 
-**主站读取链**：root layout `force-dynamic`（**必须显式**——否则构建时
-预渲染把旧价烧进静态 HTML）+ 查表注入 `CartProvider`（客户端购物车只拿
-展示快照：handle/title/price/image/numbered/soldOut）；页面价格全部
-服务端查表（landing 刊头/门户卡/FinalCta/TheShelf/两 PDP/care/hero
-ctaNote——hero 的 ctaNote 现在是 `(price) => string` 函数）。结算金额
-永远服务端 re-derive，快照只管显示。
+**主站读取链**（2026-07-30 重构，下面这套是现行事实）：
+
+root layout 仍是 `force-dynamic`（**必须显式**——否则构建时预渲染把旧价
+烧进静态 HTML），但**不再 await 目录**。它把一个未 await 的
+`getCartSnapshot()` promise 交给 `CartProvider`，由客户端用 effect 解开
+（**不能用 `use()`** ——那会让 provider 连同 children 一起挂起，等于没改）。
+首页价格是 Suspense 包着的流式叶子，三个取数 section 各有自己的边界；
+Hero 因此立刻挂载，入场动画不被打断。**为什么这么写**：从前那句 await
+挡在所有 JSX 之前，Nav/Hero/Footer 这些根本不碰 DB 的东西也得等 Supabase，
+冷进入表现为几秒纯白屏（实测 TTFB 18ms 而 HTML 主体流了 2379ms）。
+A/B 实测：同样 3 秒后端延迟，首屏内容 3429ms → 54ms。
+
+**三种读取，别用混**：
+
+| 函数 | 缓存 | 失败行为 | 谁用 |
+|---|---|---|---|
+| `getCatalogSafe` / `getStockItemsSafe` | Data Cache | 返回 `null`（未知） | 渲染路径 |
+| `getCatalog` / `getStockItems` | Data Cache | 抛错 | PDP 等仍抛错的渲染点、邮件、waitlist |
+| `getCatalogFresh` / `getStockItemsFresh` | **绕过** | 抛错 | **只有 `/api/checkout`** |
+
+Data Cache（`unstable_cache`，TTL `CATALOG_TTL_SECONDS` = 300s，tag
+`CATALOG_TAG`）跨实例共享且持久，这正是它比 `lastGood` 那个进程内 Map
+强的地方。**实测确认过两件事**：`unstable_cache` 与 `force-dynamic`
+不冲突；**抛错不入缓存**——注入故障后移除，下一个请求立刻恢复，不用等
+TTL（否则一次 3 秒的 JWT 抖动会变成 5 分钟降级）。主动失效只有一处：
+webhook 扣完库存。admin 改价**没有**通知通道（曾经有过，因为不值那些
+活动部件而拆掉），所以改完价最长等一个 TTL 才在站上可见。
+
+**陈旧为什么不影响正确性——下单那一刻才是对账点**：`/api/checkout` 走
+Fresh 读取直接问库，并**逐行比对客人页面上看到的单价**，不一致就返回
+409 `price_changed` 让他刷新，而不是闷声按新价扣款。比单价不比小计：
+服务端会归一化 qty（编号件恒 1、钳 1–9）并剔掉目录里没有的行，拿小计
+对账会因为这些归一化差异误报，把真实结算挡住——那比不检查更伤。
+口径由店主定：**改动本就不频繁，不需要即时同步，只要下单时对得上**。
 
 **admin 应用**（`admin/` 独立 Next app，**永不部署**）：
 
@@ -547,32 +576,43 @@ Create in Stripe。**不再需要重跑 stripe:setup 回填代码。**
    `pdp .page` 的 pageIn 用 `both`，移动端粘性购买条 fixed 定位被圈进
    页面坐标、沉底永不可见（2026-07-15 修，改 `backwards` 即愈）。
    凡"fixed 元素不见了/位置怪"，先查祖先 transform/filter。
-4. **Supabase 偶发 "JWT issued at future" 401**（2026-07-27 大幅更正）：
-   **旧结论「机器睡醒后本机时钟落后」是错的**，那是在本地 dev 下得的。
-   生产实证：本应用发出去的是不透明 `sb_secret_` 令牌（41 字符，**不是
-   JWT**），全项目不存在任何 JWT 格式凭证 —— 那个 `iat` 被判在未来的
-   JWT 只可能是 Supabase 侧现签的。Supabase edge log 证实：`401`、
-   `log_type: edge`、`latency: 0`，请求**根本没进到 DB**，是网关层拒的。
-   本机/Vercel 时钟不参与（实测三方时钟秒级一致）。参考 PostgREST#1139。
-   - **未解之谜**：两次事故的 401 **只打在 `stock_items` 上**，同一瞬间、
-     同一把 key 的 `products` 全部成功。单纯的「时间窗口」解释不了这个。
-     一个未验证的猜想是 undici 连接池把并发请求分到了不同 edge 节点，
-     只有某个节点时钟偏了（能同时解释「只有 stock_items 中招」和
-     「复用同一 socket 的重试也失败」）。**别把它当已知机制用。**
-   - **防线（三层，都已实测）**：① `retryOnClockSkew` 退避
-     400/1000/2000ms + 抖动（老的单次 600ms 正好落在窗口内，必然失败）；
-     ② `cache()` 请求内去重 —— 首页一次渲染从 9 次往返降到 2 次
-     （实测 5×products + 4×stock_items → 各 1 次）；
-     ③ **渲染路径降级**（`lib/degrade.ts`）：读不到就回落上次成功快照，
-     没快照就按「未知」渲染，**绝不 500**。故障注入验证：Supabase 完全
-     不可达时首页仍 200，`AU$0` 与误报售罄均为 0。
+4. **Supabase 偶发 "JWT issued at future" 401**（2026-07-30 定稿，此前两版
+   结论都是错的，见下）：**Supabase 内部两台机器的时钟分歧超过 30 秒。**
+   我们发的 `sb_secret_` 是不透明字符串、不含任何时间；官方文档确认
+   API key 会被**即时换成一张短命 JWT**（"transformed into a short-lived
+   JWT"）；那张 JWT 由项目侧的 PostgREST 校验，而 PostgREST 只在
+   `iat > now + 30s` 时拒绝（源码 `Auth/Jwt.hs` 写死 `allowedSkewSeconds
+   = 30`，报错文案 `"JWT issued at future"` 出自 `Error.hs`）。签发方的
+   钟比校验方快过 30 秒，签出来的证就成了「未来签发」。
+   - **决定性推论：证会自己熬成合法。** 校验只查 iat 有没有超前，**从不
+     查证有多旧**；证的 iat 冻住不动而校验方的钟一直走，所以一张证只要
+     活过 `(分歧 − 30)` 秒就必然被放行。这解释了为什么服务端那 1.4 秒
+     退避必死（证太新）而客户端 2 秒后的重跑几乎必成（证熬老了），也
+     反推出 07-28 那次的分歧在 **31.6–35.5 秒**之间。
+   - **两条已作废的旧结论，别再捡回来**：①「机器睡醒本机时钟落后」——
+     本地 dev 下得的，生产不成立；②「网关层拒的、没进到 DB」—— 被
+     `latency: 0` 误导，报错文案是 PostgREST 独有的，请求确实到了项目侧。
+     ③ 还有「401 只打 stock_items」——那是 3 个样本的过度拟合，07-28
+     的事故打的就是 `products`。4 个样本里 3:1 完全是随机波动。
+   - **仍属推断**（别当已知机制）：那张证被复用而非每次重签、以及两条
+     并发请求落到不同网关节点。外部观测不到，但「2 秒重跑稳定成功」这
+     个事实要求存在某种复用。
+   - **防线**：① 退避 400/1000ms（0/3 命中，留着只因为便宜）；
+     ② `cache()` 请求内去重（9 次往返 → 2 次）；③ **Data Cache**
+     （2026-07-30，见 §7 读取链）—— 绝大多数渲染一次网络都不发，这是
+     目前削减暴露面最有效的一层；④ **渲染路径降级**（`lib/degrade.ts`）：
+     读不到就回落快照，没快照按「未知」渲染，**绝不 500**；
+     ⑤ **流式渲染**（2026-07-30）：shell 不等数据，所以这个故障最坏
+     只是价格晚到，不再是白屏。
+     注意 `lastGood` 是**进程内** Map，冷实例永远为空 —— 历次事故日志里
+     的「无快照可用」就是这么来的；真正跨实例的快照是 ③。
    - **红线**：`null` = 未知，**不等于空**。当空集处理会退化成「AU$0 +
      满屏售罄」，比错误页更伤转化。库存未知一律不冤枉成售罄。
-   - **边界**：只有渲染路径降级。`/api/checkout`、`/api/webhook`、admin
-     一律沿用会抛错的 `getCatalog()` / `getStockItems()` —— 金额与库存
-     正确性不接受降级。`/scratcher` `/house` `/care` 目前也仍抛错
-     （购买页没有价格就没有意义，报错比装作正常诚实）。
+   - **边界**：见 §7 读取链——渲染吃缓存、结算读真库。
    - 新增 layout/landing 级读取时，用 `*Safe()` 版本并把 `null` 当未知。
+   - 下次事故要取的证据：Dashboard 的 **PostgREST 日志**（不是 edge 日志）
+     应有对应 401；以及「首次失败 → 最终成功」的耗时，熬证模型预测它是
+     一条窄带（几秒、高度可重复），节点剔除模型则预测方差很大。
 3. Stripe 托管页自动化：支付方式是折叠 radio
    `input[name='payment-method-accordion-item-title']`（样式隐藏 →
    `check({force:true})`），选完等 `#cardNumber` visible 再填 4242。
@@ -587,13 +627,23 @@ Create in Stripe。**不再需要重跑 stripe:setup 回填代码。**
 7. Supabase jsonb 的对象数组 containment（`.contains`）在 PostgREST 侧
    易翻车——小表直接取列 JS 过滤。
 8. Reveal 的 `as` 联合类型不全时直接扩（已含 p/div/section/li/figure）。
-9. 改 `.env.local` 后要重启 dev server 才生效。
+9. 改 `.env.local` 后要重启 dev server 才生效。**另：这个文件 shell
+   `source` 不了** —— `RESEND_FROM` 的值含未加引号的 `<>`，shell 当成
+   重定向，在那一行解析失败、其后所有变量（含 `ADMIN_SECRET`）全读不到，
+   而且**静默失败**（`source` 退出码仍是 0）。应用不受影响（Next 和
+   admin/next.config.ts 各用自己的正则解析器）。写脚本要取值就单行
+   `grep '^KEY=' .env.local | cut -d= -f2-`，别整个 source。
 10. 新页面用到 `useSearchParams` 必须包 `<Suspense>`（success 页先例）。
 11. Webhook 签名密钥**只在创建 endpoint 时返回一次**，拿到立刻落盘，
     别让它进终端管道（丢过一次，删了重建才拿回）。
 12. 根 tsconfig 的 `include: ["**/*.ts"]` 会把 `admin/` 卷进主站类型检查
     ——必须 `exclude: ["admin"]`；`.gitignore` 的 `/node_modules` 带根锚定，
-    admin 的要单独加。
+    admin 的要单独加。**镜像坑（2026-07-30 踩到）**：admin 用相对路径
+    import 主站的 `lib/`，于是主站那些文件会被 admin 的 tsc 检查，而
+    admin 的 `@/*` 指向 `admin/` 自己 —— 主站 `lib/` 里只要出现
+    `@/components/...` 就会在 admin 侧报 TS2307，主站自己却是绿的。
+    **服务端与客户端共用的类型放 `lib/` 下的零依赖文件**（先例
+    `lib/cartTypes.ts`），别放进 `components/`。
 13. admin 表格里"受控 checkbox + server action + router.refresh"会闪回旧态
     （React 受控值等 refresh 才变）——状态切换用明确的按钮，别用 checkbox。
 14. 商品数据进表后，**新页面/组件里的价格一律服务端查表传 props**，
@@ -627,6 +677,7 @@ Create in Stripe。**不再需要重跑 stripe:setup 回填代码。**
 | 07-27 | **店主为根域自配 Resend receive**（MX → `inbound-smtp.ap-northeast-1`，dig 实证）：hello@ 来信落 Resend。「根域 MX 留给未来邮箱服务」口径作废；MX 独占，将来上邮箱服务需迁走、Resend 收件即停。回信路线见 §7 Resend 条 | 收件闭环 |
 | 07-27 | **Bot 防护体系立项**（用户上一站曾被 bot 流量打爆 edge 配额，要求防 bot 但保 SEO）：层 1=robots.ts 加 SEO 工具爬虫黑名单（Ahrefs/Semrush 等全站谢客，Google/Bing 全放行；AI 爬虫刻意留给 Firewall 统一决定）；层 2=Vercel Firewall（Bot Protection Challenge + AI Bots Deny + **/api/ bypass 必须先行**否则 Stripe/Resend webhook 会被挑战拦死），步骤沉淀 runbook「Bot 防护」节。关键事实：WAF 挡掉的流量不计费（官方 2026-05 口径）；已验证搜索爬虫自动豁免挑战；生产 headless e2e 可能被 Challenge——跑前临时切 Log | 层 2 待店主按 runbook 开关 |
 | 07-27 | **收件转发上线**（用户拍板"做吧"）：`/api/inbound` 把 hello@ 来信转进店主 Gmail，Gmail send-as 以 hello@ 回信 = 完整客服收发闭环。关键实测：`receiving.forward` passthrough 会丢客户 From/无 Reply-To（不可用于人读转发）→ 改读原文重发；本地 10 项路由测试全绿（验签/守卫/真实转发头逐项断言）。env 新增 `RESEND_WEBHOOK_SECRET` + `INBOUND_FORWARD_TO`（runbook 表已更） | 罕见重投可能重复转发，无害 |
+| 07-30 | **冷进入 4 秒白屏根治 + JWT 根因定稿**（店主报「冷进入白屏约 4 秒才出现」）。测出真因：根 layout 的 `await` 挡在所有 JSX 前，TTFB 18ms 而 HTML 主体流 2379ms——服务器开了连接然后挂着等 Supabase。① **流式化**：layout 传未 await 的 promise，首页价格改流式叶子（A/B：3 秒后端延迟下首屏 3429ms→54ms）；② **Data Cache**：两张周改两次的表不再每次访问现查（5 次请求 1 次真查，热 29ms）；③ 店主质疑设计过度，顺带暴露我引入的真缺陷——`/api/checkout` 也在读缓存，于是加 `*Fresh` 绕过缓存 + **逐行单价对账**（不一致 409 让客人刷新），并**拆掉** admin→生产的失效通道（改动不频繁，不值那些活动部件）。JWT 根因定为「Supabase 内部两钟分歧 >30s + 证随年龄熬成合法」，推翻此前两版结论与「只打 stock_items」的过拟合。装 `@vercel/speed-insights`；Next 补丁升 15.5.22（清掉 8 条 advisory，逐条核对后确认一条都打不到本站） | 口径：**改动本就不频繁，不需要即时同步，只要下单时对得上**（店主定） |
 | 07-19 | **正典域名切到 roomiepaw.com.au**（用户在 Vercel 绑定后代码配套）：`lib/env.ts PROD_ORIGIN`（Stripe 回跳/邮件资产/metadataBase 的统一兜底）、admin 链接与 Dashboard SITE、stripe-setup 脚本 SITE、.env.example 注释全部切新域名；新增 `app/robots.ts` + `app/sitemap.ts`（API/cart/checkout 不进索引）。**Stripe webhook 端点故意留在 vercel.app**（server-to-server 不受域名切换影响，换端点要重配 whsec，不折腾）。待用户：Vercel env `NEXT_PUBLIC_URL` 改 `https://roomiepaw.com.au` 后 Redeploy（不改则 publicOrigin 仍信旧 env 值）；Resend 验证 roomiepaw.com.au 发件域名（验证前订单邮件只能发店主自己邮箱） | vercel.app 仍作别名 |
 | 07-19 | BrandStory 换图两轮（用户两次复评）：两张独立 AI 图切换跳动 → v1 用 hero 视频首帧+末帧（3:2 裁切 top=70），但 10s AI 视频累积变形（画框推移/画芯漂移/光变）仍被看出 → **v2 根治：只用末帧做底，猫区域用首帧像素补**（补丁管线 scratchpad patch_cat.py：手描猫多边形 mask 含尾巴贴墙影、MaxFilter 21 外扩+高斯 9 羽化——羽化半透会透出高对比毛色，边界要吃足；非猫区 SSD 网格搜索平移对齐 dy=-9；mask 外环带每通道均值比光配 ~0.95；成品 room-empty-2.jpg，两图除猫外逐像素相同）。教训：AI 视频取"同景两帧"必须做补丁合成，跨 10s 直取两帧过不了眼；public/hero/poster-first.jpg 不是真首帧（单独生成的海报变体），提帧从视频本体取 | 切换零跳动 |
 | 07-19 | **运费宣传收敛（用户指示，预备大件品类）**：26/188 从品牌层全部撤下（footer/FinalCta 去金额、cart 与 scratcher metadata 去金额、terms 概述句改"per-order shipping shown before you pay"），只留在购买流程事实层（PDP 面板价格旁、购物车抽屉、checkout 逻辑不动）；政策页 callout 加 "for our current pieces" 限定 + 大件"按商品页标注运费"预告句。**多档运费模型同日拍板**：按最高件计费 + 免邮线仅纯标准件订单，首个大件 SKU 进库时实现（口径全文见 §7 设计决策段） | 现售三件仍是 26/188，事实层不变 |
