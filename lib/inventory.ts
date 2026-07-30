@@ -1,13 +1,15 @@
 import { cache } from "react";
+import { unstable_cache } from "next/cache";
 import { readOrDegrade } from "./degrade";
 import { getSupabaseAdmin, retryOnClockSkew } from "./supabase-admin";
 import { ARTWORKS } from "./heroConfig";
 import {
+  CATALOG_TAG,
   getCatalogSafe,
   isSoldOut,
   type CatalogItem,
 } from "./catalog";
-import type { CartSnapshot } from "@/components/CartContext";
+import type { CartSnapshot } from "./cartTypes";
 
 /*
  * 组件库存（BOM）：备货单位 = 画框 ×1 + 画芯 ×6（stock_items 表），
@@ -31,10 +33,7 @@ export interface StockItem {
 /** 前台低库存标注阈值（用户定：低于 10 件标 low stock） */
 export const LOW_STOCK_AT = 10;
 
-/** 单次请求内记忆化，理由同 getCatalog（lib/catalog.ts）。 */
-export const getStockItems = cache(async function getStockItems(): Promise<
-  Map<string, StockItem>
-> {
+async function readStockItems(): Promise<StockItem[]> {
   const { data, error } = await retryOnClockSkew(() =>
     getSupabaseAdmin()
       .from("stock_items")
@@ -42,8 +41,21 @@ export const getStockItems = cache(async function getStockItems(): Promise<
       .order("sort", { ascending: true }),
   );
   if (error) throw new Error(`stock_items 读取失败: ${error.message}`);
-  return new Map((data as StockItem[]).map((i) => [i.id, i]));
+  return data as StockItem[];
+}
+
+/* 缓存的是**数组**，不是 Map —— Data Cache 要序列化结果，Map 进去出来
+   会变成空对象。Map 在缓存外面现建，成本可忽略。缓存语义同 catalog。 */
+const cachedStockItems = unstable_cache(readStockItems, ["stock-items"], {
+  tags: [CATALOG_TAG],
+  revalidate: 300,
 });
+
+/** 单次请求内记忆化 + 跨请求 Data Cache，理由同 getCatalog（lib/catalog.ts）。 */
+export const getStockItems = cache(
+  async (): Promise<Map<string, StockItem>> =>
+    new Map((await cachedStockItems()).map((i) => [i.id, i])),
+);
 
 export const itemBuyable = (i?: StockItem): boolean =>
   !!i && i.available && (i.stock === null || i.stock > 0);

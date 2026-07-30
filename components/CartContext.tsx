@@ -9,6 +9,7 @@ import {
   useRef,
   useState,
 } from "react";
+import type { CartSnapshot, ClientCatalogItem } from "@/lib/cartTypes";
 import CartDrawer from "./cart/CartDrawer";
 import DegradedRetry from "./DegradedRetry";
 import styles from "./CartContext.module.css";
@@ -23,27 +24,9 @@ import styles from "./CartContext.module.css";
 
 const STORAGE_KEY = "roomie-cart-v1";
 
-/** layout（服务端）注入的商品快照：仅上架商品，含售罄标记 */
-export interface ClientCatalogItem {
-  handle: string;
-  title: string;
-  priceCents: number;
-  image: string;
-  numbered: boolean;
-  soldOut: boolean;
-}
-
-/**
- * 服务端 → 客户端的购物车契约（服务端产出见 lib/inventory.ts getCartSnapshot）。
- * layout 传的是**未 await 的 promise**：await 会挡住整棵树，冷进入就是几秒白屏。
- */
-export interface CartSnapshot {
-  catalog: ClientCatalogItem[];
-  /** 目录缺失（DB 不可达）。true = 金额不可信，只读不写、不显示金额 */
-  catalogUnknown: boolean;
-  /** 本轮任一读取降级 → 需要客户端稍后补价 */
-  degraded: boolean;
-}
+/* 契约定义在 lib/cartTypes.ts（零依赖，服务端与客户端共用；那里有
+   为什么不能放在本文件的原因）。这里再导出一次，保持既有 import 不变。 */
+export type { ClientCatalogItem, CartSnapshot } from "@/lib/cartTypes";
 
 export interface CartLine {
   key: string; // `${handle}::${variant ?? ""}`

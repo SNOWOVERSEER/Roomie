@@ -1,4 +1,5 @@
 import { cache } from "react";
+import { unstable_cache } from "next/cache";
 import { readOrDegrade } from "./degrade";
 import {
   getSupabaseAdmin,
@@ -43,19 +44,7 @@ const fromRow = (r: ProductRow): CatalogItem => ({
   sort: r.sort,
 });
 
-/**
- * 全量商品（含未上架），sort 升序。DB 不可达时抛错 → 页面 error boundary。
- *
- * `cache()` = React 的**单次请求内**记忆化（不是跨请求缓存，与 layout 的
- * force-dynamic 不冲突）。首页一次渲染里 layout/page/CanvasCollection/
- * TheShelf/FinalCta 各自要一份目录，去重前 products 被打 5 次、
- * stock_items 4 次 —— 9 次往返就是 9 次撞上瞬时故障的机会（也是 07-27
- * 那次 500 的放大器）。去重后每次渲染各 1 次。
- * 写库不走这两个读函数（webhook 扣库存用 RPC），不存在读到自己写前快照。
- */
-export const getCatalog = cache(async function getCatalog(): Promise<
-  CatalogItem[]
-> {
+async function readProducts(): Promise<CatalogItem[]> {
   const { data, error } = await retryOnClockSkew(() =>
     getSupabaseAdmin()
       .from("products")
@@ -64,7 +53,41 @@ export const getCatalog = cache(async function getCatalog(): Promise<
   );
   if (error) throw new Error(`products 读取失败: ${error.message}`);
   return (data as ProductRow[]).map(fromRow);
+}
+
+/**
+ * 跨请求缓存（Vercel Data Cache，**跨实例共享且持久**——这正是它比
+ * lib/degrade.ts 那个进程内 lastGood 强的地方：冷实例也命中）。
+ *
+ * 为什么要缓存：站点 force-dynamic，从前每一次渲染都现查两张表，而这
+ * 两张表一周才改两次。每次往返都是一次撞上 JWT 抖动的机会，也是冷进入
+ * 的主要延迟来源（见 HANDOVER §9.4）。
+ *
+ * 抛错不入缓存（Data Cache 只存成功结果），所以一次瞬时 401 不会被
+ * 固化成几分钟的坏数据。TTL 只是兜底：写路径都会按 tag 主动失效，
+ * 唯一漏网的是有人直接在 Supabase 面板改行，那种情况 TTL 内自愈。
+ */
+export const CATALOG_TAG = "roomie-catalog";
+const CATALOG_TTL_SECONDS = 300;
+
+const cachedProducts = unstable_cache(readProducts, ["products"], {
+  tags: [CATALOG_TAG],
+  revalidate: CATALOG_TTL_SECONDS,
 });
+
+/**
+ * 全量商品（含未上架），sort 升序。DB 不可达时抛错 → 调用方决定降级。
+ *
+ * 外面那层 `cache()` = React 的**单次请求内**记忆化。首页一次渲染里
+ * layout/page/CanvasCollection/TheShelf/FinalCta 各自要一份目录，去重前
+ * products 被打 5 次、stock_items 4 次 —— 9 次往返就是 9 次撞上瞬时故障
+ * 的机会（也是 07-27 那次 500 的放大器）。去重后每次渲染各 1 次，再经
+ * 上面的 Data Cache，绝大多数渲染一次网络都不发。
+ * 写库不走这两个读函数（webhook 扣库存用 RPC），不存在读到自己写前快照。
+ */
+export const getCatalog = cache(
+  (): Promise<CatalogItem[]> => cachedProducts(),
+);
 
 export async function getCatalogMap(): Promise<Map<string, CatalogItem>> {
   return new Map((await getCatalog()).map((i) => [i.handle, i]));

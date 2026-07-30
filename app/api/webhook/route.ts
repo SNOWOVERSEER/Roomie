@@ -1,11 +1,12 @@
 import { randomInt } from "node:crypto";
 import { NextRequest, NextResponse } from "next/server";
+import { revalidateTag } from "next/cache";
 import type Stripe from "stripe";
 import { getStripe } from "@/lib/stripe";
 import { env } from "@/lib/env";
 import { getSupabaseAdmin, type OrderItem, type OrderRow } from "@/lib/supabase-admin";
 import { sendOrderConfirmation } from "@/lib/email";
-import { formatCents, getCatalogMap } from "@/lib/catalog";
+import { CATALOG_TAG, formatCents, getCatalogMap } from "@/lib/catalog";
 import { componentsFor } from "@/lib/inventory";
 
 /*
@@ -165,6 +166,9 @@ async function recordOrder(session: Stripe.Checkout.Session) {
             }
           }
         }
+        /* 库存刚变，让渲染路径的 Data Cache 立刻作废（见 lib/catalog.ts）。
+           不这么做的话，售罄状态最长会滞后一个 TTL 才反映到站上。 */
+        revalidateTag(CATALOG_TAG);
         await sendOrderConfirmation(inserted); // 内部吞错，邮件不阻断订单
       } else {
         console.log("[webhook] 重复事件，订单已存在:", session.id);
