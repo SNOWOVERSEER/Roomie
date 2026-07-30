@@ -107,11 +107,8 @@ export const HERO_COPY = {
   subtitle:
     "A framed canvas for your wall that's secretly a scratcher. Pet things that feel like part of home.",
   cta: "Shop the Canvas Scratcher", // TODO 最终文案待定
-  /** 价格实时来自 products 表（页面服务端注入）；
-   *  空串 = DB 短暂不可达，整段价格连同分隔点一起隐去（不显示 AU$0） */
-  ctaNote: (price: string) =>
-    price
-      ? `${price} · swappable prints · ships AU-wide`
-      : "swappable prints · ships AU-wide",
+  /** 价格由页面以流式节点单独送达（见 app/page.tsx ScratcherPriceNote），
+   *  未到 / DB 不可达时整段价格连同分隔点一起缺席（绝不显示 AU$0）。 */
+  ctaNoteSuffix: "swappable prints · ships AU-wide",
   tagHint: "spare prints by the wall, tap one to swap",
 };

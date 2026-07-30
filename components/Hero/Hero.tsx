@@ -41,7 +41,12 @@ const ALL_STEPS: FreezeSteps = {
 
 const objectPosition = `${COVER_FOCUS.x * 100}% ${COVER_FOCUS.y * 100}%`;
 
-export default function Hero({ priceText }: { priceText: string }) {
+export default function Hero({
+  priceText,
+}: {
+  /** 流式节点，晚于本组件到达 —— 不能是 string，否则 Hero 得等价格 */
+  priceText: React.ReactNode;
+}) {
   const stageRef = useRef<HTMLDivElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
   const timers = useRef<ReturnType<typeof setTimeout>[]>([]);

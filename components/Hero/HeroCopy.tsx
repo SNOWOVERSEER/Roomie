@@ -10,7 +10,8 @@ interface Props {
   beats: { title: boolean; subtitle: boolean };
   steps: FreezeSteps;
   /** 抓板现价（服务端 formatCents 结果），来自 products 表 */
-  priceText: string;
+  /** 流式节点：价格晚于 Hero 骨架到达，所以不是 string（见 app/page.tsx） */
+  priceText: React.ReactNode;
 }
 
 /**
@@ -80,7 +81,10 @@ export default function HeroCopy({ beats, steps, priceText }: Props) {
               </svg>
             </span>
           </Link>
-          <span className={styles.ctaNote}>{HERO_COPY.ctaNote(priceText)}</span>
+          <span className={styles.ctaNote}>
+            {priceText}
+            {HERO_COPY.ctaNoteSuffix}
+          </span>
         </div>
       </div>
     </div>

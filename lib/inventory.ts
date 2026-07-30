@@ -7,6 +7,7 @@ import {
   isSoldOut,
   type CatalogItem,
 } from "./catalog";
+import type { CartSnapshot } from "@/components/CartContext";
 
 /*
  * 组件库存（BOM）：备货单位 = 画框 ×1 + 画芯 ×6（stock_items 表），
@@ -90,6 +91,35 @@ export const getStockItemsSafe = cache(
   async (): Promise<Map<string, StockItem> | null> =>
     readOrDegrade("stock_items", getStockItems),
 );
+
+/**
+ * root layout 用：把购物车要的东西一次聚好。
+ *
+ * layout **刻意不 await 它**，而是把 promise 传给 CartProvider —— 一旦
+ * await，整棵树都要等 Supabase 回来才能吐出第一个字节，那正是「冷进入
+ * 几秒白屏」的成因（实测 TTFB 18ms 而 HTML 主体流了 2.4s）。
+ */
+export async function getCartSnapshot(): Promise<CartSnapshot> {
+  const [rows, items] = await Promise.all([
+    getCatalogSafe(),
+    getStockItemsSafe(),
+  ]);
+  return {
+    catalog: (rows ?? [])
+      .filter((i) => i.available)
+      .map((i) => ({
+        handle: i.handle,
+        title: i.title,
+        priceCents: i.priceCents,
+        image: i.image,
+        numbered: i.numbered,
+        // 库存未知时不冤枉成售罄；可售性与金额服务端还会 re-derive
+        soldOut: items ? productSoldOut(i, items) : false,
+      })),
+    catalogUnknown: rows === null,
+    degraded: rows === null || items === null,
+  };
+}
 
 /**
  * landing 各入口的状态源。**读不到返回 null = 未知**，调用方据此

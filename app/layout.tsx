@@ -2,12 +2,11 @@ import type { Metadata } from "next";
 import { Baloo_2, Nunito_Sans } from "next/font/google";
 import { cookies } from "next/headers";
 import { Analytics } from "@vercel/analytics/next";
+import { SpeedInsights } from "@vercel/speed-insights/next";
 import "./globals.css";
-import { getCatalogSafe } from "@/lib/catalog";
 import { PROD_ORIGIN } from "@/lib/env";
-import { getStockItemsSafe, productSoldOut } from "@/lib/inventory";
-import { CartProvider, type ClientCatalogItem } from "@/components/CartContext";
-import DegradedRetry from "@/components/DegradedRetry";
+import { getCartSnapshot } from "@/lib/inventory";
+import { CartProvider } from "@/components/CartContext";
 import PromoProvider from "@/components/promo/PromoProvider";
 import {
   activeCampaign,
@@ -65,15 +64,18 @@ export const metadata: Metadata = {
 export default async function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
-  // 客户端购物车的价格快照（上架商品；售罄按组件库存聚合）。
-  // 展示用快照，结算金额永远由服务端 re-derive。
-  // DB 短暂不可达时降级而非抛错 —— root layout 一抛错就是整站 500，
-  // 而这两份数据只是购物车的展示快照（见 lib/degrade.ts）。
-  const [rows, stockItems, jar] = await Promise.all([
-    getCatalogSafe(),
-    getStockItemsSafe(),
-    cookies(),
-  ]);
+  // cookies() 是本地读取（无网络），await 它不影响首字节。
+  const jar = await cookies();
+
+  /*
+   * 购物车的价格快照。**刻意不 await** —— 这是本页唯一的网络等待，
+   * 一旦 await，Supabase 回来之前整棵树一个字节都发不出去，用户看到的
+   * 就是纯白屏（实测：TTFB 18ms，而 HTML 主体流了 2379ms 才结束）。
+   * 把 promise 交给 CartProvider 由客户端非阻塞地消费，shell 先出。
+   * 展示用快照而已，结算金额永远由服务端 re-derive；DB 不可达时
+   * 降级而非抛错（root layout 一抛错就是整站 500，见 lib/degrade.ts）。
+   */
+  const snapshot = getCartSnapshot();
 
   // 活动栏位初始可见性在服务端算好：已关掉（7 天内、同活动）或
   // 已订阅（letter 类活动）都不渲染 —— SSR 首帧即正确，无闪烁无位移
@@ -84,29 +86,16 @@ export default async function RootLayout({
     act && act.id !== dismissedId && !(act.kind === "subscribe" && subscribed)
       ? act
       : null;
-  const catalog: ClientCatalogItem[] = (rows ?? [])
-    .filter((i) => i.available)
-    .map((i) => ({
-      handle: i.handle,
-      title: i.title,
-      priceCents: i.priceCents,
-      image: i.image,
-      numbered: i.numbered,
-      // 库存未知时不冤枉成售罄；结算金额与可售性服务端还会 re-derive
-      soldOut: stockItems ? productSoldOut(i, stockItems) : false,
-    }));
   return (
     <html lang="en">
       <body className={`${display.variable} ${body.variable}`}>
-        <CartProvider catalog={catalog} catalogUnknown={rows === null}>
+        <CartProvider snapshot={snapshot}>
           <PromoProvider campaign={campaign} subscribed={subscribed}>
             {children}
           </PromoProvider>
         </CartProvider>
-        {/* 这一轮是降级渲染 → 后台重跑服务端渲染把价格补回来；
-            成功后本组件就不再被渲染，自动停 */}
-        {(rows === null || stockItems === null) && <DegradedRetry />}
         <Analytics />
+        <SpeedInsights />
       </body>
     </html>
   );

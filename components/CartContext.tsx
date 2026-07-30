@@ -10,6 +10,7 @@ import {
   useState,
 } from "react";
 import CartDrawer from "./cart/CartDrawer";
+import DegradedRetry from "./DegradedRetry";
 import styles from "./CartContext.module.css";
 
 /*
@@ -30,6 +31,18 @@ export interface ClientCatalogItem {
   image: string;
   numbered: boolean;
   soldOut: boolean;
+}
+
+/**
+ * 服务端 → 客户端的购物车契约（服务端产出见 lib/inventory.ts getCartSnapshot）。
+ * layout 传的是**未 await 的 promise**：await 会挡住整棵树，冷进入就是几秒白屏。
+ */
+export interface CartSnapshot {
+  catalog: ClientCatalogItem[];
+  /** 目录缺失（DB 不可达）。true = 金额不可信，只读不写、不显示金额 */
+  catalogUnknown: boolean;
+  /** 本轮任一读取降级 → 需要客户端稍后补价 */
+  degraded: boolean;
 }
 
 export interface CartLine {
@@ -111,18 +124,37 @@ function sanitize(
 }
 
 export function CartProvider({
-  catalog: catalogList,
-  catalogUnknown = false,
+  snapshot,
   children,
 }: {
-  catalog: ClientCatalogItem[];
-  /** DB 短暂不可达导致目录快照缺失。见 lib/degrade.ts */
-  catalogUnknown?: boolean;
+  /** 未 await 的服务端 promise —— 解开它绝不能挡住 children 的渲染 */
+  snapshot: Promise<CartSnapshot>;
   children: React.ReactNode;
 }) {
+  /* 刻意用 effect 而不是 use()：use() 会让本组件挂起，children 跟着一起
+     挂起，等于白等回来了。这里让 shell 先渲染，快照到了再补。 */
+  const [snap, setSnap] = useState<CartSnapshot | null>(null);
+  useEffect(() => {
+    let alive = true;
+    snapshot.then(
+      (s) => {
+        if (alive) setSnap(s);
+      },
+      () => {
+        /* 服务端已在 lib/degrade.ts 兜过，这里不该有异常；真有也保持未知 */
+      },
+    );
+    return () => {
+      alive = false;
+    };
+  }, [snapshot]);
+
+  /* 快照未到 == 目录未知，与 DB 不可达同等对待（只读不写、不显示金额）。
+     这个窗口极短——RSC 流通常在水合前就把快照送到了。 */
+  const catalogUnknown = snap === null || snap.catalogUnknown;
   const catalog = useMemo(
-    () => Object.fromEntries(catalogList.map((i) => [i.handle, i])),
-    [catalogList],
+    () => Object.fromEntries((snap?.catalog ?? []).map((i) => [i.handle, i])),
+    [snap],
   );
   const [lines, setLines] = useState<CartLine[]>([]);
   const [hydrated, setHydrated] = useState(false);
@@ -136,16 +168,28 @@ export function CartProvider({
   } | null>(null);
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
+  /* 存储只读一次。**不能**把 catalog 放进依赖里重跑：快照到达会让它重跑，
+     那样用户在这一秒内加的行会被存储里的旧值覆盖掉。读的时候一律按
+     「目录未知」处理（不筛），筛的动作交给下面那个 effect。 */
   useEffect(() => {
     try {
       const raw = localStorage.getItem(STORAGE_KEY);
-      if (raw)
-        setLines(sanitize(JSON.parse(raw), catalog, catalogUnknown));
+      if (raw) setLines(sanitize(JSON.parse(raw), {}, true));
     } catch {
       /* 损坏的存储直接放弃 */
     }
     setHydrated(true);
-  }, [catalog, catalogUnknown]);
+  }, []);
+
+  /* 目录到达后补筛一次，剔掉已不在售的行（对应原来 sanitize 的目录校验）。
+     内容没变就返回原数组，避免白白多一次渲染。 */
+  useEffect(() => {
+    if (!hydrated || catalogUnknown) return;
+    setLines((prev) => {
+      const next = prev.filter((l) => l.handle in catalog);
+      return next.length === prev.length ? prev : next;
+    });
+  }, [hydrated, catalogUnknown, catalog]);
 
   useEffect(() => {
     if (!hydrated) return;
@@ -257,6 +301,9 @@ export function CartProvider({
       }}
     >
       {children}
+      {/* 本轮降级了 → 后台重跑服务端渲染把价格补回来；补上后 degraded
+          变 false，本组件卸载、定时器自动清理（见 DegradedRetry 顶部） */}
+      {snap?.degraded && <DegradedRetry />}
       <CartDrawer
         open={drawerOpen}
         onClose={closeDrawer}
