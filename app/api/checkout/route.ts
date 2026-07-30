@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getCatalogMap, canBuy, shippingCentsFor } from "@/lib/catalog";
-import { componentsFor, getStockItems } from "@/lib/inventory";
+import { getCatalogMapFresh, canBuy, shippingCentsFor } from "@/lib/catalog";
+import { componentsFor, getStockItemsFresh } from "@/lib/inventory";
 import { ARTWORKS } from "@/lib/heroConfig";
 import { getStripe } from "@/lib/stripe";
 import { env, publicOrigin, PROD_ORIGIN } from "@/lib/env";
@@ -21,19 +21,27 @@ interface InLine {
   handle: string;
   variant?: string;
   qty?: number;
+  /** 客户端当时显示的单价（分）。价格漂移闸门用，见下方 */
+  unit_cents?: number;
+}
+
+interface InBody {
+  lines?: InLine[];
 }
 
 export async function POST(req: NextRequest) {
-  let body: { lines?: InLine[] };
+  let body: InBody;
   try {
-    body = (await req.json()) as { lines?: InLine[] };
+    body = (await req.json()) as InBody;
   } catch {
     return NextResponse.json({ error: "invalid body" }, { status: 400 });
   }
 
+  /* 直接问库，不吃渲染路径那层 Data Cache（见 lib/catalog.ts
+     getCatalogFresh）——页面上的价格可以旧几分钟，收钱的这一步不行。 */
   const [catalog, stockItems] = await Promise.all([
-    getCatalogMap(),
-    getStockItems(),
+    getCatalogMapFresh(),
+    getStockItemsFresh(),
   ]);
   const input = (body.lines ?? []).filter(
     (l): l is InLine =>
@@ -56,6 +64,7 @@ export async function POST(req: NextRequest) {
           ? l.variant
           : undefined,
       qty: item.numbered ? 1 : Math.min(9, Math.max(1, Math.round(l.qty ?? 1))),
+      claimedUnitCents: l.unit_cents,
     };
   });
 
@@ -89,6 +98,31 @@ export async function POST(req: NextRequest) {
         { status: 409 },
       );
     }
+  }
+
+  /*
+   * 价格漂移闸门。渲染路径带缓存（TTL 见 lib/catalog.ts），店主改完价的
+   * 头几分钟里客人看到的可能还是旧价。这里对一下，不一致就请他刷新，
+   * 而不是闷声按新价扣款。
+   *
+   * **逐行比单价，不比小计**：服务端会把 qty 归一化（编号件恒 1、钳到
+   * 1–9）并剔掉目录里没有的行，拿小计对账会因为这些归一化差异误报，
+   * 把真实结算挡在门外——那比不做这个检查更伤。单价不受 qty 影响。
+   * 客户端没传（老版本 JS / 直接打 API）就跳过，不因此挡住结算。
+   */
+  const drifted = lines.filter(
+    (l) =>
+      typeof l.claimedUnitCents === "number" &&
+      l.claimedUnitCents !== l.item.priceCents,
+  );
+  if (drifted.length > 0) {
+    console.warn(
+      "[checkout] 价格漂移：",
+      drifted
+        .map((l) => `${l.item.handle} 客户端 ${l.claimedUnitCents} vs 实际 ${l.item.priceCents}`)
+        .join("; "),
+    );
+    return NextResponse.json({ error: "price_changed" }, { status: 409 });
   }
 
   // 结算回跳地址：生产上只信 https（NEXT_PUBLIC_URL 误配 localhost 时

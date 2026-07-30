@@ -4,7 +4,6 @@ import { revalidatePath } from "next/cache";
 import { db } from "@/lib/db";
 import { stripe } from "@/lib/stripe";
 import { assertAuth } from "@/lib/auth";
-import { pokeProduction } from "@/lib/revalidate";
 import {
   sendCancellation,
   sendCustomerNote,
@@ -121,7 +120,6 @@ async function restockOrder(order: OrderRow): Promise<string[]> {
     await logEvent(order.id, "restock", `Restocked ${restocked.join(", ")}`, {
       units: restocked,
     });
-    refreshStock();
   }
   return restocked;
 }
@@ -162,12 +160,6 @@ function refresh() {
   revalidatePath("/orders");
   revalidatePath("/customers");
   revalidatePath("/");
-}
-
-/* 取消/退货会回补库存 → 生产站的售罄标记要跟着变（见
-   admin/lib/revalidate.ts）。fire-and-forget：通知失败不该拖垮履约操作。 */
-function refreshStock() {
-  void pokeProduction();
 }
 
 /* ―――――――――――――― 履约主线 ―――――――――――――― */

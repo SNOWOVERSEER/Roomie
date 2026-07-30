@@ -40,7 +40,7 @@ export default function CartDrawer({
   remove: (key: string) => void;
 }) {
   const panelRef = useRef<HTMLElement>(null);
-  const { busy, err, checkout } = useCheckout(lines);
+  const { busy, err, checkout } = useCheckout(lines, catalog);
   const shipCents = shippingCentsFor(subtotalCents);
 
   // Esc 关闭

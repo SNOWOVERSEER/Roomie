@@ -6,16 +6,8 @@ import { db } from "@/lib/db";
 import { stripe, stripeMode } from "@/lib/stripe";
 import { assertAuth } from "@/lib/auth";
 import type { ProductRow } from "@/lib/types";
-import { pokeProduction } from "@/lib/revalidate";
 
 export type Result = { ok: true } | { error: string };
-
-/* 本地 admin 页面 + 生产站缓存一起刷新。生产那半边的理由见
-   admin/lib/revalidate.ts —— 少了它，改价要等一个 TTL 才上站。 */
-async function revalidateProducts(): Promise<void> {
-  revalidatePath("/products");
-  await pokeProduction();
-}
 
 const HANDLE_RE = /^[a-z0-9-]{2,40}$/;
 
@@ -85,7 +77,7 @@ export async function updatePrice(
       .prices.update(row.stripe_price_id, { active: false })
       .catch(() => {});
   }
-  await revalidateProducts();
+  revalidatePath("/products");
   return { ok: true };
 }
 
@@ -99,7 +91,7 @@ export async function updateStock(
   }
   const { error } = await db().from("products").update({ stock }).eq("handle", handle);
   if (error) return { error: error.message };
-  await revalidateProducts();
+  revalidatePath("/products");
   return { ok: true };
 }
 
@@ -126,7 +118,7 @@ export async function toggleAvailable(
     .update({ available })
     .eq("handle", handle);
   if (error) return { error: error.message };
-  await revalidateProducts();
+  revalidatePath("/products");
   return { ok: true };
 }
 
@@ -144,7 +136,7 @@ export async function updateCopy(
     .update({ title: t, tagline: tagline.trim() })
     .eq("handle", handle);
   if (error) return { error: error.message };
-  await revalidateProducts();
+  revalidatePath("/products");
   return { ok: true };
 }
 
@@ -175,7 +167,7 @@ export async function createProduct(input: {
     sort: 1000,
   });
   if (error) return { error: error.message };
-  await revalidateProducts();
+  revalidatePath("/products");
   return { ok: true };
 }
 
@@ -186,7 +178,7 @@ export async function deleteProduct(handle: string): Promise<Result> {
   if (row.available) return { error: "take it off sale before deleting" };
   const { error } = await db().from("products").delete().eq("handle", handle);
   if (error) return { error: error.message };
-  await revalidateProducts();
+  revalidatePath("/products");
   return { ok: true };
 }
 
@@ -202,7 +194,7 @@ export async function updateItemStock(
   }
   const { error } = await db().from("stock_items").update({ stock }).eq("id", id);
   if (error) return { error: error.message };
-  await revalidateProducts();
+  revalidatePath("/products");
   return { ok: true };
 }
 
@@ -220,7 +212,7 @@ export async function toggleItemAvailable(
     .update({ available })
     .eq("id", id);
   if (error) return { error: error.message };
-  await revalidateProducts();
+  revalidatePath("/products");
   return { ok: true };
 }
 
@@ -247,7 +239,7 @@ export async function ensureStripe(handle: string): Promise<Result> {
   } catch (e) {
     return { error: `Stripe: ${e instanceof Error ? e.message : "failed"}` };
   }
-  await revalidateProducts();
+  revalidatePath("/products");
   return { ok: true };
 }
 
@@ -353,7 +345,7 @@ export async function repairStripeSync(handle: string): Promise<Result> {
           .eq("handle", handle);
         if (error) return { error: error.message };
       }
-      await revalidateProducts();
+      revalidatePath("/products");
       return { ok: true };
     }
 
@@ -429,6 +421,6 @@ export async function repairStripeSync(handle: string): Promise<Result> {
   } catch (e) {
     return { error: `Stripe: ${e instanceof Error ? e.message : "failed"}` };
   }
-  await revalidateProducts();
+  revalidatePath("/products");
   return { ok: true };
 }

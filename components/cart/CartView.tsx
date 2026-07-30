@@ -16,7 +16,7 @@ import styles from "./CartView.module.css";
 export default function CartView() {
   const { lines, count, subtotalCents, catalog, catalogUnknown, setQty, remove } =
     useCart();
-  const { busy, err, checkout } = useCheckout(lines);
+  const { busy, err, checkout } = useCheckout(lines, catalog);
   const shipCents = shippingCentsFor(subtotalCents);
   const totalCents = subtotalCents + shipCents;
 

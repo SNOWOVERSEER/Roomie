@@ -57,6 +57,12 @@ export const getStockItems = cache(
     new Map((await cachedStockItems()).map((i) => [i.id, i])),
 );
 
+/** 权威读取：绕过 Data Cache，结算专用。理由见 lib/catalog.ts 同名函数。 */
+export const getStockItemsFresh = cache(
+  async (): Promise<Map<string, StockItem>> =>
+    new Map((await readStockItems()).map((i) => [i.id, i])),
+);
+
 export const itemBuyable = (i?: StockItem): boolean =>
   !!i && i.available && (i.stock === null || i.stock > 0);
 

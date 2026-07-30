@@ -94,6 +94,20 @@ export async function getCatalogMap(): Promise<Map<string, CatalogItem>> {
 }
 
 /**
+ * 权威读取：**绕过 Data Cache**，直接问库；只保留单次请求内去重。
+ *
+ * 给 /api/checkout 用。渲染路径读到几分钟前的价格无所谓（结算这一关会
+ * 兜住），但结算本身读缓存就成了错误收费与超卖的来源 —— HANDOVER 那条
+ * 「金额与库存正确性不接受降级」说的就是这里。邮件/waitlist 只从目录取
+ * 标题和图（金额来自订单行的 unit_cents），继续用带缓存的版本即可。
+ */
+export const getCatalogFresh = cache(readProducts);
+
+export async function getCatalogMapFresh(): Promise<Map<string, CatalogItem>> {
+  return new Map((await getCatalogFresh()).map((i) => [i.handle, i]));
+}
+
+/**
  * 渲染路径用：读不到返回 null（= 未知，不是空）。见 lib/degrade.ts。
  * 结算/webhook/admin 继续用上面会抛错的版本。
  */
