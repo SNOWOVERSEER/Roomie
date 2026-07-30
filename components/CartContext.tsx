@@ -80,14 +80,15 @@ export const useCart = () => useContext(Ctx);
 const keyOf = (handle: string, variant?: string) =>
   `${handle}::${variant ?? ""}`;
 
-function sanitize(
-  raw: unknown,
-  catalog: Record<string, ClientCatalogItem>,
-  /* true = 目录快照缺失（DB 短暂不可达，见 lib/degrade.ts）。此时**绝不能**
-     拿空目录去筛购物车行——那会把用户的购物车整个清空并写回 localStorage，
-     比原来的错误页伤害更大。未知就原样留着，等下次渲染拿到目录再筛。 */
-  catalogUnknown = false,
-): CartLine[] {
+/*
+ * 只做形状与数量校验，**刻意不碰目录**。
+ *
+ * 读存储的时刻目录必然还没到（layout 传下来的是未 await 的 promise），
+ * 此时拿一份空目录去筛，会把用户的购物车整个清空再写回 localStorage ——
+ * 比它想修的错误页伤害更大（4d80168 实测复现过）。「这一行的商品还在不在
+ * 售」由 CartProvider 里那个 effect 在目录到达之后单独筛一次。
+ */
+function sanitize(raw: unknown): CartLine[] {
   if (!Array.isArray(raw)) return [];
   return raw
     .filter(
@@ -95,7 +96,6 @@ function sanitize(
         !!l &&
         typeof l === "object" &&
         typeof (l as CartLine).handle === "string" &&
-        (catalogUnknown || (l as CartLine).handle in catalog) &&
         typeof (l as CartLine).qty === "number",
     )
     .map((l) => ({
@@ -157,7 +157,7 @@ export function CartProvider({
   useEffect(() => {
     try {
       const raw = localStorage.getItem(STORAGE_KEY);
-      if (raw) setLines(sanitize(JSON.parse(raw), {}, true));
+      if (raw) setLines(sanitize(JSON.parse(raw)));
     } catch {
       /* 损坏的存储直接放弃 */
     }
