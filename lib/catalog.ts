@@ -64,8 +64,17 @@ async function readProducts(): Promise<CatalogItem[]> {
  * 的主要延迟来源（见 HANDOVER §9.4）。
  *
  * 抛错不入缓存（Data Cache 只存成功结果），所以一次瞬时 401 不会被
- * 固化成几分钟的坏数据。TTL 只是兜底：写路径都会按 tag 主动失效，
- * 唯一漏网的是有人直接在 Supabase 面板改行，那种情况 TTL 内自愈。
+ * 固化成几分钟的坏数据。
+ *
+ * 陈旧到什么程度都不影响正确性：**下单那一刻才是对账点**。
+ * /api/checkout 走 getCatalogFresh/getStockItemsFresh 直接问库，并逐行
+ * 比对客人页面上看到的单价，不一致就退回让他刷新（店主定的口径：改动
+ * 本来就不频繁，不需要即时同步，只要下单时对得上）。所以这里的 TTL 是
+ * 纯粹的「展示新鲜度 vs 查询次数」权衡，调它不会动到任何正确性保证。
+ *
+ * 主动失效只有一处：webhook 扣完库存（售罄标记值得早点上站）。admin
+ * 改价没有通知通道 —— 曾经有过，因为不值那些活动部件而拆掉了，代价就是
+ * 改完价最长等一个 TTL 才在站上可见。
  */
 export const CATALOG_TAG = "roomie-catalog";
 export const CATALOG_TTL_SECONDS = 300;
