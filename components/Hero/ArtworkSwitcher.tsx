@@ -9,11 +9,14 @@ interface Props {
   rect: ContentRect; // 视频内容矩形（px，相对舞台）
   active: boolean; // 定格后才可交互
   revealed: boolean; // 吊牌/画芯架错峰浮现的时机
+  /** 视频起播后才 true。在此之前不挂 art 大图 —— 7.1MB 的画会和
+   *  视频抢首屏带宽，而它们要到第 11 秒才用得上。 */
+  loadArt: boolean;
 }
 
 const SWAP_MS = 300;
 
-export default function ArtworkSwitcher({ rect, active, revealed }: Props) {
+export default function ArtworkSwitcher({ rect, active, revealed, loadArt }: Props) {
   // index/prev/dir 单一原子状态，避免连点竞态与 updater 副作用
   const [pair, setPair] = useState<{
     index: number;
@@ -91,7 +94,7 @@ export default function ArtworkSwitcher({ rect, active, revealed }: Props) {
 
   return (
     <>
-      {/* 画框图层：始终挂载所有画作（提前解码，杜绝闪白），定格前整层隐身 */}
+      {/* 画框图层：loadArt 放行后挂载全部画作（提前解码，杜绝闪白），定格前整层隐身 */}
       <div
         className={`${styles.frame} ${active ? styles.frameActive : ""}`}
         style={{ left: px(fLeft), top: px(fTop), width: px(fW), height: px(fH) }}
@@ -105,26 +108,27 @@ export default function ArtworkSwitcher({ rect, active, revealed }: Props) {
         }}
         aria-hidden={!active}
       >
-        {ARTWORKS.map((a, i) => {
-          const isCurrent = i === index;
-          const isPrev = i === prevIndex;
-          const entering = isCurrent && prevIndex !== null;
-          return (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
-              key={a.id}
-              src={a.src}
-              alt={isCurrent ? a.alt : ""}
-              draggable={false}
-              className={[
-                styles.art,
-                isCurrent ? styles.artCurrent : "",
-                isPrev ? styles.artPrev : "",
-                entering ? (dir === 1 ? styles.artInR : styles.artInL) : "",
-              ].join(" ")}
-            />
-          );
-        })}
+        {loadArt &&
+          ARTWORKS.map((a, i) => {
+            const isCurrent = i === index;
+            const isPrev = i === prevIndex;
+            const entering = isCurrent && prevIndex !== null;
+            return (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                key={a.id}
+                src={a.src}
+                alt={isCurrent ? a.alt : ""}
+                draggable={false}
+                className={[
+                  styles.art,
+                  isCurrent ? styles.artCurrent : "",
+                  isPrev ? styles.artPrev : "",
+                  entering ? (dir === 1 ? styles.artInR : styles.artInL) : "",
+                ].join(" ")}
+              />
+            );
+          })}
       </div>
 
       {/* 备用画芯：靠墙立在地板上，点哪张就换哪张。

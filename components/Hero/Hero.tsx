@@ -57,6 +57,8 @@ export default function Hero({
   const [frozen, setFrozen] = useState(false);
   const [beats, setBeats] = useState({ title: false, subtitle: false });
   const [steps, setSteps] = useState<FreezeSteps>(NO_STEPS);
+  // art 大图的放行闸：视频起播后才下，避开与视频抢首屏带宽
+  const [loadArt, setLoadArt] = useState(false);
 
   useEffect(() => {
     const reduced = window.matchMedia("(prefers-reduced-motion: reduce)");
@@ -112,22 +114,26 @@ export default function Hero({
       runFreezeSequence(false);
     };
     const onError = () => setStaticMode(true);
+    const onPlaying = () => setLoadArt(true);
 
     v.addEventListener("canplay", tryPlay, { once: true });
     v.addEventListener("timeupdate", onTime);
     v.addEventListener("ended", onEnded);
     v.addEventListener("error", onError);
+    v.addEventListener("playing", onPlaying, { once: true });
     return () => {
       v.removeEventListener("canplay", tryPlay);
       v.removeEventListener("timeupdate", onTime);
       v.removeEventListener("ended", onEnded);
       v.removeEventListener("error", onError);
+      v.removeEventListener("playing", onPlaying);
     };
   }, [staticMode, runFreezeSequence]);
 
   // 静态模式：reduced-motion 全量直呈；小屏走一遍快速错峰
   useEffect(() => {
     if (staticMode !== true) return;
+    setLoadArt(true); // 无视频可等，画作 350ms 后就要用
     const reduced = window.matchMedia(
       "(prefers-reduced-motion: reduce)",
     ).matches;
@@ -185,7 +191,12 @@ export default function Hero({
         />
 
         {rect && (
-          <ArtworkSwitcher rect={rect} active={frozen} revealed={steps.plaque} />
+          <ArtworkSwitcher
+            rect={rect}
+            active={frozen}
+            revealed={steps.plaque}
+            loadArt={loadArt}
+          />
         )}
 
         {/* 滚动提示：一对爪印轮替走路，最后最轻地出现 */}
