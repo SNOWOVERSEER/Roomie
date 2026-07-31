@@ -12,11 +12,19 @@ interface Props {
   /** 视频起播后才 true。在此之前不挂 art 大图 —— 7.1MB 的画会和
    *  视频抢首屏带宽，而它们要到第 11 秒才用得上。 */
   loadArt: boolean;
+  /** 送货中：画芯已在场但还没落定 —— 去饱和、不可点 */
+  delivering: boolean;
 }
 
 const SWAP_MS = 300;
 
-export default function ArtworkSwitcher({ rect, active, revealed, loadArt }: Props) {
+export default function ArtworkSwitcher({
+  rect,
+  active,
+  revealed,
+  loadArt,
+  delivering,
+}: Props) {
   // index/prev/dir 单一原子状态，避免连点竞态与 updater 副作用
   const [pair, setPair] = useState<{
     index: number;
@@ -134,7 +142,11 @@ export default function ArtworkSwitcher({ rect, active, revealed, loadArt }: Pro
       {/* 备用画芯：靠墙立在地板上，点哪张就换哪张。
           当前在框里的那张翻过去露出画布背面。 */}
       <div
-        className={`${styles.rack} ${revealed ? styles.rackOn : ""}`}
+        className={[
+          styles.rack,
+          delivering && !revealed ? styles.rackDelivering : "",
+          revealed ? styles.rackOn : "",
+        ].join(" ")}
         style={rackVars}
         role="radiogroup"
         aria-label="Spare prints. Pick one for the frame"

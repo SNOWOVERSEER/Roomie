@@ -80,6 +80,7 @@ export default function Hero({
             active={frozen}
             revealed={steps.plaque}
             loadArt={loadArt}
+            delivering={beats.delivery}
           />
         )}
 

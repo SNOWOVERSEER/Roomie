@@ -102,6 +102,40 @@
   pointer-events: auto;
 }
 
+/* ---------- 送货态：画芯在场，但还没落定 ----------
+   从舞台左缘推进来（推手在画面外），去饱和 + 没有落地阴影。
+   读作「还在被搬运」而不是「坏了/禁用」—— 关键是它在动，
+   动着的东西没人会去点。落定那一下才上色、投影、可交互。
+   第 6 张留空位给猫推（见 CatDelivery）。 */
+
+.rackDelivering .mini {
+  filter: saturate(0.22) brightness(0.86);
+  animation: miniSlideIn 760ms var(--ease-out) calc(var(--i) * 130ms) both;
+}
+
+/* 起点在舞台左缘之外：--rack-left 是画芯架距舞台左边的距离，
+   取负再多退两个画芯宽度就完全出画。 */
+@keyframes miniSlideIn {
+  from {
+    opacity: 0;
+    translate: calc(-1 * var(--rack-left) - var(--mini-w) * 2) 0;
+  }
+  to {
+    opacity: 1;
+    translate: 0 0;
+  }
+}
+
+.rackDelivering .mini::after {
+  opacity: 0; /* 还没落地，就没有落地阴影 */
+}
+
+/* 第 6 张不在送货批次里 —— 它由猫推进来 */
+.rackDelivering .mini:nth-child(6) {
+  animation: none;
+  opacity: 0;
+}
+
 .mini {
   position: relative;
   width: var(--mini-w);
@@ -114,6 +148,7 @@
   transition:
     opacity 560ms var(--ease-out) calc(var(--i) * 95ms + 80ms),
     translate 620ms var(--ease-soft) calc(var(--i) * 95ms + 80ms),
+    filter 620ms var(--ease-out),
     transform 220ms var(--ease-soft) 0s;
 }
 
@@ -143,6 +178,8 @@
 .rackOn .mini {
   opacity: 1;
   translate: 0 0;
+  filter: none;
+  animation: none;
 }
 
 .mini:not(.miniFramed):hover {
@@ -361,5 +398,14 @@
   }
   .mini {
     transition-delay: 0s;
+  }
+  .rackDelivering .mini {
+    animation: none;
+    opacity: 1;
+    translate: 0 0;
+    filter: none;
+  }
+  .rackDelivering .mini:nth-child(6) {
+    opacity: 1;
   }
 }

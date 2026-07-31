@@ -13,6 +13,8 @@ export interface FreezeSteps {
 export interface HeroBeats {
   title: boolean;
   subtitle: boolean;
+  /** 画芯开始滑入（去饱和、不可交互）。落定由 steps.plaque 接手 */
+  delivery: boolean;
 }
 
 export interface HeroSequence {
@@ -52,6 +54,7 @@ export function useHeroSequence(): HeroSequence {
   const [beats, setBeats] = useState<HeroBeats>({
     title: false,
     subtitle: false,
+    delivery: false,
   });
   const [steps, setSteps] = useState<FreezeSteps>(NO_STEPS);
   // art 大图的放行闸：视频起播后才下，避开与视频抢首屏带宽
@@ -68,7 +71,7 @@ export function useHeroSequence(): HeroSequence {
 
   const runFreezeSequence = useCallback((instant: boolean) => {
     setFrozen(true);
-    setBeats({ title: true, subtitle: true });
+    setBeats({ title: true, subtitle: true, delivery: true });
     if (instant) {
       setSteps(ALL_STEPS);
       return;
@@ -129,9 +132,12 @@ export function useHeroSequence(): HeroSequence {
       setBeats((b) => {
         const title = b.title || t >= HERO_TIMINGS.title;
         const subtitle = b.subtitle || t >= HERO_TIMINGS.subtitle;
-        return title === b.title && subtitle === b.subtitle
+        const delivery = b.delivery || t >= HERO_TIMINGS.delivery;
+        return title === b.title &&
+          subtitle === b.subtitle &&
+          delivery === b.delivery
           ? b
-          : { title, subtitle };
+          : { title, subtitle, delivery };
       });
     };
     const onEnded = () => {
@@ -184,7 +190,7 @@ export function useHeroSequence(): HeroSequence {
     if (reduced) {
       runFreezeSequence(true);
     } else {
-      setBeats((b) => ({ ...b, title: true }));
+      setBeats((b) => ({ ...b, title: true, delivery: true }));
       timers.current.push(setTimeout(() => runFreezeSequence(false), 350));
     }
   }, [staticMode, runFreezeSequence]);
