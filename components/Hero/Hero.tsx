@@ -183,16 +183,13 @@ export default function Hero({
             ref={videoRef}
             className={styles.media}
             style={{ objectPosition }}
+            src="/hero/cat-scratcher-10s.mp4"
             poster="/hero/poster-first.jpg"
             muted
             playsInline
             preload="auto"
             aria-label="A cat walks into a sunny living room, scratches a framed canvas leaning on the wall, then sits beside it"
-          >
-            {/* VP9 优先，H.264 兜底 —— Safari 不吃 VP9 会自动落到下一条 */}
-            <source src="/hero/cat-scratcher-10s.webm" type="video/webm" />
-            <source src="/hero/cat-scratcher-10s.mp4" type="video/mp4" />
-          </video>
+          />
         )}
         {staticMode === true && (
           // eslint-disable-next-line @next/next/no-img-element
