@@ -102,6 +102,12 @@ export const HERO_TIMINGS = {
   fallback: { title: 400, subtitle: 2000 },
   /** 迟迟不 canplay 就放弃视频走静态定格（毫秒），否则弱网永远卡在 poster */
   loadTimeout: 8000,
+  /**
+   * SkipDial 进度环的长度（毫秒）= 起播 → 可交互。
+   * 必须等于 视频时长(10s) + freeze.plaque —— 环走完的那一刻正是
+   * 画芯落定可点的那一刻。改 freeze.plaque 时这里要跟着改。
+   */
+  dialMs: 11000,
   // 定格后的错峰浮现（相对 onEnded 的毫秒数）
   freeze: {
     settle: 0, // 文字轻轻上移收拢

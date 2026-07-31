@@ -13,11 +13,12 @@
  *      （视频剧场 + 换画交互不动，只是外面多一层滑轨）。
  */
 import { useRef } from "react";
-import { COVER_FOCUS } from "@/lib/heroConfig";
+import { COVER_FOCUS, HERO_TIMINGS } from "@/lib/heroConfig";
 import { useVideoRect } from "./useVideoRect";
 import { useHeroSequence } from "./useHeroSequence";
 import HeroCopy from "./HeroCopy";
 import ArtworkSwitcher from "./ArtworkSwitcher";
+import SkipDial from "./SkipDial";
 import styles from "./Hero.module.css";
 
 export type { FreezeSteps } from "./useHeroSequence";
@@ -32,7 +33,7 @@ export default function Hero({
 }) {
   const stageRef = useRef<HTMLDivElement>(null);
   const rect = useVideoRect(stageRef);
-  const { staticMode, frozen, beats, steps, loadArt, videoRef } =
+  const { staticMode, frozen, beats, steps, loadArt, videoRef, skip } =
     useHeroSequence();
 
   return (
@@ -79,6 +80,16 @@ export default function Hero({
             active={frozen}
             revealed={steps.plaque}
             loadArt={loadArt}
+          />
+        )}
+
+        {/* 进度环 + 逃生舱。只在视频路径下出现 —— staticMode 本来就
+            只有 350ms 错峰，没有可跳过的等待；定格后演出结束即卸载。 */}
+        {staticMode === false && !frozen && (
+          <SkipDial
+            mode={loadArt ? "running" : "buffering"}
+            durationMs={HERO_TIMINGS.dialMs}
+            onSkip={skip}
           />
         )}
 

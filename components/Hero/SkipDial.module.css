@@ -1,0 +1,142 @@
+/* 右下角的进度环。够小、够淡，不跟画面抢注意力；
+   但一直在走，所以「还有内容」这件事一直在被说着。 */
+
+.dial {
+  position: absolute;
+  right: clamp(1.1rem, 2.4vw, 2rem);
+  bottom: clamp(1.1rem, 2.4vh, 2rem);
+  z-index: 6;
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: rgba(248, 240, 222, 0.42);
+  backdrop-filter: blur(3px);
+  cursor: pointer;
+  pointer-events: auto;
+  -webkit-tap-highlight-color: transparent;
+  transition:
+    background 260ms var(--ease-out),
+    transform 260ms var(--ease-soft);
+  /* 演出结束后由 Hero 卸载，这里只管淡入 */
+  animation: dialIn 700ms var(--ease-out) 500ms both;
+}
+
+@keyframes dialIn {
+  from {
+    opacity: 0;
+    transform: scale(0.86);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.dial:hover,
+.dial:focus-visible {
+  background: rgba(248, 240, 222, 0.92);
+  transform: scale(1.06);
+}
+
+.ring,
+.paw,
+.label {
+  grid-area: 1 / 1;
+}
+
+.ring {
+  width: 40px;
+  height: 40px;
+  transform: rotate(-90deg); /* 12 点方向起步 */
+}
+
+.track {
+  fill: none;
+  stroke: rgba(58, 91, 199, 0.16);
+  stroke-width: 2.2;
+}
+
+.arcRun,
+.arcWait {
+  fill: none;
+  stroke: var(--orange-deep);
+  stroke-width: 2.2;
+  stroke-linecap: round;
+}
+
+/* 演出进行中：确定进度，一圈走完 = 可交互 */
+.arcRun {
+  animation: arcSweep var(--dur) linear both;
+}
+
+@keyframes arcSweep {
+  from {
+    stroke-dashoffset: var(--circ);
+  }
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+/* 视频还没来：此时确实不知道要多久，用一段慢弧诚实表达 */
+.arcWait {
+  stroke-dasharray: 18 200;
+  animation: arcSpin 1.5s linear infinite;
+}
+
+@keyframes arcSpin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.arcWait {
+  transform-origin: 20px 20px;
+}
+
+.paw {
+  width: 16px;
+  height: 14px;
+  fill: rgba(58, 91, 199, 0.72);
+  transition:
+    opacity 180ms var(--ease-out),
+    transform 180ms var(--ease-out);
+}
+
+.label {
+  font-size: 0.62rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  color: var(--blue-deep);
+  opacity: 0;
+  transform: translateY(3px);
+  transition:
+    opacity 180ms var(--ease-out),
+    transform 180ms var(--ease-out);
+}
+
+.dial:hover .paw,
+.dial:focus-visible .paw {
+  opacity: 0;
+  transform: scale(0.8);
+}
+
+.dial:hover .label,
+.dial:focus-visible .label {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dial {
+    animation: none;
+  }
+  .arcWait {
+    animation: none;
+    stroke-dasharray: none;
+  }
+}

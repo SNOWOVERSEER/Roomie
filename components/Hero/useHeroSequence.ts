@@ -24,6 +24,8 @@ export interface HeroSequence {
   /** art 大图的放行闸：视频起播后才下，避开与视频抢首屏带宽 */
   loadArt: boolean;
   videoRef: React.RefObject<HTMLVideoElement | null>;
+  /** 跳过整场演出，直接进可交互的定格态 */
+  skip: () => void;
 }
 
 const NO_STEPS: FreezeSteps = {
@@ -54,6 +56,9 @@ export function useHeroSequence(): HeroSequence {
   const [steps, setSteps] = useState<FreezeSteps>(NO_STEPS);
   // art 大图的放行闸：视频起播后才下，避开与视频抢首屏带宽
   const [loadArt, setLoadArt] = useState(false);
+  // skip 会把视频 seek 到末尾，这会触发 ended —— 若不拦，
+  // runFreezeSequence 会被 (true) 和 (false) 各跑一遍，错峰序列打架
+  const skipped = useRef(false);
 
   useEffect(() => {
     const reduced = window.matchMedia("(prefers-reduced-motion: reduce)");
@@ -81,6 +86,26 @@ export function useHeroSequence(): HeroSequence {
       );
     }
   }, []);
+
+  const skip = useCallback(() => {
+    if (skipped.current) return;
+    skipped.current = true;
+    setLoadArt(true); // 立刻要用画作了，不能再等 playing
+    const v = videoRef.current;
+    if (v && v.readyState >= 2) {
+      // 有可播数据：停在末帧，画面与正常结束一致
+      v.pause();
+      try {
+        v.currentTime = v.duration || 0;
+      } catch {
+        // duration 尚不可用时忽略，下面的静态降级会接住
+      }
+      runFreezeSequence(true);
+    } else {
+      // 视频还没来：直接走静态定格，staticMode 的 effect 会补齐其余
+      setStaticMode(true);
+    }
+  }, [runFreezeSequence]);
 
   // 视频模式：起播 + 与叙事咬合的文字节拍
   useEffect(() => {
@@ -110,6 +135,7 @@ export function useHeroSequence(): HeroSequence {
       });
     };
     const onEnded = () => {
+      if (skipped.current) return;
       v.pause(); // 定格最后一帧
       runFreezeSequence(false);
     };
@@ -170,5 +196,5 @@ export function useHeroSequence(): HeroSequence {
     [],
   );
 
-  return { staticMode, frozen, beats, steps, loadArt, videoRef };
+  return { staticMode, frozen, beats, steps, loadArt, videoRef, skip };
 }
