@@ -54,7 +54,14 @@ art PNG 比视频早 4ms 发起 —— 完全同步竞争。
       Reviewer 抓到真 bug（plan-mandated）：慢网下 fallback 2s 已显示副标题，
       8s 的 loadGuard 翻静态模式时无条件 setBeats 把它打回去，会淡出再淡入。
       c266e55 改成合并 updater 修掉，复审确认两条路径都正确。
-- [ ] Task 3: 视频重压与画作转 JPEG（原计划 WebP，见下）
+- [x] Task 3: 视频重压与画作转 JPEG — complete (a3ab850..f2ffc65, review clean)
+      两处执行中改档：① 画作 WebP → JPEG（本机无 WebP 编码器，且 PNG 无 alpha），
+      q=2 视觉无损，6.9MB → 1.48MB；② 视频先按计划压到 1280×960/CRF27（1.01MB），
+      我比对裁切发现**画布织物纹理被抹平**（subagent 只查了块状噪点/条带，
+      没查纹理丢失），且 1440 视口 cover 后内容矩形 1440×1080，1280 编码在被放大。
+      改回原生 1664×1248/CRF26 = 2.12MB，纹理保住。同时删掉 WebM
+      （VP9 1.96MB 比 H.264 还大，却排在第一个 source，等于让 Chrome 多下 1MB）。
+      **实测 hero 总量 13.83MB → 4.58MB，关键路径约 2.9MB。**
 - [ ] Task 4: 抽出 useHeroSequence（纯重构）
 - [ ] Task 5: SkipDial
 - [ ] Task 6: 画芯提前滑入的送货态
