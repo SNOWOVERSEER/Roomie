@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { ARTWORKS, FRAME_RECT, HERO_COPY } from "@/lib/heroConfig";
+import { ARTWORKS, FRAME_RECT, HERO_COPY, HERO_TIMINGS } from "@/lib/heroConfig";
 import type { ContentRect } from "./useVideoRect";
 import styles from "./ArtworkSwitcher.module.css";
 
@@ -96,6 +96,8 @@ export default function ArtworkSwitcher({
     "--rack-bottom-y": px(rect.top + rect.height * 0.708),
     "--rack-m-left": px(fLeft + 2),
     "--rack-m-top": px(fTop + fH + rect.height * 0.03),
+    // 第 6 张由猫推进来，时长必须与 CatDelivery 一致 —— 单一来源
+    "--push-dur": `${HERO_TIMINGS.catPushMs}ms`,
   } as React.CSSProperties;
 
   const art = ARTWORKS[index];

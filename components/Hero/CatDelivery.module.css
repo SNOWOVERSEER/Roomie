@@ -1,0 +1,57 @@
+/* 猫从舞台左缘外进来，推到画芯架位置，停一拍，退回画外。
+   进 + 停 + 退共 --cat-dur * 2.1，但「推到位」发生在 --cat-dur，
+   与 rack 第 6 张的落位同刻。 */
+
+.cat {
+  position: absolute;
+  z-index: 6;
+  left: 0;
+  top: calc(var(--cat-bottom-y) - var(--cat-w) * 0.5625);
+  width: var(--cat-w);
+  pointer-events: none;
+  animation: catPush calc(var(--cat-dur) * 2.1) var(--ease-out) both;
+}
+
+.cat img {
+  display: block;
+  width: 100%;
+  height: auto;
+  /* 手绘猫叠在写实画面上，压一点对比并给个落地阴影，
+     免得像贴纸浮在半空 */
+  filter: drop-shadow(0 6px 10px rgba(60, 36, 12, 0.34)) saturate(0.92);
+}
+
+@keyframes catPush {
+  /* 出画外 */
+  0% {
+    transform: translateX(calc(-1 * var(--cat-w) * 1.3));
+    opacity: 0;
+  }
+  10% {
+    opacity: 1;
+  }
+  /* 推到位 —— 与 rack 第 6 张落位同刻 */
+  47.6% {
+    transform: translateX(var(--cat-end-x));
+    opacity: 1;
+  }
+  /* 停一拍，看一眼自己的成果 */
+  66% {
+    transform: translateX(var(--cat-end-x));
+    opacity: 1;
+  }
+  /* 退回画外 */
+  95% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateX(calc(-1 * var(--cat-w) * 1.3));
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cat {
+    display: none;
+  }
+}

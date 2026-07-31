@@ -109,18 +109,23 @@ export const HERO_TIMINGS = {
   /** 迟迟不 canplay 就放弃视频走静态定格（毫秒），否则弱网永远卡在 poster */
   loadTimeout: 8000,
   /**
-   * SkipDial 进度环的长度（毫秒）= 起播 → 可交互。
-   * 必须等于 视频时长(10s) + freeze.plaque —— 环走完的那一刻正是
-   * 画芯落定可点的那一刻。改 freeze.plaque 时这里要跟着改。
+   * SkipDial 进度环的长度（毫秒）。环必须在 SkipDial 卸载前走完，
+   * 而卸载发生在 steps.plaque = 视频时长(实测 10017ms) + freeze.plaque。
+   * 取 10800 而不是刚好 11017：宁可环满了停一瞬再落定，也不能被砍断 ——
+   * 一个走不到终点的进度环否定了它自己存在的理由。
+   * 改 freeze.plaque 时这里要跟着改，并保住这个余量。
    */
-  dialMs: 11000,
+  dialMs: 10800,
   // 定格后的错峰浮现（相对 onEnded 的毫秒数）
   freeze: {
     settle: 0, // 文字轻轻上移收拢
-    cta: 680, // 停一拍 → CTA 上浮
-    plaque: 1500, // 再停一拍 → 换画铭牌最后浮现
-    scrollCue: 2300, // 页脚滚动提示，最轻的一笔
+    cta: 550, // CTA 上浮 —— 与猫推货并行，不排队
+    plaque: 1000, // 猫推到位 → 画芯落定 + 铭牌浮现 + 可交互
+    scrollCue: 1500, // 页脚滚动提示，最轻的一笔
   },
+  /** 猫从画外推到位的时长（毫秒）。必须与 freeze.plaque 对齐 ——
+   *  猫推到的那一刻正是画芯落定的那一刻。 */
+  catPushMs: 1000,
 };
 
 export const HERO_COPY = {

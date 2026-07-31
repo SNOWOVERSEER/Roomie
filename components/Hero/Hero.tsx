@@ -18,6 +18,7 @@ import { useVideoRect } from "./useVideoRect";
 import { useHeroSequence } from "./useHeroSequence";
 import HeroCopy from "./HeroCopy";
 import ArtworkSwitcher from "./ArtworkSwitcher";
+import CatDelivery from "./CatDelivery";
 import SkipDial from "./SkipDial";
 import styles from "./Hero.module.css";
 
@@ -82,6 +83,12 @@ export default function Hero({
             loadArt={loadArt}
             delivering={beats.delivery}
           />
+        )}
+
+        {/* 猫推最后一张进来。只在视频路径下播 —— 静图上没有铺垫，
+            凭空来只猫推货会很突兀。 */}
+        {rect && staticMode === false && (
+          <CatDelivery rect={rect} play={frozen} />
         )}
 
         {/* 进度环 + 逃生舱。只在视频路径下出现 —— staticMode 本来就
