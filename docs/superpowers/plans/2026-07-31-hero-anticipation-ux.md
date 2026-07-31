@@ -42,52 +42,32 @@
 
 ---
 
-### Task 0: dev server 启动配置
+### Task 0: 采集改动前的网络基线
 
-后续每个任务都要用浏览器验证，先把入口装好。
+后续每个任务都要用浏览器验证。`.claude/launch.json` 里**已有** `roomie-dev` 配置（port 3000），无需新建。
 
-**Files:**
-- Create: `.claude/launch.json`
+**Files:** 无（只采数据）
 
-**Interfaces:**
-- Produces: 名为 `roomie` 的 dev server 配置，供 `preview_start({name: "roomie"})` 使用
+- [ ] **Step 1: 启动并确认首屏可达**
 
-- [ ] **Step 1: 创建启动配置**
-
-`.claude/launch.json`:
-
-```json
-{
-  "version": "0.0.1",
-  "configurations": [
-    {
-      "name": "roomie",
-      "runtimeExecutable": "npm",
-      "runtimeArgs": ["run", "dev"],
-      "port": 3000
-    }
-  ]
-}
-```
-
-- [ ] **Step 2: 启动并确认首屏可达**
-
-用 `preview_start({name: "roomie"})` 启动，然后 `read_page`。
+用 `preview_start({name: "roomie-dev"})` 启动，然后 `read_page`。
 
 Expected: 页面加载，能看到 `aria-label="The Canvas Scratcher"` 的 section。
 
-- [ ] **Step 3: 记录改动前的网络基线**
+- [ ] **Step 2: 记录改动前的网络基线**
 
-`read_network_requests({urlPattern: "hero"})`。
-
-Expected（这是要修掉的现状，先存证）：`cat-scratcher-10s.mp4` 与 6 个 `art-0X.png` 的请求几乎同时发起。记下 art-01.png 的发起时刻与视频的发起时刻。
-
-- [ ] **Step 4: Commit**
-
-```bash
-git add .claude/launch.json
-git commit -m "chore: 加 dev server 启动配置，供 Hero 改动的浏览器验证"
+```js
+performance.getEntriesByType('resource')
+  .filter(r => r.name.includes('/hero/'))
+  .map(r => ({
+    f: r.name.split('/').pop(),
+    kb: Math.round((r.encodedBodySize || 0) / 1024),
+    startMs: Math.round(r.startTime),
+  }))
+  .sort((a, b) => a.startMs - b.startMs)
 ```
+
+Expected（这是要修掉的现状，先存证）：`cat-scratcher-10s.mp4` 与 6 个 `art-0X.png` 的 `startMs` 几乎相同。记下总字节数与 art-01.png 的发起时刻，Task 1 与 Task 8 都要拿它作对比。
 
 ---
 
