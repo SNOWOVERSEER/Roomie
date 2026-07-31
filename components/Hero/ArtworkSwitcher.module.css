@@ -113,12 +113,20 @@
   animation: miniSlideIn 760ms var(--ease-out) calc(var(--i) * 130ms) both;
 }
 
-/* 起点在舞台左缘之外：--rack-left 是画芯架距舞台左边的距离，
-   取负再多退两个画芯宽度就完全出画。 */
+/* 起点在舞台左缘之外：--rack-left 是画芯架距舞台左边的距离。
+   但画芯架是叠压的 flex 行（.mini + .mini 每张收进 0.42 个
+   画芯宽），第 i 张的自然流位置已经比第 0 张多右移了 0.58i
+   个画芯宽 —— 固定位移量只压得住前两张，后面几张还没退到
+   舞台外就已经在播「送货态」。所以位移要按 --i 缩放：
+   0.58 × --i 抵消这份叠压带来的流位移，再多退 1.4 个画芯宽，
+   让每张的右边缘都稳稳越过舞台左缘，而不是刚好卡在线上。 */
 @keyframes miniSlideIn {
   from {
     opacity: 0;
-    translate: calc(-1 * var(--rack-left) - var(--mini-w) * 2) 0;
+    translate: calc(
+        -1 * var(--rack-left) - var(--mini-w) * (var(--i) * 0.58 + 1.4)
+      )
+      0;
   }
   to {
     opacity: 1;
@@ -389,6 +397,20 @@
   .tagCard {
     rotate: -1.2deg;
     transform-origin: 50% 50%;
+  }
+
+  /* 移动端不经过送货态：那是给桌面剧场的铺垫，小屏本来就是
+     350ms 快速错峰。这里把它压回「未出现」，由 .rackOn 一次揭示。
+     （送货位移是按 --rack-left 算的，而移动端 rack 改用
+     --rack-m-left 定位，硬跑这段动画连位移基准都是错的。） */
+  .rackDelivering .mini {
+    animation: none;
+    opacity: 0;
+    translate: 0 12px;
+    filter: none;
+  }
+  .rackDelivering .mini:nth-child(6) {
+    opacity: 0;
   }
 }
 
