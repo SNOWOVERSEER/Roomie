@@ -38,7 +38,7 @@
 | `components/Hero/ArtworkSwitcher.module.css` | 上者样式 | 修改：新增送货态 |
 | `components/Hero/SkipDial.tsx` + `.module.css` | 爪印进度环 + 跳过 | 新建 |
 | `components/Hero/CatDelivery.tsx` + `.module.css` | 猫推货层 | 新建 |
-| `public/hero/` | 视频与静帧资产 | 修改：重压视频、WebP 画作 |
+| `public/hero/` | 视频与静帧资产 | 修改：重压视频、画作转 JPEG |
 
 ---
 
@@ -339,20 +339,34 @@ beats 只绑 video.currentTime，视频不起播就恒为 0，于是加载期间
 
 ---
 
-### Task 3: 视频重压与画作 WebP
+### Task 3: 视频重压与画作转 JPEG
 
 **Files:**
 - Create: `tools/compress_hero_media.sh`
 - Modify: `public/hero/cat-scratcher-10s.mp4`（重压覆盖）
 - Create: `public/hero/cat-scratcher-10s.webm`
-- Create: `public/hero/art/art-0{1..6}.webp`
+- Create: `public/hero/art/art-0{1..6}.jpg`
 - Modify: `components/Hero/Hero.tsx`（`<source>` 标签）
-- Modify: `lib/heroConfig.ts`（`ARTWORKS[].src` 指向 webp）
+- Modify: `lib/heroConfig.ts`（`ARTWORKS[].src` 指向 jpg）
 
 **Interfaces:**
-- Produces: `public/hero/cat-scratcher-10s.webm`；`ARTWORKS[i].src` 改为 `.webp` 路径
+- Produces: `public/hero/cat-scratcher-10s.webm`；`ARTWORKS[i].src` 改为 `.jpg` 路径
 
-**注意**：档位不预设，下面给的是起点。必须肉眼比对后定档 —— 这是画作商品页，画质是产品本身。
+**为什么是 JPEG 而不是 WebP**（执行前实测改的档）：
+
+1. 这台机器上**没有任何可用的 WebP 编码器** —— ffmpeg 只有 WebP muxer
+   没有 libwebp encoder，`cwebp` 没装，ImageMagick 没装，`sips -s format webp`
+   也失败。
+2. 这些 PNG **本来就没有 alpha 通道**（实测 IHDR colortype=2，纯 RGB，
+   734×1010）。羽化边缘是 CSS 的 `frame-mask.png` 做的，画作层不需要透明。
+   用 PNG 存不透明的绘画内容纯属格式用错。
+3. 缩略图 `flat-0X-s.jpg` 本来就是 JPEG，格式上一致。
+
+实测 art-02：PNG 1265KB → q=2 285KB / q=4 183KB。2 倍放大裁切对比下
+q=4 与原图已看不出差别。**取 q=2（视觉无损档）**：经 Task 1 之后画作
+已不在关键路径上（视频起播后才下），字节该花在画质上 —— 画作本身就是商品。
+
+**视频档位不预设**，下面 CRF 27 是起点，必须肉眼比对后定档。
 
 - [ ] **Step 1: 把原始视频移出 public/，作为可重复压制的母版**
 
@@ -368,7 +382,7 @@ ls -la assets/hero/
 
 Expected：`cat-scratcher-10s.master.mp4`，约 6.7MB。
 
-画作 PNG **不动** —— 它们是 `make_artworks.py` 的产物，是 WebP 的源。留在 `public/hero/art/` 里（浏览器不会请求它们，因为 `ARTWORKS[].src` 指向 `.webp`），脚本每次从它们重新生成，管线可重复。
+画作 PNG **不动** —— 它们是 `make_artworks.py` 的产物，是 JPEG 的源。留在 `public/hero/art/` 里（浏览器不会请求它们，因为 `ARTWORKS[].src` 指向 `.jpg`），脚本每次从它们重新生成，管线可重复。
 
 - [ ] **Step 2: 写压制脚本**
 
@@ -378,20 +392,25 @@ Expected：`cat-scratcher-10s.master.mp4`，约 6.7MB。
 #!/usr/bin/env bash
 # Hero 首屏资产压制。原始素材体积是首屏最大的负担：
 #   视频 6.7MB（1664x1248 / 5.4Mbps）+ 6 张画 7.1MB = 13.8MB
-# 目标：视频 ~1.8MB，画作合计 ~1.5MB。
+# 目标：视频 ~1.8MB，画作合计 ~1.7MB。
 #
 # 源都在仓库里，本脚本可反复重跑：
 #   视频母版 assets/hero/cat-scratcher-10s.master.mp4（不在 public/，不部署）
 #   画作 public/hero/art/art-0X.png（make_artworks.py 的产物，浏览器不请求）
 # 输出才是浏览器真正下载的东西。
 #
-# 用法：bash tools/compress_hero_media.sh [CRF]
-# CRF 默认 27。数字越小越清晰、文件越大。改完必须肉眼比对 ——
-# 这是画作商品页，画质是产品本身。
+# 画作转 JPEG 而非 WebP：这些 PNG 没有 alpha（羽化边缘由 CSS 的
+# frame-mask.png 负责），而本机没有可用的 WebP 编码器。JPEG q=2 是
+# 视觉无损档，1265KB → 285KB。
+#
+# 用法：bash tools/compress_hero_media.sh [CRF] [JPEG_Q]
+# CRF 默认 27（越小越清晰）；JPEG_Q 默认 2（ffmpeg 的 -q:v，2 最好、31 最差）。
+# 改完必须肉眼比对 —— 这是画作商品页，画质是产品本身。
 set -euo pipefail
 cd "$(dirname "$0")/.."
 
 CRF="${1:-27}"
+JPEG_Q="${2:-2}"
 SRC=assets/hero/cat-scratcher-10s.master.mp4
 
 if [ ! -f "$SRC" ]; then
@@ -413,17 +432,16 @@ ffmpeg -v error -y -i "$SRC" \
   -row-mt 1 -an \
   public/hero/cat-scratcher-10s.webm
 
-echo "== 画作转 WebP =="
+echo "== 画作转 JPEG (q=$JPEG_Q) =="
 for i in 1 2 3 4 5 6; do
   ffmpeg -v error -y -i "public/hero/art/art-0$i.png" \
-    -c:v libwebp -quality 88 -compression_level 6 \
-    "public/hero/art/art-0$i.webp"
+    -q:v "$JPEG_Q" "public/hero/art/art-0$i.jpg"
 done
 
 echo
 echo "== 结果 =="
 ls -la public/hero/cat-scratcher-10s.mp4 public/hero/cat-scratcher-10s.webm
-ls -la public/hero/art/art-0*.webp
+ls -la public/hero/art/art-0*.jpg
 ```
 
 - [ ] **Step 3: 跑一遍并看体积**
@@ -432,7 +450,7 @@ ls -la public/hero/art/art-0*.webp
 bash tools/compress_hero_media.sh 27
 ```
 
-Expected：mp4 落在 1.5–2.5MB，webm 更小，6 个 webp 合计 1–2MB。
+Expected：mp4 落在 1.5–2.5MB，webm 更小，6 个 jpg 合计约 1.7MB。
 
 若 mp4 超过 3MB，用 `bash tools/compress_hero_media.sh 30` 重跑；若肉眼发现画面有块状噪点，用 `24` 重跑。
 
@@ -473,15 +491,15 @@ Expected：画框里的《晴野》色块边缘干净，猫的黑白毛发交界
 
 注意 `src` 属性已移除，改由 `<source>` 提供。
 
-- [ ] **Step 6: ARTWORKS 指向 webp**
+- [ ] **Step 6: ARTWORKS 指向 jpg**
 
-`lib/heroConfig.ts`，把 `ARTWORKS` 数组里 6 处 `src` 的扩展名从 `.png` 改为 `.webp`：
+`lib/heroConfig.ts`，把 `ARTWORKS` 数组里 6 处 `src` 的扩展名从 `.png` 改为 `.jpg`：
 
 ```ts
-    src: "/hero/art/art-01.webp",
+    src: "/hero/art/art-01.jpg",
 ```
 
-依此类推到 `art-06.webp`。其余字段不动。
+依此类推到 `art-06.jpg`。其余字段不动。
 
 - [ ] **Step 7: 更新管线注释**
 
@@ -495,14 +513,14 @@ Expected：画框里的《晴野》色块边缘干净，猫的黑白毛发交界
 
 ```
  * 上新画作 = 放入源图 → 两个脚本各跑一次 → 跑 tools/compress_hero_media.sh
- * 转 WebP → 在这里加一项。
+ * 转 JPEG → 在这里加一项。
 ```
 
 - [ ] **Step 8: 验证仍能播放且体积下来了**
 
 重载页面，`read_network_requests({urlPattern: "hero"})`。
 
-Expected：加载的是 `.webm`（Chrome）；art 请求的是 `.webp`；hero 相关请求总字节数从约 14MB 降到 3MB 以内。
+Expected：加载的是 `.webm`（Chrome）；art 请求的是 `.jpg`；hero 相关请求总字节数从约 13.8MB 降到 4MB 以内。
 
 再 `read_console_messages({onlyErrors: true})`。
 
@@ -516,7 +534,7 @@ Expected：两张都正常，画作清晰，换画过渡无闪白。
 
 - [ ] **Step 10: 确认 PNG 不再被浏览器请求**
 
-`art-0X.png` 保留在仓库里（它们是 WebP 的源），但浏览器不该再下它们。重载页面后：
+`art-0X.png` 保留在仓库里（它们是 JPEG 的源），但浏览器不该再下它们。重载页面后：
 
 ```js
 performance.getEntriesByType('resource')
@@ -524,7 +542,7 @@ performance.getEntriesByType('resource')
   .map(r => r.name.split('/').pop())
 ```
 
-Expected：只有 `.webp` 与 `flat-0X-s.jpg`，**没有** `art-0X.png`。
+Expected：只有 `art-0X.jpg` 与 `flat-0X-s.jpg`，**没有** `art-0X.png`。
 
 - [ ] **Step 11: Commit**
 
@@ -533,10 +551,10 @@ git add -A assets public/hero tools/compress_hero_media.sh components/Hero/Hero.
 git commit -m "首屏资产从 14MB 压到 3MB 以内
 
 视频 1664x1248/5.4Mbps 对一个 hero 是过配的，降到 1280x960 并出
-一条 VP9 作首选；6 张画作 PNG 转 WebP。
+一条 VP9 作首选；6 张画作 PNG 转 JPEG（本机无可用 WebP 编码器，且这些 PNG 无 alpha）。
 
 母版移到 assets/hero/（不在 public/ 下，不部署，但留在仓库里），
-画作 PNG 原地保留作 WebP 的源 —— 压制脚本要能反复重跑，换画作
+画作 PNG 原地保留作 JPEG 的源 —— 压制脚本要能反复重跑，换画作
 和调 CRF 都得从源头再来一遍。"
 ```
 
@@ -1950,7 +1968,7 @@ Expected：`totalMB` 在 3 以内（改动前约 14）；`largest` 里视频的 
 出现；换画 feature 到第 11.5 秒才露面且中途零信号。
 
 现在：
-- art 大图推迟到视频 `playing` 后才挂 `src`；画作转 WebP，视频重压
+- art 大图推迟到视频 `playing` 后才挂 `src`；画作转 JPEG，视频重压
   （参数在 `tools/compress_hero_media.sh`，换画作时重跑）
 - `beats` 由视频轨与页面轨双轨驱动，先到者生效；8 秒 `canplay` 兜底
 - 第 7 秒起画芯从舞台左缘滑入的送货态（去饱和、不可点），定格后
@@ -1990,4 +2008,4 @@ catPushMs = freeze.plaque。改时间轴时最容易在这里失步。"
 
 CSS 侧不设第二份真值：猫的行进（`--cat-dur`）与第 6 张画芯的滑入（`--push-dur`）都由组件从 `HERO_TIMINGS.catPushMs` 传成自定义属性。初稿在两处各写了一个 1000ms 手动对齐，那种写法迟早失步，已改掉。
 
-**预检修正**（执行前发现的三处计划自身问题，已改）：① 压制脚本原先从 `/tmp` 备份读源，tmp 一清就再也压不了第二次 —— 改为视频母版移到 `assets/hero/`（不部署但留仓库）、画作 PNG 原地保留作 WebP 的源；② 原先要删掉 art PNG，那会切断 WebP 的可重复生成路径，且对用户下载量毫无影响（浏览器本就不请求它们）—— 改为保留并验证浏览器不再请求；③ 上述 CSS 常量重复。
+**预检修正**（执行前发现的三处计划自身问题，已改）：① 压制脚本原先从 `/tmp` 备份读源，tmp 一清就再也压不了第二次 —— 改为视频母版移到 `assets/hero/`（不部署但留仓库）、画作 PNG 原地保留作 JPEG 的源；② 原先要删掉 art PNG，那会切断可重复生成路径，且对用户下载量毫无影响（浏览器本就不请求它们）—— 改为保留并验证浏览器不再请求；③ 上述 CSS 常量重复。
