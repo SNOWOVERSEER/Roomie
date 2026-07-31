@@ -374,13 +374,21 @@ beats 只绑 video.currentTime，视频不起播就恒为 0，于是加载期间
 
 **注意**：档位不预设，下面给的是起点。必须肉眼比对后定档 —— 这是画作商品页，画质是产品本身。
 
-- [ ] **Step 1: 备份原始资产**
+- [ ] **Step 1: 把原始视频移出 public/，作为可重复压制的母版**
+
+压制脚本必须有一个**durable 的源**。原先设想的 `/tmp` 备份不算数 —— tmp 一清就再也压不了第二次，而换画作、调 CRF 都要重跑。
+
+母版移出 `public/` 后 Vercel 不再部署它（省 6.7MB 部署体积），但仓库里留着，脚本随时可用：
 
 ```bash
-mkdir -p /tmp/roomie-hero-backup && cp public/hero/cat-scratcher-10s.mp4 public/hero/art/art-0*.png /tmp/roomie-hero-backup/ && ls -la /tmp/roomie-hero-backup/
+mkdir -p assets/hero
+git mv public/hero/cat-scratcher-10s.mp4 assets/hero/cat-scratcher-10s.master.mp4
+ls -la assets/hero/
 ```
 
-Expected：7 个文件，合计约 13.8MB。
+Expected：`cat-scratcher-10s.master.mp4`，约 6.7MB。
+
+画作 PNG **不动** —— 它们是 `make_artworks.py` 的产物，是 WebP 的源。留在 `public/hero/art/` 里（浏览器不会请求它们，因为 `ARTWORKS[].src` 指向 `.webp`），脚本每次从它们重新生成，管线可重复。
 
 - [ ] **Step 2: 写压制脚本**
 
@@ -392,14 +400,26 @@ Expected：7 个文件，合计约 13.8MB。
 #   视频 6.7MB（1664x1248 / 5.4Mbps）+ 6 张画 7.1MB = 13.8MB
 # 目标：视频 ~1.8MB，画作合计 ~1.5MB。
 #
+# 源都在仓库里，本脚本可反复重跑：
+#   视频母版 assets/hero/cat-scratcher-10s.master.mp4（不在 public/，不部署）
+#   画作 public/hero/art/art-0X.png（make_artworks.py 的产物，浏览器不请求）
+# 输出才是浏览器真正下载的东西。
+#
 # 用法：bash tools/compress_hero_media.sh [CRF]
-# CRF 默认 27。画质不满意就调低（数字越小越清晰、越大越小），
-# 每次改完必须肉眼比对 —— 这是画作商品页，画质是产品本身。
+# CRF 默认 27。数字越小越清晰、文件越大。改完必须肉眼比对 ——
+# 这是画作商品页，画质是产品本身。
 set -euo pipefail
 cd "$(dirname "$0")/.."
 
 CRF="${1:-27}"
-SRC=/tmp/roomie-hero-backup/cat-scratcher-10s.mp4
+SRC=assets/hero/cat-scratcher-10s.master.mp4
+
+if [ ! -f "$SRC" ]; then
+  echo "找不到视频母版 $SRC" >&2
+  echo "它应当在仓库里。若被误删，从 git 历史恢复：" >&2
+  echo "  git log --all --oneline -- '*cat-scratcher-10s*'" >&2
+  exit 1
+fi
 
 echo "== H.264 (CRF $CRF, 1280x960) =="
 ffmpeg -v error -y -i "$SRC" \
@@ -415,7 +435,7 @@ ffmpeg -v error -y -i "$SRC" \
 
 echo "== 画作转 WebP =="
 for i in 1 2 3 4 5 6; do
-  ffmpeg -v error -y -i "/tmp/roomie-hero-backup/art-0$i.png" \
+  ffmpeg -v error -y -i "public/hero/art/art-0$i.png" \
     -c:v libwebp -quality 88 -compression_level 6 \
     "public/hero/art/art-0$i.webp"
 done
@@ -438,10 +458,10 @@ Expected：mp4 落在 1.5–2.5MB，webm 更小，6 个 webp 合计 1–2MB。
 
 - [ ] **Step 4: 肉眼比对画质**
 
-抽同一帧对比原始与压制结果：
+抽同一帧对比母版与压制结果：
 
 ```bash
-ffmpeg -v error -ss 9.9 -i /tmp/roomie-hero-backup/cat-scratcher-10s.mp4 -frames:v 1 -q:v 2 /tmp/before.jpg -y
+ffmpeg -v error -ss 9.9 -i assets/hero/cat-scratcher-10s.master.mp4 -frames:v 1 -q:v 2 /tmp/before.jpg -y
 ffmpeg -v error -ss 9.9 -i public/hero/cat-scratcher-10s.mp4 -frames:v 1 -q:v 2 /tmp/after.jpg -y
 echo "对比 /tmp/before.jpg 与 /tmp/after.jpg"
 ```
@@ -514,29 +534,30 @@ Expected：无 404、无媒体解码错误。
 
 Expected：两张都正常，画作清晰，换画过渡无闪白。
 
-- [ ] **Step 10: 清理旧 PNG**
+- [ ] **Step 10: 确认 PNG 不再被浏览器请求**
 
-确认 webp 一切正常后：
+`art-0X.png` 保留在仓库里（它们是 WebP 的源），但浏览器不该再下它们。重载页面后：
 
-```bash
-git rm --cached public/hero/art/art-0*.png 2>/dev/null || true
-rm -f public/hero/art/art-0*.png
-ls public/hero/art/
+```js
+performance.getEntriesByType('resource')
+  .filter(r => r.name.includes('/art/'))
+  .map(r => r.name.split('/').pop())
 ```
 
-Expected：只剩 `art-0*.webp`、`flat-0*` 与 `frame-mask.png`。
-
-（`flat-0X.png` 是 `make_artworks.py` 的中间产物，不在首屏路径上，保留。）
+Expected：只有 `.webp` 与 `flat-0X-s.jpg`，**没有** `art-0X.png`。
 
 - [ ] **Step 11: Commit**
 
 ```bash
-git add -A public/hero tools/compress_hero_media.sh components/Hero/Hero.tsx lib/heroConfig.ts
+git add -A assets public/hero tools/compress_hero_media.sh components/Hero/Hero.tsx lib/heroConfig.ts
 git commit -m "首屏资产从 14MB 压到 3MB 以内
 
 视频 1664x1248/5.4Mbps 对一个 hero 是过配的，降到 1280x960 并出
-一条 VP9 作首选；6 张画作 PNG 转 WebP。压制参数集中在
-tools/compress_hero_media.sh，换画作时重跑即可。"
+一条 VP9 作首选；6 张画作 PNG 转 WebP。
+
+母版移到 assets/hero/（不在 public/ 下，不部署，但留在仓库里），
+画作 PNG 原地保留作 WebP 的源 —— 压制脚本要能反复重跑，换画作
+和调 CRF 都得从源头再来一遍。"
 ```
 
 ---
@@ -1702,15 +1723,40 @@ export default function CatDelivery({ rect, play }: Props) {
 }
 ```
 
-- [ ] **Step 4: 第 6 张画芯的推入动画**
+- [ ] **Step 4: 把猫的推货时长喂给 CSS**
+
+第 6 张画芯的滑入必须和猫的行进同时长，否则猫和它推的画会脱节。CSS 读不到 JS 常量，所以**用自定义属性传下去**，而不是在两处各写一个 1000ms —— 那种手动对齐迟早失步。
+
+`components/Hero/ArtworkSwitcher.tsx`，把 heroConfig 的 import 加上 `HERO_TIMINGS`：
+
+```tsx
+import { ARTWORKS, FRAME_RECT, HERO_COPY, HERO_TIMINGS } from "@/lib/heroConfig";
+```
+
+在 `rackVars` 里加一项：
+
+```tsx
+  const rackVars = {
+    "--mini-w": px(miniW),
+    "--rack-left": px(rect.left + rect.width * 0.129),
+    "--rack-bottom-y": px(rect.top + rect.height * 0.708),
+    "--rack-m-left": px(fLeft + 2),
+    "--rack-m-top": px(fTop + fH + rect.height * 0.03),
+    // 第 6 张由猫推进来，时长必须与 CatDelivery 一致 —— 单一来源
+    "--push-dur": `${HERO_TIMINGS.catPushMs}ms`,
+  } as React.CSSProperties;
+```
+
+- [ ] **Step 5: 第 6 张画芯的推入动画**
 
 `components/Hero/ArtworkSwitcher.module.css`，在 `.rackOn .mini { ... }` 规则**之后**加：
 
 ```css
-/* 第 6 张不走常规错峰 —— 它是被猫推进来的，
-   时长与 CatDelivery 的 catPush 前半段对齐。 */
+/* 第 6 张不走常规错峰 —— 它是被猫推进来的。
+   --push-dur 由组件从 HERO_TIMINGS.catPushMs 传入，
+   与 CatDelivery 的行进同一个来源，不会失步。 */
 .rackOn .mini:nth-child(6) {
-  animation: miniPushedIn 1000ms var(--ease-out) both;
+  animation: miniPushedIn var(--push-dur) var(--ease-out) both;
 }
 
 @keyframes miniPushedIn {
@@ -1731,7 +1777,7 @@ export default function CatDelivery({ rect, play }: Props) {
 }
 ```
 
-- [ ] **Step 5: 挂进 Hero**
+- [ ] **Step 6: 挂进 Hero**
 
 `components/Hero/Hero.tsx`，import 区加：
 
@@ -1749,7 +1795,7 @@ import CatDelivery from "./CatDelivery";
         )}
 ```
 
-- [ ] **Step 6: 类型检查**
+- [ ] **Step 7: 类型检查**
 
 ```bash
 npx tsc --noEmit
@@ -1757,7 +1803,7 @@ npx tsc --noEmit
 
 Expected：无报错。
 
-- [ ] **Step 7: 验证猫在定格后登场**
+- [ ] **Step 8: 验证猫在定格后登场**
 
 重载页面，跳到视频末尾触发定格，然后在猫行进中截图：
 
@@ -1774,13 +1820,13 @@ Expected：无报错。
 
 Expected：画面左侧有一只手绘黑白猫正推着第 6 张画芯向画芯架移动；视频里那只写实的猫坐在画框右侧不动。两只猫空间上分开，不重叠。
 
-- [ ] **Step 8: 验证落定后猫已退场**
+- [ ] **Step 9: 验证落定后猫已退场**
 
 再等 1.5 秒后截图。
 
 Expected：猫已退出画面，6 张画芯彩色齐整靠墙，吊牌浮现。
 
-- [ ] **Step 9: 验证不与视频里的猫同框**
+- [ ] **Step 10: 验证不与视频里的猫同框**
 
 ```js
 (async () => {
@@ -1806,7 +1852,7 @@ Expected：猫已退出画面，6 张画芯彩色齐整靠墙，吊牌浮现。
 
 Expected：`stageImgs` 里**没有** `roomie-pushing-cat` —— 视频播放中舞台层不该有猫。
 
-- [ ] **Step 10: 验证 reduced-motion 下猫不播**
+- [ ] **Step 11: 验证 reduced-motion 下猫不播**
 
 ```js
 // 无法在页面里改 media query，改用 CSS 检查规则是否生效
@@ -1821,7 +1867,7 @@ grep -A2 "prefers-reduced-motion" components/Hero/CatDelivery.module.css
 
 Expected：输出包含 `display: none`。
 
-- [ ] **Step 11: 验证移动端不挂载**
+- [ ] **Step 12: 验证移动端不挂载**
 
 `resize_window({preset: "mobile"})` 后重载：
 
@@ -1836,7 +1882,7 @@ Expected：`hasCat: false`。
 
 改回 `resize_window({preset: "desktop"})`。
 
-- [ ] **Step 12: 完整走一遍时间轴**
+- [ ] **Step 13: 完整走一遍时间轴**
 
 重载页面，什么都不做，从头看到尾，在 7.5s / 10.5s / 12s 各截一张。
 
@@ -1845,10 +1891,10 @@ Expected：
 - 10.5s — 猫推第 6 张进来，CTA 已浮现
 - 12s — 画芯全彩齐整、吊牌在、滚动提示在、环已消失、可换画
 
-- [ ] **Step 13: Commit**
+- [ ] **Step 14: Commit**
 
 ```bash
-git add components/Hero/CatDelivery.tsx components/Hero/CatDelivery.module.css lib/heroConfig.ts components/Hero/ArtworkSwitcher.module.css components/Hero/Hero.tsx
+git add components/Hero/CatDelivery.tsx components/Hero/CatDelivery.module.css lib/heroConfig.ts components/Hero/ArtworkSwitcher.tsx components/Hero/ArtworkSwitcher.module.css components/Hero/Hero.tsx
 git commit -m "猫推最后一张进来
 
 复用 CTA 里已有的 roomie-pushing-cat —— 猫推画等于换画，这个
@@ -1931,9 +1977,15 @@ Expected：`totalMB` 在 3 以内（改动前约 14）；`largest` 里视频的 
   `CatDelivery` 推入第 6 张完成落定
 - 右下角 `SkipDial`：确定进度环 + hover 跳过，移动端不出现
 
-调时间轴只改 `lib/heroConfig.ts` 的 `HERO_TIMINGS`。注意 `dialMs`
-必须等于 视频时长 + `freeze.plaque`，`catPushMs` 必须等于
-`freeze.plaque`。
+调时间轴只改 `lib/heroConfig.ts` 的 `HERO_TIMINGS`。两条必须手动
+维持的等式：`dialMs` = 视频时长 + `freeze.plaque`；`catPushMs` =
+`freeze.plaque`。（CSS 侧不需要跟着改 —— `--push-dur` 与
+`--cat-dur` 都由组件从 `catPushMs` 传入。）
+
+资产重压：`bash tools/compress_hero_media.sh [CRF]`。源是
+`assets/hero/cat-scratcher-10s.master.mp4`（不在 public/ 下，
+不部署）与 `public/hero/art/art-0X.png`，两者都留在仓库里，
+脚本可反复重跑。
 ```
 
 - [ ] **Step 5: Commit**
@@ -1954,4 +2006,8 @@ catPushMs = freeze.plaque。改时间轴时最容易在这里失步。"
 
 **类型一致性**：`FreezeSteps` 在 Task 4 定义于 `useHeroSequence.ts`，`Hero.tsx` 转发导出以免 `HeroCopy.tsx` 断链（Task 4 Step 2/3）。`HeroBeats` 在 Task 6 加 `delivery`，三处 `setBeats` 全量赋值处同步更新（Step 2）。`ArtworkSwitcher` 的 props 分两次增补：`loadArt`（Task 1）、`delivering`（Task 6），两次都改了函数签名与调用点。
 
-**常量耦合**（最易失步处，已写进 HANDOVER）：`dialMs` = 视频时长 + `freeze.plaque`；`catPushMs` = `freeze.plaque`；CSS 里 `miniPushedIn` 的 1000ms 与 `catPushMs` 手动对齐 —— CSS 拿不到 JS 常量，改 `catPushMs` 时必须同步改 `ArtworkSwitcher.module.css` 里那个 1000ms。
+**常量耦合**（最易失步处，已写进 HANDOVER）：`dialMs` = 视频时长 + `freeze.plaque`；`catPushMs` = `freeze.plaque`。这两条是 JS 内部的，只能靠注释与 HANDOVER 守住。
+
+CSS 侧不设第二份真值：猫的行进（`--cat-dur`）与第 6 张画芯的滑入（`--push-dur`）都由组件从 `HERO_TIMINGS.catPushMs` 传成自定义属性。初稿在两处各写了一个 1000ms 手动对齐，那种写法迟早失步，已改掉。
+
+**预检修正**（执行前发现的三处计划自身问题，已改）：① 压制脚本原先从 `/tmp` 备份读源，tmp 一清就再也压不了第二次 —— 改为视频母版移到 `assets/hero/`（不部署但留仓库）、画作 PNG 原地保留作 WebP 的源；② 原先要删掉 art PNG，那会切断 WebP 的可重复生成路径，且对用户下载量毫无影响（浏览器本就不请求它们）—— 改为保留并验证浏览器不再请求；③ 上述 CSS 常量重复。
