@@ -99,6 +99,11 @@ export default function Hero({
     };
     if (v.readyState >= 2) tryPlay();
 
+    // 弱网兜底：迟迟拿不到可播数据就放弃视频，让用户至少拿到完整的静态首屏
+    const loadGuard = setTimeout(() => {
+      if (v.readyState < 2) setStaticMode(true);
+    }, HERO_TIMINGS.loadTimeout);
+
     const onTime = () => {
       const t = v.currentTime;
       setBeats((b) => {
@@ -122,6 +127,7 @@ export default function Hero({
     v.addEventListener("error", onError);
     v.addEventListener("playing", onPlaying, { once: true });
     return () => {
+      clearTimeout(loadGuard);
       v.removeEventListener("canplay", tryPlay);
       v.removeEventListener("timeupdate", onTime);
       v.removeEventListener("ended", onEnded);
@@ -129,6 +135,23 @@ export default function Hero({
       v.removeEventListener("playing", onPlaying);
     };
   }, [staticMode, runFreezeSequence]);
+
+  // 文案的页面时钟兜底 —— beats 平时由视频时间驱动，但视频不起播时
+  // currentTime 恒为 0，首屏会一个字都没有。两条轨先到者生效。
+  useEffect(() => {
+    if (staticMode !== false) return;
+    const f = HERO_TIMINGS.fallback;
+    timers.current.push(
+      setTimeout(
+        () => setBeats((b) => (b.title ? b : { ...b, title: true })),
+        f.title,
+      ),
+      setTimeout(
+        () => setBeats((b) => (b.subtitle ? b : { ...b, subtitle: true })),
+        f.subtitle,
+      ),
+    );
+  }, [staticMode]);
 
   // 静态模式：reduced-motion 全量直呈；小屏走一遍快速错峰
   useEffect(() => {

@@ -93,6 +93,14 @@ export const ARTWORKS: Artwork[] = [
 export const HERO_TIMINGS = {
   title: 0.6, // 空镜稳定后，标题淡入
   subtitle: 2.6, // 猫走进画面时，副标题跟进
+  /**
+   * 页面时钟兜底（毫秒）——— 与上面两拍是「先到者生效」的关系。
+   * beats 原本只绑 video.currentTime，视频不起播就恒为 0，
+   * 于是加载期间首屏连标题都没有。这两个值保证文案不等视频。
+   */
+  fallback: { title: 400, subtitle: 2000 },
+  /** 迟迟不 canplay 就放弃视频走静态定格（毫秒），否则弱网永远卡在 poster */
+  loadTimeout: 8000,
   // 定格后的错峰浮现（相对 onEnded 的毫秒数）
   freeze: {
     settle: 0, // 文字轻轻上移收拢
