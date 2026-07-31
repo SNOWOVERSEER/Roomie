@@ -9,6 +9,10 @@ Roomie hero artwork pipeline — matte (绿幕) edition.
   public/hero/art/art-0X.png   （末帧画框区域的完整合成图）
   lib/frame-rect.json          （画框外接矩形百分比，heroConfig 自动引用）
   tools/matte.png / edges_check.png（人工复核用）
+
+只跑这个脚本不够：art-0X.png 是合成中间产物，页面实际引用的是
+tools/compress_hero_media.sh 转出的 art-0X.jpg —— 只重跑这里、不跟着
+跑那一步，画作 PNG 是新的，站上什么都不会变。
 """
 import json
 import pathlib

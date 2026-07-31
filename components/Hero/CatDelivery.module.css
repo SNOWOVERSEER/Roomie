@@ -9,6 +9,14 @@
   top: calc(var(--cat-bottom-y) - var(--cat-w) * 0.5625);
   width: var(--cat-w);
   pointer-events: none;
+}
+
+/* 挂载但还没到播放拍：图片已经在解码，画面上先不露面、不动 */
+.catIdle {
+  opacity: 0;
+}
+
+.catPlay {
   animation: catPush calc(var(--cat-dur) * 2.1) var(--ease-out) both;
 }
 
@@ -22,9 +30,10 @@
 }
 
 @keyframes catPush {
-  /* 出画外 */
+  /* 出画外 —— 起点与 ArtworkSwitcher 第 6 张画芯的起跑点同源
+     (CAT_GEOM.startX，heroConfig.ts)，两边不再各算各的 */
   0% {
-    transform: translateX(calc(-1 * var(--cat-w) * 1.3));
+    transform: translateX(var(--cat-start-x));
     opacity: 0;
   }
   10% {
@@ -45,11 +54,15 @@
     opacity: 1;
   }
   100% {
-    transform: translateX(calc(-1 * var(--cat-w) * 1.3));
+    transform: translateX(var(--cat-start-x));
     opacity: 0;
   }
 }
 
+/* 这块看着像死代码（staticMode 分支下 CatDelivery 根本不挂载）但不是：
+   staticMode 只在 mount 时判一次、没有 change 监听，而这条媒体查询
+   是活的 —— 页面开着时才打开"减少动态效果"的访客，会保留已挂载的
+   组件，届时全靠这条规则接住动画。 */
 @media (prefers-reduced-motion: reduce) {
   .cat {
     display: none;

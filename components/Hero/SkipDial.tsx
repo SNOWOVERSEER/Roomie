@@ -37,7 +37,10 @@ export default function SkipDial({ mode, durationMs, onSkip }: Props) {
           r={R}
           style={
             {
-              strokeDasharray: C,
+              // stroke-dasharray 交给各自的 CSS 规则（.arcRun / .arcWait）——
+              // 内联样式的优先级高于任何普通规则，之前写在这里会永远盖过
+              // .arcWait 的 `18 200`，buffering 态被迫渲成实心整环转圈，
+              // 读出来正好是"已完成 100%"，与本意相反。
               "--dur": `${durationMs}ms`,
               "--circ": C,
             } as React.CSSProperties

@@ -147,7 +147,10 @@
 /* 第 6 张由猫推进来：从定格那一刻起和猫一起走，
    --push-dur 与 CatDelivery 的 --cat-dur 同源（HERO_TIMINGS.catPushMs），
    所以猫抵达的那一刻正是这张落位的那一刻。放在 .rackDelivering 之后、
-   与之同级特异度，靠源码顺序覆盖上面的按兵不动规则。 */
+   与之同级特异度，靠源码顺序覆盖上面的按兵不动规则。
+   .rackPushing 本身只在 Hero 判定「视频路径 + 猫确实存在」时才挂上
+   （见 ArtworkSwitcher.tsx 的 pushing prop）—— 静态降级分支不会有这张
+   在没有猫的情况下自己跑起来。 */
 .rackPushing .mini:nth-child(6) {
   animation: miniPushedIn var(--push-dur) var(--ease-out) both;
   opacity: 1;
@@ -199,10 +202,18 @@
   animation: none;
 }
 
+/* 起点：与 CatDelivery 里猫前爪的起跑点用同一套 CAT_GEOM 算出来
+   （heroConfig.ts），由 ArtworkSwitcher.tsx 算好通过 --push-from-x
+   传入 —— 不能像 .mini + .mini 的叠压位移那样在这里独立硬算。
+   这里曾经写的是 calc(-1 * var(--rack-left) - var(--mini-w) * 2)，
+   与猫的起跑点各算各的：画在 +44px 起跑、爪子在 −97px，141px 的
+   差距一路线性收窄，画全程跑在猫前面，只在最后一帧才被"追上"。
+   miniSlideIn（上面）已经因为同一类错误改过一次、按 --i 缩放；
+   这条是它的姊妹关键帧，此前一直没跟着改。 */
 @keyframes miniPushedIn {
   from {
     opacity: 0;
-    translate: calc(-1 * var(--rack-left) - var(--mini-w) * 2) 0;
+    translate: var(--push-from-x) 0;
   }
   to {
     opacity: 1;
@@ -210,6 +221,11 @@
   }
 }
 
+/* 这块看着像死代码（大部分 reduced-motion 访客走的是 staticMode 的
+   即时呈现分支，根本不经过 .rackPushing）但不是：staticMode 只在
+   mount 时判一次、没有 change 监听，而这条媒体查询是活的 —— 页面
+   开着时才打开"减少动态效果"的访客，会保留已挂载的组件，届时
+   全靠这条规则接住动画。 */
 @media (prefers-reduced-motion: reduce) {
   .rackPushing .mini:nth-child(6) {
     animation: none;
@@ -241,6 +257,9 @@
   );
   filter: blur(1.5px);
   z-index: -1;
+  /* 送货态把它藏起来（见下），落定时要和 .mini 的 filter 一起淡出，
+     不能瞬间蹦出来 —— 620ms 与 .mini 的 filter 过渡时长对齐 */
+  transition: opacity 620ms var(--ease-out);
 }
 
 .miniInner {
@@ -451,6 +470,8 @@
   }
 }
 
+/* 同上一条：staticMode 落定只判一次，这条媒体查询常驻。
+   页面开着时才切换"减少动态效果"的访客，全靠它兜底。 */
 @media (prefers-reduced-motion: reduce) {
   .tagCard {
     animation: none;

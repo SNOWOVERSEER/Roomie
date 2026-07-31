@@ -49,9 +49,12 @@ ffmpeg -v error -y -i "$SRC" \
   public/hero/cat-scratcher-10s.mp4
 
 echo "== 画作转 JPEG (q=$JPEG_Q) =="
-for i in 1 2 3 4 5 6; do
-  ffmpeg -v error -y -i "public/hero/art/art-0$i.png" \
-    -q:v "$JPEG_Q" "public/hero/art/art-0$i.jpg"
+# 对实际存在的 PNG 通配，而不是硬编码 1-6 —— 上新第 7 张画作时
+# make_artworks.py 会产出 art-07.png，硬编码的循环会漏掉它，
+# 页面却已经在 heroConfig.ts 里引用 art-07.jpg，结果是 404。
+for f in public/hero/art/art-0*.png; do
+  out="${f%.png}.jpg"
+  ffmpeg -v error -y -i "$f" -q:v "$JPEG_Q" "$out"
 done
 
 echo

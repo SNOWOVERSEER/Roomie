@@ -28,6 +28,11 @@ export interface HeroSequence {
   videoRef: React.RefObject<HTMLVideoElement | null>;
   /** 跳过整场演出，直接进可交互的定格态 */
   skip: () => void;
+  /** 只在错峰路径（onEnded 的自然定格）为 true，一旦置真永不回落。
+   *  skip() 走的是 instant 分支，不会让它变 true —— Hero.tsx 用它
+   *  和 staticMode 一起判断猫该不该出场（catRuns），这样 skip 才能
+   *  真的跳过猫那 2.1 秒，而不是让猫在空场上自顾自演完。 */
+  pushed: boolean;
 }
 
 const NO_STEPS: FreezeSteps = {
@@ -59,6 +64,8 @@ export function useHeroSequence(): HeroSequence {
   const [steps, setSteps] = useState<FreezeSteps>(NO_STEPS);
   // art 大图的放行闸：视频起播后才下，避开与视频抢首屏带宽
   const [loadArt, setLoadArt] = useState(false);
+  // 只在错峰（staggered）路径置真，且只置真 —— 猫是否出场的单一开关
+  const [pushed, setPushed] = useState(false);
   // skip 会把视频 seek 到末尾，这会触发 ended —— 若不拦，
   // runFreezeSequence 会被 (true) 和 (false) 各跑一遍，错峰序列打架
   const skipped = useRef(false);
@@ -73,6 +80,11 @@ export function useHeroSequence(): HeroSequence {
     setFrozen(true);
     setBeats({ title: true, subtitle: true, delivery: true });
     if (instant) {
+      // skip() 之类的即时分支：把上一条路径可能已经排好的错峰定时器
+      // 清掉，免得它们晚点触发时对着已经是终态的 steps 做无意义的
+      // setState（不会致错，但会留下一串永远走不到任何人的空调用）。
+      timers.current.forEach(clearTimeout);
+      timers.current = [];
       setSteps(ALL_STEPS);
       return;
     }
@@ -88,6 +100,10 @@ export function useHeroSequence(): HeroSequence {
         setTimeout(() => setSteps((s) => ({ ...s, [key]: true })), delay),
       );
     }
+    // 只有走到这条错峰路径才算「猫送货」这套铺垫真正发生过 —— 一旦
+    // 置真就不再回落（skip 不会再调这个分支），Hero.tsx 靠这个锁存
+    // 标记决定猫该不该出场。
+    setPushed(true);
   }, []);
 
   const skip = useCallback(() => {
@@ -202,5 +218,5 @@ export function useHeroSequence(): HeroSequence {
     [],
   );
 
-  return { staticMode, frozen, beats, steps, loadArt, videoRef, skip };
+  return { staticMode, frozen, beats, steps, loadArt, videoRef, skip, pushed };
 }

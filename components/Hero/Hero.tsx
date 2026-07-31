@@ -36,8 +36,13 @@ export default function Hero({
 }) {
   const stageRef = useRef<HTMLDivElement>(null);
   const rect = useVideoRect(stageRef);
-  const { staticMode, frozen, beats, steps, loadArt, videoRef, skip } =
+  const { staticMode, frozen, beats, steps, loadArt, videoRef, skip, pushed } =
     useHeroSequence();
+
+  // 猫送货只在视频路径的自然定格上发生。静态降级没有铺垫，凭空来只猫
+  // 推货会很突兀；而 skip 走的是 instant 分支（pushed 保持 false），
+  // 所以点了跳过就不会再看 2.1 秒的猫 —— 那正是「跳过」的意思。
+  const catRuns = staticMode === false && pushed;
 
   return (
     <section className={styles.hero} id="top" aria-label="The Canvas Scratcher">
@@ -84,13 +89,18 @@ export default function Hero({
             revealed={steps.plaque}
             loadArt={loadArt}
             delivering={beats.delivery}
+            pushing={catRuns && !steps.plaque}
           />
         )}
 
         {/* 猫推最后一张进来。只在视频路径下播 —— 静图上没有铺垫，
-            凭空来只猫推货会很突兀。 */}
+            凭空来只猫推货会很突兀。图片提前在送货拍（beats.delivery）
+            挂载，给 148KB 的资产留出播放前的解码时间；真正播动画要等
+            到 catRuns（错峰路径的自然定格，不含 skip）。猫的动画是
+            2100ms，比 steps.plaque（1000ms）晚落定得多，所以这里不能
+            用 steps.plaque 卸载它 —— catRuns 锁存，猫会留到自己演完。 */}
         {rect && staticMode === false && (
-          <CatDelivery rect={rect} play={frozen} />
+          <CatDelivery rect={rect} mounted={beats.delivery} play={catRuns} />
         )}
 
         {/* 进度环 + 逃生舱。只在视频路径下出现 —— staticMode 本来就

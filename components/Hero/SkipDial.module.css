@@ -18,11 +18,20 @@
   cursor: pointer;
   pointer-events: auto;
   -webkit-tap-highlight-color: transparent;
+  /* 动画结束后的落点：直接写在这里而不是靠 animation 的 forwards
+     半场去钉，这样下面的 :hover/:focus-visible 才盖得过去 */
+  opacity: 1;
+  transform: scale(1);
   transition:
     background 260ms var(--ease-out),
     transform 260ms var(--ease-soft);
-  /* 演出结束后由 Hero 卸载，这里只管淡入 */
-  animation: dialIn 700ms var(--ease-out) 500ms both;
+  /* 演出结束后由 Hero 卸载，这里只管淡入。fill 用 backwards 而非
+     both —— both 的 forwards 半场会把 100% 关键帧的 transform:
+     scale(1) 钉死在元素上，动画声明的优先级高于普通规则，下面的
+     :hover/:focus-visible 缩放就再也盖不过它了（曾经的真实故障）。
+     backwards 只在动画开始前（500ms 延迟期间）借 0% 关键帧把它藏起来，
+     动画跑完就把控制权交还给上面这两条基础声明。 */
+  animation: dialIn 700ms var(--ease-out) 500ms backwards;
 }
 
 @keyframes dialIn {
@@ -70,6 +79,7 @@
 
 /* 演出进行中：确定进度，一圈走完 = 可交互 */
 .arcRun {
+  stroke-dasharray: var(--circ);
   animation: arcSweep var(--dur) linear both;
 }
 
@@ -131,6 +141,11 @@
   transform: translateY(0);
 }
 
+/* 看着像死代码（SkipDial 只在 staticMode === false 时挂载，
+   而 reduced-motion 用户通常一开始就落进 staticMode）但不是：
+   staticMode 只在 mount 时判一次、没有 change 监听，这条媒体查询
+   却是活的 —— 页面开着、SkipDial 已经挂载之后才打开"减少动态
+   效果"的访客，全靠它接住动画。 */
 @media (prefers-reduced-motion: reduce) {
   .dial {
     animation: none;

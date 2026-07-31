@@ -45,6 +45,20 @@ export function rackGeometry(rect: { left: number; width: number }) {
   };
 }
 
+/**
+ * 送货猫的几何。ArtworkSwitcher 也要用它 —— 第 6 张画芯的起跑点必须
+ * 和猫的前爪重合，否则画会跑在猫前面（开发中真出过：画在 +44px 起跑、
+ * 爪子在 −97px，一路追不上，只在最后一帧才碰到）。
+ */
+export const CAT_GEOM = {
+  /** 猫宽占视频内容宽的比例 */
+  widthRatio: 0.14,
+  /** 前爪在图片中的横向位置（占图宽） */
+  pawX: 0.82,
+  /** 入场起点：猫的左缘相对自身宽度的倍数（负值 = 画外） */
+  startX: -1.3,
+};
+
 export interface Artwork {
   id: string;
   src: string;
@@ -143,6 +157,12 @@ export const HERO_TIMINGS = {
    *  猫推到的那一刻正是画芯落定的那一刻。 */
   catPushMs: 1000,
 };
+
+// 上面两处耦合过去各出过一次事故，之前只靠 HANDOVER 里的文字提醒守着。
+if (process.env.NODE_ENV !== "production") {
+  console.assert(HERO_TIMINGS.catPushMs === HERO_TIMINGS.freeze.plaque, "catPushMs 必须等于 freeze.plaque");
+  console.assert(HERO_TIMINGS.dialMs < 10017 + HERO_TIMINGS.freeze.plaque, "dialMs 必须小于视频时长(10017ms) + freeze.plaque");
+}
 
 export const HERO_COPY = {
   title: ["The art your cat", "can scratch"],

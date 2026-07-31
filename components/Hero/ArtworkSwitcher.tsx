@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
   ARTWORKS,
+  CAT_GEOM,
   FRAME_RECT,
   HERO_COPY,
   HERO_TIMINGS,
@@ -15,11 +16,16 @@ interface Props {
   rect: ContentRect; // 视频内容矩形（px，相对舞台）
   active: boolean; // 定格后才可交互
   revealed: boolean; // 吊牌/画芯架错峰浮现的时机
-  /** 视频起播后才 true。在此之前不挂 art 大图 —— 7.1MB 的画会和
-   *  视频抢首屏带宽，而它们要到第 11 秒才用得上。 */
+  /** 大图与画芯缩略图共用的放行闸：视频路径在起播(playing)时才 true；
+   *  静态路径（staticMode）没有视频可等，挂载时就立即 true。 */
   loadArt: boolean;
   /** 送货中：画芯已在场但还没落定 —— 去饱和、不可点 */
   delivering: boolean;
+  /** 猫正在推第 6 张进场（只在视频路径 + 猫存在时为 true，见 Hero.tsx
+   *  catRuns）—— 由 Hero 派生传入而非本组件内部算，否则 staticMode
+   *  走到静态定格的分支（自动播放被拒/视频出错/8s 兜底/来不及加载就
+   *  被跳过）也会播这段推入动画，而那些分支根本没有猫。 */
+  pushing: boolean;
 }
 
 const SWAP_MS = 300;
@@ -30,6 +36,7 @@ export default function ArtworkSwitcher({
   revealed,
   loadArt,
   delivering,
+  pushing,
 }: Props) {
   // index/prev/dir 单一原子状态，避免连点竞态与 updater 副作用
   const [pair, setPair] = useState<{
@@ -95,7 +102,12 @@ export default function ArtworkSwitcher({
   const fH = (rect.height * FRAME_RECT.height) / 100;
 
   // 画芯架：立在大画框左侧地板上（墙脚线 ≈ 内容高的 70.6%）
-  const { miniW, rackLeft } = rackGeometry(rect);
+  const { miniW, rackLeft, miniLeft } = rackGeometry(rect);
+  // 第 6 张的起跑点必须落在猫前爪的起跑点上，否则画会跑在猫前面
+  // （开发中真出过：画在 +44px 起跑、爪子在 −97px，一路追不上）。
+  // 用 CatDelivery 算爪子终点同一套 CAT_GEOM，两边不再各算各的。
+  const catW = rect.width * CAT_GEOM.widthRatio;
+  const pushFromX = (CAT_GEOM.startX + CAT_GEOM.pawX) * catW - miniLeft(5);
   const rackVars = {
     "--mini-w": px(miniW),
     "--rack-left": px(rackLeft),
@@ -104,6 +116,7 @@ export default function ArtworkSwitcher({
     "--rack-m-top": px(fTop + fH + rect.height * 0.03),
     // 第 6 张由猫推进来，时长必须与 CatDelivery 一致 —— 单一来源
     "--push-dur": `${HERO_TIMINGS.catPushMs}ms`,
+    "--push-from-x": px(pushFromX),
   } as React.CSSProperties;
 
   const art = ARTWORKS[index];
@@ -154,46 +167,47 @@ export default function ArtworkSwitcher({
           styles.rack,
           delivering && !revealed ? styles.rackDelivering : "",
           revealed ? styles.rackOn : "",
-          active && !revealed ? styles.rackPushing : "",
+          pushing ? styles.rackPushing : "",
         ].join(" ")}
         style={rackVars}
         role="radiogroup"
         aria-label="Spare prints. Pick one for the frame"
       >
-        {ARTWORKS.map((a, i) => {
-          const isFramed = i === index;
-          return (
-            <button
-              key={a.id}
-              className={`${styles.mini} ${isFramed ? styles.miniFramed : ""}`}
-              style={{ "--i": i } as React.CSSProperties}
-              onClick={() => !isFramed && swapTo(i)}
-              role="radio"
-              aria-checked={isFramed}
-              aria-label={
-                isFramed
-                  ? `${a.title} — currently framed`
-                  : `Put ${a.title} in the frame`
-              }
-              tabIndex={active ? 0 : -1}
-            >
-              <span className={styles.miniInner}>
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  src={`/hero/art/flat-0${i + 1}-s.jpg`}
-                  alt=""
-                  draggable={false}
-                  className={styles.miniFace}
-                />
-                {/* 画布背面：木框十字撑条 */}
-                <span className={styles.miniBack} aria-hidden>
-                  <span />
-                  <span />
+        {loadArt &&
+          ARTWORKS.map((a, i) => {
+            const isFramed = i === index;
+            return (
+              <button
+                key={a.id}
+                className={`${styles.mini} ${isFramed ? styles.miniFramed : ""}`}
+                style={{ "--i": i } as React.CSSProperties}
+                onClick={() => !isFramed && swapTo(i)}
+                role="radio"
+                aria-checked={isFramed}
+                aria-label={
+                  isFramed
+                    ? `${a.title} — currently framed`
+                    : `Put ${a.title} in the frame`
+                }
+                tabIndex={active ? 0 : -1}
+              >
+                <span className={styles.miniInner}>
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={`/hero/art/flat-0${i + 1}-s.jpg`}
+                    alt=""
+                    draggable={false}
+                    className={styles.miniFace}
+                  />
+                  {/* 画布背面：木框十字撑条 */}
+                  <span className={styles.miniBack} aria-hidden>
+                    <span />
+                    <span />
+                  </span>
                 </span>
-              </span>
-            </button>
-          );
-        })}
+              </button>
+            );
+          })}
       </div>
 
       {/* 纸质吊牌：桌面端挂在画框左上角；移动端落在画框脚下右侧。
