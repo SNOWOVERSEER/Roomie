@@ -42,47 +42,48 @@ export interface Artwork {
  * 每张图都是「末帧画框区域的完整合成图」：透视、光照、画布纹理
  * 已离线烘焙（tools/make_artworks.py），浏览器端只做交叉溶解。
  * 平面稿 flat-0X 由 tools/extract_flats.py 从产品图提取（真实画作）。
- * 上新画作 = 放入源图 → 两个脚本各跑一次 → 在这里加一项。
+ * 上新画作 = 放入源图 → 两个脚本各跑一次 → 跑 tools/compress_hero_media.sh
+ * 转 JPEG → 在这里加一项。
  */
 export const ARTWORKS: Artwork[] = [
   {
     id: "art-01",
-    src: "/hero/art/art-01.png",
+    src: "/hero/art/art-01.jpg",
     title: "Sunny Field",
     alt: "A little white house under a red sun, deep blue sky over a golden field",
     caption: "The one it arrives with: a little house, a big noon.",
   },
   {
     id: "art-02",
-    src: "/hero/art/art-02.png",
+    src: "/hero/art/art-02.jpg",
     title: "Wave Light",
     alt: "Sun glitter scattered across blue afternoon waves",
     caption: "The sea, mid-sparkle.",
   },
   {
     id: "art-03",
-    src: "/hero/art/art-03.png",
+    src: "/hero/art/art-03.jpg",
     title: "Leaf Boat",
     alt: "A tiny boat adrift on a deep indigo sea, seen from above",
     caption: "One small boat, a very big blue.",
   },
   {
     id: "art-04",
-    src: "/hero/art/art-04.png",
+    src: "/hero/art/art-04.jpg",
     title: "Forest Light",
     alt: "Sunlight pooling through green summer leaves",
     caption: "Sun through the canopy, for the wild ones.",
   },
   {
     id: "art-05",
-    src: "/hero/art/art-05.png",
+    src: "/hero/art/art-05.jpg",
     title: "Window Glow",
     alt: "Late-afternoon window light and palm shadows in warm orange",
     caption: "Golden hour, no window required.",
   },
   {
     id: "art-06",
-    src: "/hero/art/art-06.png",
+    src: "/hero/art/art-06.jpg",
     title: "Red Fruit",
     alt: "A deck chair perched on an apple the size of a hill",
     caption: "Summer, on a very big apple.",
