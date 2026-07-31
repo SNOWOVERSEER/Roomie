@@ -96,7 +96,28 @@ art PNG 比视频早 4ms 发起 —— 完全同步竞争。
 5. **`visibilityState: hidden` 下浏览器不给 `<video>` 分配加载**：
    readyState 卡在 0，而服务端 6ms 就返回 2.2MB。早期能跑通大概是
    标签曾被 front 过。几何验证只能靠代码 + 算术。
-- [ ] Task 8: 收尾核对与文档
+- [x] Task 8: 收尾核对与文档 — complete (9411242..0377852, review clean)
+      构建通过；实测总量 13.83MB → 4.30MB（69%）。发现我计划里的"3MB 以内"
+      期望不成立：目标定于把视频改回原生分辨率之前，是算术没跟上，已记入 HANDOVER。
+
+## 整分支终审（opus）— 抓到八个逐任务审查都漏掉的 High
+
+**画跑在猫前面。** `miniPushedIn` 仍用扁平的 `- mini-w * 2` 位移，
+而第 6 张的自然位置是 `rackLeft + 2.9×miniW` —— 起点落在 **+44px（画内）**，
+猫爪起点在 **−96.8px**。同缓动同时长，只在最后一帧才碰上：观感是画凭空
+出现在舞台中间、猫在后面追。Task 6 为 `miniSlideIn` 修过同一个 bug，
+`miniPushedIn` 写在那之前，没跟上。
+
+**终点算术是对的（0.02px），但算术只能验终点，而时间线冻结让没人看过轨迹。**
+
+另四条：`rackPushing` 在桌面降级路径上无猫却触发；**skip 反而多给 2.1 秒
+的猫**（与按钮字面意思相反）；buffering 环因内联 `strokeDasharray` 压过
+indeterminate 规则而渲染成**整圈**（读作 100% 完成）；猫的图片在它必须
+出现的那一刻才开始下载。
+
+修复取结构化路线：`CAT_GEOM` 进 heroConfig，两处几何经自定义属性同源；
+`pushed` latch 分离自然定格与 instant；猫提前到 `beats.delivery` 挂载。
+实测两个起点均为 −96.768px。
 
 ## Minor findings 累积（供最终整分支 review 分诊）
 
