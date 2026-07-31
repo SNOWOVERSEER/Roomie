@@ -11,6 +11,8 @@
  *      heroConfig（视频、FRAME_RECT、时间轴各自独立）；
  *   3. 本文件现有实现整体保留，作为 Carousel 的第 1 屏直接复用
  *      （视频剧场 + 换画交互不动，只是外面多一层滑轨）。
+ *   4. 时间轴状态机已抽进 useHeroSequence()，Carousel 化时每屏
+ *      各自持有一个实例即可；SkipDial / CatDelivery 只服务第 1 屏。
  */
 import { useRef } from "react";
 import { COVER_FOCUS, HERO_TIMINGS } from "@/lib/heroConfig";
