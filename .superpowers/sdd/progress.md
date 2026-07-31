@@ -144,3 +144,27 @@ indeterminate 规则而渲染成**整圈**（读作 100% 完成）；猫的图�
   不清 `timers.current` 里已排期的错峰计时器。它们稍后落到已是 true 的
   字段上，是 no-op（消费方只看布尔值不看对象引用），无可见影响，
   但会有几次无谓的 re-render。
+
+
+## 终审结论：MERGE（8fa7a01 修完九条后）
+
+Reviewer 独立重推几何，确认 Fix 1 是构造上正确：`miniLeft(5)` 代数上
+抵消，起点锁定对任意 rect / miniW / rackLeft 成立，改 0.58 叠压系数
+也不会破。6 种视口（含 rect.left 为负、761px 临界）Δ 全为精确 0。
+轨迹偏差峰值 ~0.5px（源于 999.6 vs 1000ms 的 0.4ms 误差），不可见。
+
+## 合并后的跟进项（都不阻塞）
+
+1. **部署体积**：`public/hero/art/` 里 7.1MB 的画作 PNG 母版 + 21.7MB 的
+   flat-0X.png 仍会部署到 Vercel（用户从不下载，只是部署重量）。视频母版
+   已移到 assets/，画作没移是因为要同时改 make_artworks.py 的输出路径 ——
+   那是管线改动，该独立成一次带自己验证的变更。
+2. **`0.58` 有三份拷贝**：`miniSlideIn` 的 CSS、`rackGeometry()`、以及
+   `.mini + .mini` 的 -42% margin（0.58 = 1 − 0.42）。这是本轮反复出问题
+   的那个模式最后一处活标本，失效后果是 Task 6 那个 bug 重现（观感层面）。
+3. **`HeroCopy.tsx:46,55`** 用 `priority` 渲染两张图，会在关键路径上发
+   preload —— 正是这个分支要清空的那个位置。体积小且是既有代码，未动。
+4. `CatDelivery` 的 `.catIdle` 可加 `visibility: hidden`，省掉 3 秒的
+   drop-shadow 图层绘制。
+5. `CatDelivery.module.css` 里 `2.1 × 47.6% = 0.9996` 必须等于 1，
+   改停留/退场时长会静默失去与 `--push-dur` 的同步。CSS 侧，TS 断言够不到。
