@@ -65,7 +65,12 @@ art PNG 比视频早 4ms 发起 —— 完全同步竞争。
 - [x] Task 4: 抽出 useHeroSequence（纯重构）— complete (dc5db6f..052e3c0, review clean)
       Hero.tsx 216 → 110 行；134 行删除中 132 行逐字移入 hook，另 2 行差异是
       结构性必需。计划片段里带着 Task 2 修掉的那行 bug，执行前已同步（dc5db6f）。
-- [ ] Task 5: SkipDial
+- [x] Task 5: SkipDial — complete (759a7fc..49065dc, review clean)
+      Reviewer 抓到真缺陷：dial 在 `!frozen` 卸载（视频一停 10.02s），
+      而环声明 11 秒 —— 每次都在 91% 处被砍断，一个"看得见终点"的环
+      从没走到终点。49065dc 改成跟 `steps.plaque` 卸载。
+      ⚠️ 复审留的前瞻警告已在计划里处理：Task 7 把 plaque 改 1000 后，
+      环完成与卸载只差 17ms，已把 dialMs 改为 10800 留 217ms 余量。
 - [ ] Task 6: 画芯提前滑入的送货态
 - [ ] Task 7: CatDelivery
 - [ ] Task 8: 收尾核对与文档
@@ -90,3 +95,8 @@ art PNG 比视频早 4ms 发起 —— 完全同步竞争。
   `@media (prefers-reduced-motion: reduce)` 块不可达：reduced-motion 下
   `staticMode` 已是 true，而挂载条件要求 `staticMode === false`，
   SkipDial 根本不会挂。无害的防御性冗余。
+
+- **Task 5** — `useHeroSequence.ts` 的 `runFreezeSequence` 在 instant 分支
+  不清 `timers.current` 里已排期的错峰计时器。它们稍后落到已是 true 的
+  字段上，是 no-op（消费方只看布尔值不看对象引用），无可见影响，
+  但会有几次无谓的 re-render。

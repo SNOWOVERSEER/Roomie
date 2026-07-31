@@ -1624,13 +1624,24 @@ disabled 态的说明。第 6 张留空位给猫。"
   catPushMs: 1000,
 ```
 
-`dialMs` 的注释里提到过它等于视频时长加 `freeze.plaque`，现在 plaque 从 1500 变 1000，把 `dialMs` 从 `11000` 改为：
+**`dialMs` 必须跟着改，而且要留余量。** SkipDial 在 `steps.plaque` 卸载，
+所以环必须在那之前走完。plaque 时刻 = 视频时长(实测 10017ms) +
+`freeze.plaque`。plaque 改成 1000 后那是 11017ms，而 `dialMs` 若留在
+11000 只剩 **17ms** 余量 —— 视频时长在不同浏览器/编码上抖几毫秒就会
+翻转，环又会被砍断（这正是 Task 5 修掉的那个缺陷）。
+
+把 `dialMs` 改为：
 
 ```ts
-  dialMs: 11000, // 10s 视频 + freeze.plaque(1000)
+  /**
+   * SkipDial 进度环的长度（毫秒）。环必须在 SkipDial 卸载前走完，
+   * 而卸载发生在 steps.plaque = 视频时长(实测 10017ms) + freeze.plaque。
+   * 取 10800 而不是刚好 11017：宁可环满了停一瞬再落定，也不能被砍断 ——
+   * 一个走不到终点的进度环否定了它自己存在的理由。
+   * 改 freeze.plaque 时这里要跟着改，并保住这个余量。
+   */
+  dialMs: 10800,
 ```
-
-（数值不变，补上算式说明。）
 
 - [ ] **Step 2: 写 CatDelivery 组件**
 
