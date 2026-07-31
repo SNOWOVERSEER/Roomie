@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { HERO_TIMINGS } from "@/lib/heroConfig";
+import { HERO_TIMINGS, rackGeometry } from "@/lib/heroConfig";
 import type { ContentRect } from "./useVideoRect";
 import styles from "./CatDelivery.module.css";
 
@@ -27,10 +27,14 @@ export default function CatDelivery({ rect, play }: Props) {
 
   // 猫立在墙脚线上（与画芯架同一条地面），身宽约画面的 14%
   const catW = rect.width * 0.14;
+  const { miniLeft } = rackGeometry(rect);
+  // 猫的前爪在图片约 82% 宽处，把爪子送到第 6 张（index 5）的左缘上 ——
+  // 第 6 张因叠压天然停在画芯架起点右侧 2.9 个画芯宽处，不是起点本身。
+  const catEndX = miniLeft(5) - catW * 0.82;
   const vars = {
     "--cat-w": `${catW}px`,
     "--cat-bottom-y": `${rect.top + rect.height * 0.708}px`,
-    "--cat-end-x": `${rect.left + rect.width * 0.129 - catW * 0.62}px`,
+    "--cat-end-x": `${catEndX}px`,
     "--cat-dur": `${HERO_TIMINGS.catPushMs}ms`,
   } as React.CSSProperties;
 

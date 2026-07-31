@@ -144,6 +144,15 @@
   opacity: 0;
 }
 
+/* 第 6 张由猫推进来：从定格那一刻起和猫一起走，
+   --push-dur 与 CatDelivery 的 --cat-dur 同源（HERO_TIMINGS.catPushMs），
+   所以猫抵达的那一刻正是这张落位的那一刻。放在 .rackDelivering 之后、
+   与之同级特异度，靠源码顺序覆盖上面的按兵不动规则。 */
+.rackPushing .mini:nth-child(6) {
+  animation: miniPushedIn var(--push-dur) var(--ease-out) both;
+  opacity: 1;
+}
+
 .mini {
   position: relative;
   width: var(--mini-w);
@@ -190,13 +199,6 @@
   animation: none;
 }
 
-/* 第 6 张不走常规错峰 —— 它是被猫推进来的。
-   --push-dur 由组件从 HERO_TIMINGS.catPushMs 传入，
-   与 CatDelivery 的行进同一个来源，不会失步。 */
-.rackOn .mini:nth-child(6) {
-  animation: miniPushedIn var(--push-dur) var(--ease-out) both;
-}
-
 @keyframes miniPushedIn {
   from {
     opacity: 0;
@@ -209,7 +211,7 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .rackOn .mini:nth-child(6) {
+  .rackPushing .mini:nth-child(6) {
     animation: none;
   }
 }
@@ -435,6 +437,17 @@
   }
   .rackDelivering .mini:nth-child(6) {
     opacity: 0;
+  }
+
+  /* 猫推入动画同样按 --rack-left 计算位移基准，桌面端有效、
+     移动端的 rack 却改用 --rack-m-left 定位（两者不等，实测
+     -15.1px vs 45.5px @375px）—— 硬跑会退到错误坐标系里的某处。
+     移动端不出猫，第 6 张按基础 .mini 隐藏态原地待命，等 .rackOn
+     一次性揭示，与其余五张同步登场即可。 */
+  .rackPushing .mini:nth-child(6) {
+    animation: none;
+    opacity: 0;
+    translate: 0 12px;
   }
 }
 

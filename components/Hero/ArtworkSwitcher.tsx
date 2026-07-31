@@ -1,7 +1,13 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { ARTWORKS, FRAME_RECT, HERO_COPY, HERO_TIMINGS } from "@/lib/heroConfig";
+import {
+  ARTWORKS,
+  FRAME_RECT,
+  HERO_COPY,
+  HERO_TIMINGS,
+  rackGeometry,
+} from "@/lib/heroConfig";
 import type { ContentRect } from "./useVideoRect";
 import styles from "./ArtworkSwitcher.module.css";
 
@@ -89,10 +95,10 @@ export default function ArtworkSwitcher({
   const fH = (rect.height * FRAME_RECT.height) / 100;
 
   // 画芯架：立在大画框左侧地板上（墙脚线 ≈ 内容高的 70.6%）
-  const miniW = Math.max(36, rect.width * 0.034);
+  const { miniW, rackLeft } = rackGeometry(rect);
   const rackVars = {
     "--mini-w": px(miniW),
-    "--rack-left": px(rect.left + rect.width * 0.129),
+    "--rack-left": px(rackLeft),
     "--rack-bottom-y": px(rect.top + rect.height * 0.708),
     "--rack-m-left": px(fLeft + 2),
     "--rack-m-top": px(fTop + fH + rect.height * 0.03),
@@ -148,6 +154,7 @@ export default function ArtworkSwitcher({
           styles.rack,
           delivering && !revealed ? styles.rackDelivering : "",
           revealed ? styles.rackOn : "",
+          active && !revealed ? styles.rackPushing : "",
         ].join(" ")}
         style={rackVars}
         role="radiogroup"

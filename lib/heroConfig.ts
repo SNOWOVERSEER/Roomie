@@ -29,6 +29,22 @@ export const FRAME_RECT = frameRect as {
   pinTop: number;
 };
 
+/**
+ * 画芯架的几何。CatDelivery 要知道第 6 张停在哪才能把猫送到位，
+ * ArtworkSwitcher 要按同一套数摆放它们 —— 两边各算各的就会像
+ * 之前那样猫推空。叠压步长 0.58 来自 .mini + .mini 的 -42% margin。
+ */
+export function rackGeometry(rect: { left: number; width: number }) {
+  const miniW = Math.max(36, rect.width * 0.034);
+  const rackLeft = rect.left + rect.width * 0.129;
+  return {
+    miniW,
+    rackLeft,
+    /** 第 i 张画芯的左缘（相对舞台，px） */
+    miniLeft: (i: number) => rackLeft + i * 0.58 * miniW,
+  };
+}
+
 export interface Artwork {
   id: string;
   src: string;
