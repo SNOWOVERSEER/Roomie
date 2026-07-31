@@ -80,7 +80,22 @@ art PNG 比视频早 4ms 发起 —— 完全同步竞争。
          送货动画（spec 明说移动端不该经过），且移动端 rack 用
          --rack-m-left 定位而位移按 --rack-left 算，基准都是错的。
          在移动端媒体查询里把送货态压回"未出现"。
-- [ ] Task 7: CatDelivery
+- [x] Task 7: CatDelivery — complete (0dd257d..4733704, 复审待回)
+      Reviewer 的实证工作抓到两条推翻核心交付的缺陷（diff 与 brief 逐字一致，
+      只有行为验证能发现）：
+      ① --cat-end-x 瞄画芯架起点，但第 6 张因 -42% 叠压在起点右侧 2.9 个
+         画芯宽处 —— 猫停在第 1、2 张旁边，差 65px。
+      ② 第 6 张的推入动画挂 .rackOn，要到 plaque(t=1000ms) 才生效，正是猫
+         已抵达之时。真实观感是猫走到空位比划完离开，画才自己滑进来。
+      根因同一个：猫和画芯架各算各的几何。抽出 rackGeometry() 共用。
+      修后爪子落点与第 6 张左缘相差 0.02px；rackPushing 在定格后 4.9ms
+      生效、rackOn 在 1007ms 接手。
+
+## 取景器新限制（Task 7 期间出现）
+
+5. **`visibilityState: hidden` 下浏览器不给 `<video>` 分配加载**：
+   readyState 卡在 0，而服务端 6ms 就返回 2.2MB。早期能跑通大概是
+   标签曾被 front 过。几何验证只能靠代码 + 算术。
 - [ ] Task 8: 收尾核对与文档
 
 ## Minor findings 累积（供最终整分支 review 分诊）
