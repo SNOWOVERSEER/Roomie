@@ -1360,11 +1360,15 @@ export interface HeroBeats {
     };
 ```
 
-静态模式 effect 里的 `setBeats({ title: true, subtitle: false });` 改为：
+静态模式 effect 里那行**现在是合并 updater**（Task 2 修 flicker 时改的，
+别改回无条件替换），把它改为：
 
 ```ts
-      setBeats({ title: true, subtitle: false, delivery: true });
+      setBeats((b) => ({ ...b, title: true, delivery: true }));
 ```
+
+> ⚠️ 若你在文件里看到的是 `setBeats({ title: true, subtitle: false })`，
+> 说明有人把修复覆盖掉了 —— 停下来报告，不要继续。
 
 - [ ] **Step 3: ArtworkSwitcher 接受 delivering**
 

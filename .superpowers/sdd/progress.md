@@ -85,3 +85,8 @@ art PNG 比视频早 4ms 发起 —— 完全同步竞争。
 - **Task 2** — fallback 的两个计时器只在最终卸载时清理，`staticMode`
   从 false 翻走时不清。实际无害（只翻一次，且 updater 是 no-op 守卫），
   且与文件既有惯例一致，记录备查。
+
+- **Task 5** — `components/Hero/SkipDial.module.css` 末尾的
+  `@media (prefers-reduced-motion: reduce)` 块不可达：reduced-motion 下
+  `staticMode` 已是 true，而挂载条件要求 `staticMode === false`，
+  SkipDial 根本不会挂。无害的防御性冗余。
