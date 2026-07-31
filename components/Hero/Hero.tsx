@@ -163,7 +163,7 @@ export default function Hero({
     if (reduced) {
       runFreezeSequence(true);
     } else {
-      setBeats({ title: true, subtitle: false });
+      setBeats((b) => ({ ...b, title: true }));
       timers.current.push(setTimeout(() => runFreezeSequence(false), 350));
     }
   }, [staticMode, runFreezeSequence]);
