@@ -2016,10 +2016,20 @@ Expected：`totalMB` 在 3 以内（改动前约 14）；`largest` 里视频的 
   `CatDelivery` 推入第 6 张完成落定
 - 右下角 `SkipDial`：确定进度环 + hover 跳过，移动端不出现
 
-调时间轴只改 `lib/heroConfig.ts` 的 `HERO_TIMINGS`。两条必须手动
-维持的等式：`dialMs` = 视频时长 + `freeze.plaque`；`catPushMs` =
-`freeze.plaque`。（CSS 侧不需要跟着改 —— `--push-dur` 与
-`--cat-dur` 都由组件从 `catPushMs` 传入。）
+调时间轴只改 `lib/heroConfig.ts` 的 `HERO_TIMINGS`。三条约束：
+
+1. `catPushMs` **必须等于** `freeze.plaque` —— 猫抵达的那一刻正是
+   画芯落定的那一刻。
+2. `dialMs` **必须小于** 视频时长(实测 10017ms) + `freeze.plaque`。
+   SkipDial 在 `steps.plaque` 卸载，环若没走完就会被砍断 —— 那正是
+   开发中修过一次的缺陷。当前 10800 对 11017，留 217ms 余量；宁可
+   满环停一瞬，也不能砍断。
+3. 画芯架的几何（`miniW` / `rackLeft` / 第 i 张的位置）一律走
+   `rackGeometry()`。CatDelivery 要知道第 6 张停在哪，ArtworkSwitcher
+   要摆放它们 —— 两边各算各的就会像开发中那样猫推空 65px。
+
+CSS 侧不需要跟着改时长：`--push-dur` 与 `--cat-dur` 都由组件从
+`catPushMs` 传入。
 
 资产重压：`bash tools/compress_hero_media.sh [CRF]`。源是
 `assets/hero/cat-scratcher-10s.master.mp4`（不在 public/ 下，
