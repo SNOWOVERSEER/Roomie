@@ -84,8 +84,8 @@ export default function Hero({
         )}
 
         {/* 进度环 + 逃生舱。只在视频路径下出现 —— staticMode 本来就
-            只有 350ms 错峰，没有可跳过的等待；定格后演出结束即卸载。 */}
-        {staticMode === false && !frozen && (
+            只有 350ms 错峰，没有可跳过的等待；环走完的那一刻正好是画芯落定可点的那一刻。 */}
+        {staticMode === false && !steps.plaque && (
           <SkipDial
             mode={loadArt ? "running" : "buffering"}
             durationMs={HERO_TIMINGS.dialMs}
