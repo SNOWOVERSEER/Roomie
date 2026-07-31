@@ -600,6 +600,17 @@ git commit -m "首屏资产从 14MB 压到 3MB 以内
   ```
 - 后续任务会往 `HeroSequence` 上加 `skip` 与 `beats.delivery`
 
+> **⚠️ 权威来源是当前的 `Hero.tsx`，不是下面的片段。**
+> 本节的代码写于 Task 1/2 之前，之后 `Hero.tsx` 已经变了（`loadArt` 闸门、
+> 页面时钟兜底、`loadGuard`、以及把静态模式那行改成合并 updater 的
+> flicker 修复）。**搬运当前文件里真实存在的逻辑**，把下面的片段当作
+> 目标结构的参考。逐字照抄会把已修好的 bug 重新引入 —— 特别是静态模式
+> 分支必须是 `setBeats((b) => ({ ...b, title: true }))`，绝不是
+> `setBeats({ title: true, subtitle: false })`。
+>
+> 判据：这是纯重构，`git diff` 里 `Hero.tsx` 删掉的每一行都应当在
+> `useHeroSequence.ts` 里原样出现。
+
 - [ ] **Step 1: 新建 hook 文件**
 
 `components/Hero/useHeroSequence.ts`：
@@ -768,7 +779,7 @@ export function useHeroSequence(): HeroSequence {
     if (reduced) {
       runFreezeSequence(true);
     } else {
-      setBeats({ title: true, subtitle: false });
+      setBeats((b) => ({ ...b, title: true }));
       timers.current.push(setTimeout(() => runFreezeSequence(false), 350));
     }
   }, [staticMode, runFreezeSequence]);
