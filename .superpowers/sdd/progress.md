@@ -29,7 +29,8 @@ art PNG 比视频早 4ms 发起 —— 完全同步竞争。
 ## 任务
 
 - [x] Task 0: 采集改动前网络基线 — 完成，无代码改动
-- [ ] Task 1: art 大图推迟到视频起播后
+- [x] Task 1: art 大图推迟到视频起播后 — complete (e29046c..e8bb666, review clean)
+      实测：视频 967ms 起、art 1053ms 起，顺序已翻转（基线是 art 早 4ms）
 - [ ] Task 2: 文案时机从视频时间解耦 + 弱网兜底
 - [ ] Task 3: 视频重压与画作 WebP
 - [ ] Task 4: 抽出 useHeroSequence（纯重构）
@@ -40,4 +41,7 @@ art PNG 比视频早 4ms 发起 —— 完全同步竞争。
 
 ## Minor findings 累积（供最终整分支 review 分诊）
 
-（暂无）
+- **Task 1** — `components/Hero/ArtworkSwitcher.tsx:12-13`：`loadArt` 的
+  prop 注释只写了"视频起播后才 true"，没提 staticMode 下也会立即置
+  true。单独读 ArtworkSwitcher.tsx 会误以为只有视频路径会放行。
+  （注释文本照抄自 brief，是计划的问题不是实现的问题。）
