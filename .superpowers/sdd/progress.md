@@ -62,7 +62,9 @@ art PNG 比视频早 4ms 发起 —— 完全同步竞争。
       改回原生 1664×1248/CRF26 = 2.12MB，纹理保住。同时删掉 WebM
       （VP9 1.96MB 比 H.264 还大，却排在第一个 source，等于让 Chrome 多下 1MB）。
       **实测 hero 总量 13.83MB → 4.58MB，关键路径约 2.9MB。**
-- [ ] Task 4: 抽出 useHeroSequence（纯重构）
+- [x] Task 4: 抽出 useHeroSequence（纯重构）— complete (dc5db6f..052e3c0, review clean)
+      Hero.tsx 216 → 110 行；134 行删除中 132 行逐字移入 hook，另 2 行差异是
+      结构性必需。计划片段里带着 Task 2 修掉的那行 bug，执行前已同步（dc5db6f）。
 - [ ] Task 5: SkipDial
 - [ ] Task 6: 画芯提前滑入的送货态
 - [ ] Task 7: CatDelivery
