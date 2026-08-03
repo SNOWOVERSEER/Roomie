@@ -168,11 +168,21 @@ export default function ArtworkSwitcher({
       {delivering && !revealed && !pushing && (
         <div
           className={styles.rackSpinner}
-          style={{
-            // 以那排画芯的中心为锚点（架宽 = 3.9 个画芯宽，见 -42% 叠压）
-            left: px(rackLeft + miniW * 1.95),
-            top: px(rect.top + rect.height * 0.708 - miniW * 0.73),
-          }}
+          style={
+            {
+              // 居中于「此刻在场的那 5 张」——第 6 张要等猫送来，
+              // 把它算进跨度会让转圈整体右移 0.29 个画芯宽。
+              left: px((rackLeft + miniLeft(4) + miniW) / 2),
+              // 画芯高 = miniW × 10/7，架顶在 rack-bottom-y − 1.46×miniW，
+              // 所以竖直中心在 rack-bottom-y − 0.746×miniW
+              top: px(rect.top + rect.height * 0.708 - miniW * 0.746),
+              // 和那 5 张一起从舞台左缘滑进来：起点对齐它们的起点
+              // （−1.4×miniW，见 miniSlideIn），扣掉自身居中的半宽
+              "--spin-from-x": px(
+                -1.4 * miniW - ((rackLeft + miniLeft(4) + miniW) / 2 - 15),
+              ),
+            } as React.CSSProperties
+          }
           aria-hidden
         >
           <svg viewBox="0 0 30 30">

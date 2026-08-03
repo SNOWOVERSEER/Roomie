@@ -509,17 +509,21 @@
     0 1px 4px rgba(74, 48, 16, 0.3),
     0 5px 14px rgba(74, 48, 16, 0.2);
   pointer-events: none;
-  animation: spinnerIn 320ms var(--ease-out) both;
+  /* 和那 5 张画芯一起滑进来，而不是在原地淡出来 —— 它是这批货的一部分。
+     760ms 与 miniSlideIn 同长；260ms 延迟 = 中间那张（i=2）的错峰位置，
+     所以它跟着这排的视觉中心一起走。用 translate 属性而非 transform，
+     免得和 hover/active 那些 transform 打架。 */
+  animation: spinnerSlideIn 760ms var(--ease-out) 260ms both;
 }
 
-@keyframes spinnerIn {
+@keyframes spinnerSlideIn {
   from {
     opacity: 0;
-    transform: scale(0.7);
+    translate: var(--spin-from-x) 0;
   }
   to {
     opacity: 1;
-    transform: scale(1);
+    translate: 0 0;
   }
 }
 
