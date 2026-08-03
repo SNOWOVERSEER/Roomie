@@ -102,6 +102,60 @@
   pointer-events: auto;
 }
 
+/* ---------- 送货态：画芯在场，但还没落定 ----------
+   从舞台左缘推进来（推手在画面外），去饱和 + 没有落地阴影。
+   读作「还在被搬运」而不是「坏了/禁用」—— 关键是它在动，
+   动着的东西没人会去点。落定那一下才上色、投影、可交互。
+   第 6 张留空位给猫推（见 CatDelivery）。 */
+
+.rackDelivering .mini {
+  filter: saturate(0.22) brightness(0.86);
+  animation: miniSlideIn 760ms var(--ease-out) calc(var(--i) * 130ms) both;
+}
+
+/* 起点在舞台左缘之外：--rack-left 是画芯架距舞台左边的距离。
+   但画芯架是叠压的 flex 行（.mini + .mini 每张收进 0.42 个
+   画芯宽），第 i 张的自然流位置已经比第 0 张多右移了 0.58i
+   个画芯宽 —— 固定位移量只压得住前两张，后面几张还没退到
+   舞台外就已经在播「送货态」。所以位移要按 --i 缩放：
+   0.58 × --i 抵消这份叠压带来的流位移，再多退 1.4 个画芯宽，
+   让每张的右边缘都稳稳越过舞台左缘，而不是刚好卡在线上。 */
+@keyframes miniSlideIn {
+  from {
+    opacity: 0;
+    translate: calc(
+        -1 * var(--rack-left) - var(--mini-w) * (var(--i) * 0.58 + 1.4)
+      )
+      0;
+  }
+  to {
+    opacity: 1;
+    translate: 0 0;
+  }
+}
+
+.rackDelivering .mini::after {
+  opacity: 0; /* 还没落地，就没有落地阴影 */
+}
+
+/* 第 6 张不在送货批次里 —— 它由猫推进来 */
+.rackDelivering .mini:nth-child(6) {
+  animation: none;
+  opacity: 0;
+}
+
+/* 第 6 张由猫推进来：从定格那一刻起和猫一起走，
+   --push-dur 与 CatDelivery 的 --cat-dur 同源（HERO_TIMINGS.catPushMs），
+   所以猫抵达的那一刻正是这张落位的那一刻。放在 .rackDelivering 之后、
+   与之同级特异度，靠源码顺序覆盖上面的按兵不动规则。
+   .rackPushing 本身只在 Hero 判定「视频路径 + 猫确实存在」时才挂上
+   （见 ArtworkSwitcher.tsx 的 pushing prop）—— 静态降级分支不会有这张
+   在没有猫的情况下自己跑起来。 */
+.rackPushing .mini:nth-child(6) {
+  animation: miniPushedIn var(--push-dur) var(--ease-out) both;
+  opacity: 1;
+}
+
 .mini {
   position: relative;
   width: var(--mini-w);
@@ -114,6 +168,7 @@
   transition:
     opacity 560ms var(--ease-out) calc(var(--i) * 95ms + 80ms),
     translate 620ms var(--ease-soft) calc(var(--i) * 95ms + 80ms),
+    filter 620ms var(--ease-out),
     transform 220ms var(--ease-soft) 0s;
 }
 
@@ -143,6 +198,38 @@
 .rackOn .mini {
   opacity: 1;
   translate: 0 0;
+  filter: none;
+  animation: none;
+}
+
+/* 起点：与 CatDelivery 里猫前爪的起跑点用同一套 CAT_GEOM 算出来
+   （heroConfig.ts），由 ArtworkSwitcher.tsx 算好通过 --push-from-x
+   传入 —— 不能像 .mini + .mini 的叠压位移那样在这里独立硬算。
+   这里曾经写的是 calc(-1 * var(--rack-left) - var(--mini-w) * 2)，
+   与猫的起跑点各算各的：画在 +44px 起跑、爪子在 −97px，141px 的
+   差距一路线性收窄，画全程跑在猫前面，只在最后一帧才被"追上"。
+   miniSlideIn（上面）已经因为同一类错误改过一次、按 --i 缩放；
+   这条是它的姊妹关键帧，此前一直没跟着改。 */
+@keyframes miniPushedIn {
+  from {
+    opacity: 0;
+    translate: var(--push-from-x) 0;
+  }
+  to {
+    opacity: 1;
+    translate: 0 0;
+  }
+}
+
+/* 这块看着像死代码（大部分 reduced-motion 访客走的是 staticMode 的
+   即时呈现分支，根本不经过 .rackPushing）但不是：staticMode 只在
+   mount 时判一次、没有 change 监听，而这条媒体查询是活的 —— 页面
+   开着时才打开"减少动态效果"的访客，会保留已挂载的组件，届时
+   全靠这条规则接住动画。 */
+@media (prefers-reduced-motion: reduce) {
+  .rackPushing .mini:nth-child(6) {
+    animation: none;
+  }
 }
 
 .mini:not(.miniFramed):hover {
@@ -170,6 +257,9 @@
   );
   filter: blur(1.5px);
   z-index: -1;
+  /* 送货态把它藏起来（见下），落定时要和 .mini 的 filter 一起淡出，
+     不能瞬间蹦出来 —— 620ms 与 .mini 的 filter 过渡时长对齐 */
+  transition: opacity 620ms var(--ease-out);
 }
 
 .miniInner {
@@ -353,13 +443,128 @@
     rotate: -1.2deg;
     transform-origin: 50% 50%;
   }
+
+  /* 移动端不经过送货态：那是给桌面剧场的铺垫，小屏本来就是
+     350ms 快速错峰。这里把它压回「未出现」，由 .rackOn 一次揭示。
+     （送货位移是按 --rack-left 算的，而移动端 rack 改用
+     --rack-m-left 定位，硬跑这段动画连位移基准都是错的。） */
+  .rackDelivering .mini {
+    animation: none;
+    opacity: 0;
+    translate: 0 12px;
+    filter: none;
+  }
+  .rackDelivering .mini:nth-child(6) {
+    opacity: 0;
+  }
+
+  /* 猫推入动画同样按 --rack-left 计算位移基准，桌面端有效、
+     移动端的 rack 却改用 --rack-m-left 定位（两者不等，实测
+     -15.1px vs 45.5px @375px）—— 硬跑会退到错误坐标系里的某处。
+     移动端不出猫，第 6 张按基础 .mini 隐藏态原地待命，等 .rackOn
+     一次性揭示，与其余五张同步登场即可。 */
+  .rackPushing .mini:nth-child(6) {
+    animation: none;
+    opacity: 0;
+    translate: 0 12px;
+  }
 }
 
+/* 同上一条：staticMode 落定只判一次，这条媒体查询常驻。
+   页面开着时才切换"减少动态效果"的访客，全靠它兜底。 */
 @media (prefers-reduced-motion: reduce) {
   .tagCard {
     animation: none;
   }
   .mini {
     transition-delay: 0s;
+  }
+  .rackDelivering .mini {
+    animation: none;
+    opacity: 1;
+    translate: 0 0;
+    filter: none;
+  }
+  .rackDelivering .mini:nth-child(6) {
+    opacity: 1;
+  }
+}
+
+/* ---------- 送货中的小转圈 ----------
+   叠在那排还没落定的画芯上，只活到猫出现为止。与右下角 SkipDial
+   的进度环同一套语言（奶油实底 + 橙色弧 + 落地阴影），只是这里
+   时长未知，所以是不定长转圈而不是有终点的进度弧。 */
+
+.rackSpinner {
+  position: absolute;
+  z-index: 6;
+  width: 30px;
+  height: 30px;
+  margin: -15px 0 0 -15px; /* 让 left/top 落在中心而不是左上角 */
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--cream-warm);
+  box-shadow:
+    0 1px 4px rgba(74, 48, 16, 0.3),
+    0 5px 14px rgba(74, 48, 16, 0.2);
+  pointer-events: none;
+  /* 和那 5 张画芯一起滑进来，而不是在原地淡出来 —— 它是这批货的一部分。
+     760ms 与 miniSlideIn 同长；260ms 延迟 = 中间那张（i=2）的错峰位置，
+     所以它跟着这排的视觉中心一起走。用 translate 属性而非 transform，
+     免得和 hover/active 那些 transform 打架。 */
+  animation: spinnerSlideIn 760ms var(--ease-out) 260ms both;
+}
+
+@keyframes spinnerSlideIn {
+  from {
+    opacity: 0;
+    translate: var(--spin-from-x) 0;
+  }
+  to {
+    opacity: 1;
+    translate: 0 0;
+  }
+}
+
+.rackSpinner svg {
+  width: 30px;
+  height: 30px;
+}
+
+.spinTrack {
+  fill: none;
+  stroke: rgba(212, 112, 42, 0.18);
+  stroke-width: 2.6;
+}
+
+.spinArc {
+  fill: none;
+  stroke: var(--orange-deep);
+  stroke-width: 2.6;
+  stroke-linecap: round;
+  stroke-dasharray: 17 200;
+  transform-origin: 15px 15px;
+  animation: rackSpin 1.1s linear infinite;
+}
+
+@keyframes rackSpin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* 移动端整个送货态都被压掉了（见上面的媒体查询），转圈自然也不出现；
+   何况它的 left 是按 --rack-left 算的，而移动端画芯架改用 --rack-m-left
+   定位，硬留着连位置都是错的。 */
+@media (max-width: 760px) {
+  .rackSpinner {
+    display: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .rackSpinner {
+    display: none;
   }
 }

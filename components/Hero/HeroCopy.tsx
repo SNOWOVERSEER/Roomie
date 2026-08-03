@@ -3,7 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { HERO_COPY } from "@/lib/heroConfig";
-import type { FreezeSteps } from "./Hero";
+import type { FreezeSteps } from "./useHeroSequence";
 import styles from "./Hero.module.css";
 
 interface Props {

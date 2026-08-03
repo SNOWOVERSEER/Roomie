@@ -704,3 +704,56 @@ npx tsc --noEmit                 # 应零错误
 6. 要做新商品详情页：先读 `docs/PDP_TEMPLATE.md`，从模板 A/B 起步。
 
 有不确定的先问用户（中文），小事自己定但在交付说明里讲清楚。
+
+---
+
+## Hero 首屏可预测性（2026-07-31）
+
+设计：`docs/superpowers/specs/2026-07-31-hero-anticipation-ux-design.md`
+
+改动前首屏要下 ~14MB，其中 6 张 art 大图（7.1MB）在挂载首帧就和
+视频抢带宽；`beats` 只绑 `video.currentTime`，视频不起播则标题永不
+出现；换画 feature 到第 11.5 秒才露面且中途零信号。
+
+现在：
+- art 大图推迟到视频 `playing` 后才挂 `src`；画作转 JPEG，视频重压
+  （参数在 `tools/compress_hero_media.sh`，换画作时重跑）
+- `beats` 由视频轨与页面轨双轨驱动，先到者生效；8 秒 `canplay` 兜底
+- 第 7 秒起画芯从舞台左缘滑入的送货态（去饱和、不可点），定格后
+  `CatDelivery` 推入第 6 张完成落定
+- 右下角 `SkipDial`：确定进度环 + hover 跳过，移动端不出现
+
+调时间轴只改 `lib/heroConfig.ts` 的 `HERO_TIMINGS`。三条约束：
+
+1. `catPushMs` **必须等于** `freeze.plaque` —— 猫抵达的那一刻正是
+   画芯落定的那一刻。
+2. `dialMs` **必须小于** 视频时长(实测 10017ms) + `freeze.plaque`。
+   SkipDial 在 `steps.plaque` 卸载，环若没走完就会被砍断 —— 那正是
+   开发中修过一次的缺陷。当前 10800 对 11017，留 217ms 余量；宁可
+   满环停一瞬，也不能砍断。
+3. 画芯架的几何（`miniW` / `rackLeft` / 第 i 张的位置）一律走
+   `rackGeometry()`。CatDelivery 要知道第 6 张停在哪，ArtworkSwitcher
+   要摆放它们 —— 两边各算各的就会像开发中那样猫推空 65px。
+
+CSS 侧不需要跟着改时长：`--push-dur` 与 `--cat-dur` 都由组件从
+`catPushMs` 传入。
+
+资产重压：`bash tools/compress_hero_media.sh [CRF]`。源是
+`assets/hero/cat-scratcher-10s.master.mp4`（不在 public/ 下，
+不部署）与 `public/hero/art/art-0X.png`，两者都留在仓库里，
+脚本可反复重跑。
+
+**Task 8 核对结果（收尾时补记）**：生产构建（`BUILD_DIR=.next-build
+npm run build`）通过，零类型错、零 lint 错。首屏体积用浏览器
+Performance API 复核时撞上两个环境干扰：dev 模式下 `<video>` 被
+React Strict Mode 重复挂载导致重复下载一次（生产不会）；art/画芯缩略图
+在这台机器上早被浏览器缓存命中，`encodedBodySize` 读成 0。剔除这两个
+干扰、改用磁盘实际字节数核算：视频 2.12MB + 6 张 art JPEG 1.45MB +
+6 张缩略图 0.42MB + poster 0.30MB + frame-mask 0.01MB ≈ **4.3MB**，
+比改动前 13.83MB 降约 69%。`loadArt` 由 `playing` 事件放行（起播后
+几乎立刻），6 张 art 一次性全挂载不做懒加载，所以“视频+全部画作”合计
+（2.12+1.45=3.57MB）本身就过不了 3MB——本节末尾原计划文本写的
+“totalMB 在 3 以内”对最终落地的资产尺寸不成立，仅“视频请求早于 art
+请求”这条在实测中成立（startMs 346ms 对 393ms）。核心目标（首帧不再
+抢带宽、视频优先）达成，但如果后续要卡紧到 3MB 硬指标，需要再收窄 art
+JPEG 或改懒加载单张而非一次性挂载六张。

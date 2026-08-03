@@ -11,33 +11,20 @@
  *      heroConfig（视频、FRAME_RECT、时间轴各自独立）；
  *   3. 本文件现有实现整体保留，作为 Carousel 的第 1 屏直接复用
  *      （视频剧场 + 换画交互不动，只是外面多一层滑轨）。
+ *   4. 时间轴状态机已抽进 useHeroSequence()，Carousel 化时每屏
+ *      各自持有一个实例即可；SkipDial / CatDelivery 只服务第 1 屏。
  */
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useRef } from "react";
 import { COVER_FOCUS, HERO_TIMINGS } from "@/lib/heroConfig";
 import { useVideoRect } from "./useVideoRect";
+import { useHeroSequence } from "./useHeroSequence";
 import HeroCopy from "./HeroCopy";
 import ArtworkSwitcher from "./ArtworkSwitcher";
+import CatDelivery from "./CatDelivery";
+import SkipDial from "./SkipDial";
 import styles from "./Hero.module.css";
 
-export interface FreezeSteps {
-  settled: boolean;
-  cta: boolean;
-  plaque: boolean;
-  cue: boolean;
-}
-
-const NO_STEPS: FreezeSteps = {
-  settled: false,
-  cta: false,
-  plaque: false,
-  cue: false,
-};
-const ALL_STEPS: FreezeSteps = {
-  settled: true,
-  cta: true,
-  plaque: true,
-  cue: true,
-};
+export type { FreezeSteps } from "./useHeroSequence";
 
 const objectPosition = `${COVER_FOCUS.x * 100}% ${COVER_FOCUS.y * 100}%`;
 
@@ -48,103 +35,14 @@ export default function Hero({
   priceText: React.ReactNode;
 }) {
   const stageRef = useRef<HTMLDivElement>(null);
-  const videoRef = useRef<HTMLVideoElement>(null);
-  const timers = useRef<ReturnType<typeof setTimeout>[]>([]);
   const rect = useVideoRect(stageRef);
+  const { staticMode, frozen, beats, steps, loadArt, videoRef, skip, pushed } =
+    useHeroSequence();
 
-  // static = 无视频路径（reduced-motion / 移动端 / 播放失败）→ 落幅图 + 完整交互
-  const [staticMode, setStaticMode] = useState<boolean | null>(null);
-  const [frozen, setFrozen] = useState(false);
-  const [beats, setBeats] = useState({ title: false, subtitle: false });
-  const [steps, setSteps] = useState<FreezeSteps>(NO_STEPS);
-
-  useEffect(() => {
-    const reduced = window.matchMedia("(prefers-reduced-motion: reduce)");
-    const small = window.matchMedia("(max-width: 760px)");
-    setStaticMode(reduced.matches || small.matches);
-  }, []);
-
-  const runFreezeSequence = useCallback((instant: boolean) => {
-    setFrozen(true);
-    setBeats({ title: true, subtitle: true });
-    if (instant) {
-      setSteps(ALL_STEPS);
-      return;
-    }
-    const t = HERO_TIMINGS.freeze;
-    const plan: [number, keyof FreezeSteps][] = [
-      [t.settle, "settled"],
-      [t.cta, "cta"],
-      [t.plaque, "plaque"],
-      [t.scrollCue, "cue"],
-    ];
-    for (const [delay, key] of plan) {
-      timers.current.push(
-        setTimeout(() => setSteps((s) => ({ ...s, [key]: true })), delay),
-      );
-    }
-  }, []);
-
-  // 视频模式：起播 + 与叙事咬合的文字节拍
-  useEffect(() => {
-    if (staticMode !== false) return;
-    const v = videoRef.current;
-    if (!v) return;
-
-    const tryPlay = () => {
-      const p = v.play();
-      if (p) p.catch(() => setStaticMode(true)); // autoplay 被拒 → 静态降级
-    };
-    if (v.readyState >= 2) tryPlay();
-
-    const onTime = () => {
-      const t = v.currentTime;
-      setBeats((b) => {
-        const title = b.title || t >= HERO_TIMINGS.title;
-        const subtitle = b.subtitle || t >= HERO_TIMINGS.subtitle;
-        return title === b.title && subtitle === b.subtitle
-          ? b
-          : { title, subtitle };
-      });
-    };
-    const onEnded = () => {
-      v.pause(); // 定格最后一帧
-      runFreezeSequence(false);
-    };
-    const onError = () => setStaticMode(true);
-
-    v.addEventListener("canplay", tryPlay, { once: true });
-    v.addEventListener("timeupdate", onTime);
-    v.addEventListener("ended", onEnded);
-    v.addEventListener("error", onError);
-    return () => {
-      v.removeEventListener("canplay", tryPlay);
-      v.removeEventListener("timeupdate", onTime);
-      v.removeEventListener("ended", onEnded);
-      v.removeEventListener("error", onError);
-    };
-  }, [staticMode, runFreezeSequence]);
-
-  // 静态模式：reduced-motion 全量直呈；小屏走一遍快速错峰
-  useEffect(() => {
-    if (staticMode !== true) return;
-    const reduced = window.matchMedia(
-      "(prefers-reduced-motion: reduce)",
-    ).matches;
-    if (reduced) {
-      runFreezeSequence(true);
-    } else {
-      setBeats({ title: true, subtitle: false });
-      timers.current.push(setTimeout(() => runFreezeSequence(false), 350));
-    }
-  }, [staticMode, runFreezeSequence]);
-
-  useEffect(
-    () => () => {
-      timers.current.forEach(clearTimeout);
-    },
-    [],
-  );
+  // 猫送货只在视频路径的自然定格上发生。静态降级没有铺垫，凭空来只猫
+  // 推货会很突兀；而 skip 走的是 instant 分支（pushed 保持 false），
+  // 所以点了跳过就不会再看 2.1 秒的猫 —— 那正是「跳过」的意思。
+  const catRuns = staticMode === false && pushed;
 
   return (
     <section className={styles.hero} id="top" aria-label="The Canvas Scratcher">
@@ -185,7 +83,34 @@ export default function Hero({
         />
 
         {rect && (
-          <ArtworkSwitcher rect={rect} active={frozen} revealed={steps.plaque} />
+          <ArtworkSwitcher
+            rect={rect}
+            active={frozen}
+            revealed={steps.plaque}
+            loadArt={loadArt}
+            delivering={beats.delivery}
+            pushing={catRuns && !steps.plaque}
+          />
+        )}
+
+        {/* 猫推最后一张进来。只在视频路径下播 —— 静图上没有铺垫，
+            凭空来只猫推货会很突兀。图片提前在送货拍（beats.delivery）
+            挂载，给 148KB 的资产留出播放前的解码时间；真正播动画要等
+            到 catRuns（错峰路径的自然定格，不含 skip）。猫的动画是
+            2100ms，比 steps.plaque（1000ms）晚落定得多，所以这里不能
+            用 steps.plaque 卸载它 —— catRuns 锁存，猫会留到自己演完。 */}
+        {rect && staticMode === false && (
+          <CatDelivery rect={rect} mounted={beats.delivery} play={catRuns} />
+        )}
+
+        {/* 进度环 + 逃生舱。只在视频路径下出现 —— staticMode 本来就
+            只有 350ms 错峰，没有可跳过的等待；环走完的那一刻正好是画芯落定可点的那一刻。 */}
+        {staticMode === false && !steps.plaque && (
+          <SkipDial
+            mode={loadArt ? "running" : "buffering"}
+            durationMs={HERO_TIMINGS.dialMs}
+            onSkip={skip}
+          />
         )}
 
         {/* 滚动提示：一对爪印轮替走路，最后最轻地出现 */}
@@ -193,18 +118,47 @@ export default function Hero({
           className={`${styles.cue} ${steps.cue ? styles.cueOn : ""}`}
           aria-hidden
         >
+          {/* 4 趾 + 1 掌垫。这两只原先各只画了 3 趾（比 PawMark 的诞生
+              还早），一屏上和进度环里的爪印并排出现会露馅。几何与
+              PawMark 同比例，只是嵌在这个 26×30 的走位坐标系里。 */}
           <svg viewBox="0 0 26 30" width="18">
             <g className={styles.pawA} fill="currentColor">
-              <ellipse cx="8" cy="8" rx="4" ry="3.4" />
-              <ellipse cx="3.4" cy="3.8" rx="1.7" ry="2.1" />
-              <ellipse cx="8" cy="2.2" rx="1.7" ry="2.1" />
-              <ellipse cx="12.6" cy="3.8" rx="1.7" ry="2.1" />
+              <ellipse cx="8" cy="8.6" rx="3.8" ry="3.1" />
+              <ellipse
+                cx="2.9"
+                cy="4.2"
+                rx="1.4"
+                ry="1.8"
+                transform="rotate(-22 2.9 4.2)"
+              />
+              <ellipse cx="6.2" cy="2" rx="1.4" ry="1.9" />
+              <ellipse cx="9.8" cy="2" rx="1.4" ry="1.9" />
+              <ellipse
+                cx="13.1"
+                cy="4.2"
+                rx="1.4"
+                ry="1.8"
+                transform="rotate(22 13.1 4.2)"
+              />
             </g>
             <g className={styles.pawB} fill="currentColor">
-              <ellipse cx="18" cy="24" rx="4" ry="3.4" />
-              <ellipse cx="13.4" cy="19.8" rx="1.7" ry="2.1" />
-              <ellipse cx="18" cy="18.2" rx="1.7" ry="2.1" />
-              <ellipse cx="22.6" cy="19.8" rx="1.7" ry="2.1" />
+              <ellipse cx="18" cy="24.6" rx="3.8" ry="3.1" />
+              <ellipse
+                cx="12.9"
+                cy="20.2"
+                rx="1.4"
+                ry="1.8"
+                transform="rotate(-22 12.9 20.2)"
+              />
+              <ellipse cx="16.2" cy="18" rx="1.4" ry="1.9" />
+              <ellipse cx="19.8" cy="18" rx="1.4" ry="1.9" />
+              <ellipse
+                cx="23.1"
+                cy="20.2"
+                rx="1.4"
+                ry="1.8"
+                transform="rotate(22 23.1 20.2)"
+              />
             </g>
           </svg>
         </div>
