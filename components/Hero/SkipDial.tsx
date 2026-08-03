@@ -1,6 +1,7 @@
 "use client";
 
 import styles from "./SkipDial.module.css";
+import PawMark from "./PawMark";
 
 interface Props {
   /** buffering = 视频还没来（时长未知）；running = 演出进行中（时长确定） */
@@ -10,7 +11,7 @@ interface Props {
   onSkip: () => void;
 }
 
-const R = 15; // 环半径
+const R = 20; // 环半径
 const C = 2 * Math.PI * R; // 周长，用作 dasharray
 
 /**
@@ -19,6 +20,10 @@ const C = 2 * Math.PI * R; // 周长，用作 dasharray
  *        无限转圈说的是「天知道要多久」，那是促使人划走的东西。
  *   hover = 控制权。不想等的人不必等。
  * 移动端不挂载（见 Hero.tsx）—— staticMode 本来就没有可跳过的等待。
+ *
+ * 底盘做成不透明的奶油圆片而不是半透明毛玻璃：它压在一张繁忙的实拍
+ * 照片上，半透明会和墙面糊成一团脏，爪印直接看不见。实底 + 落地阴影
+ * 读作「放在场景里的一枚小物件」，而不是浮在画面上的控件。
  */
 export default function SkipDial({ mode, durationMs, onSkip }: Props) {
   return (
@@ -28,12 +33,12 @@ export default function SkipDial({ mode, durationMs, onSkip }: Props) {
       onClick={onSkip}
       aria-label="Skip the intro and go straight to swapping prints"
     >
-      <svg viewBox="0 0 40 40" className={styles.ring} aria-hidden>
-        <circle className={styles.track} cx="20" cy="20" r={R} />
+      <svg viewBox="0 0 50 50" className={styles.ring} aria-hidden>
+        <circle className={styles.track} cx="25" cy="25" r={R} />
         <circle
           className={mode === "running" ? styles.arcRun : styles.arcWait}
-          cx="20"
-          cy="20"
+          cx="25"
+          cy="25"
           r={R}
           style={
             {
@@ -48,13 +53,8 @@ export default function SkipDial({ mode, durationMs, onSkip }: Props) {
         />
       </svg>
 
-      {/* 静息态：爪印（几何与 Hero 的滚动提示同源） */}
-      <svg className={styles.paw} viewBox="0 0 16 14" aria-hidden>
-        <ellipse cx="8" cy="9.4" rx="3.6" ry="3" />
-        <ellipse cx="3.6" cy="5" rx="1.5" ry="1.9" />
-        <ellipse cx="8" cy="3.4" rx="1.5" ry="1.9" />
-        <ellipse cx="12.4" cy="5" rx="1.5" ry="1.9" />
-      </svg>
+      {/* 静息态：爪印 */}
+      <PawMark className={styles.paw} />
 
       {/* hover 态：换成 Skip */}
       <span className={styles.label} aria-hidden>

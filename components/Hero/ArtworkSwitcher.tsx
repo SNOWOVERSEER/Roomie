@@ -160,6 +160,28 @@ export default function ArtworkSwitcher({
           })}
       </div>
 
+      {/* 送货中的小转圈，叠在那排还没落定的画芯上。
+          只活到猫出现为止：猫一到就该由猫来说明「最后一张在路上」，
+          再留着转圈等于两个东西在说同一件事。语言与右下角的进度环
+          同源（奶油实底 + 橙色弧），只是这里时长未知，所以是不定长
+          转圈而不是有终点的进度。 */}
+      {delivering && !revealed && !pushing && (
+        <div
+          className={styles.rackSpinner}
+          style={{
+            // 以那排画芯的中心为锚点（架宽 = 3.9 个画芯宽，见 -42% 叠压）
+            left: px(rackLeft + miniW * 1.95),
+            top: px(rect.top + rect.height * 0.708 - miniW * 0.73),
+          }}
+          aria-hidden
+        >
+          <svg viewBox="0 0 30 30">
+            <circle className={styles.spinTrack} cx="15" cy="15" r="11" />
+            <circle className={styles.spinArc} cx="15" cy="15" r="11" />
+          </svg>
+        </div>
+      )}
+
       {/* 备用画芯：靠墙立在地板上，点哪张就换哪张。
           当前在框里的那张翻过去露出画布背面。 */}
       <div

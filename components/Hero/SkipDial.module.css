@@ -8,13 +8,18 @@
   z-index: 6;
   display: grid;
   place-items: center;
-  width: 40px;
-  height: 40px;
+  width: 50px;
+  height: 50px;
   padding: 0;
   border: 0;
   border-radius: 50%;
-  background: rgba(248, 240, 222, 0.42);
-  backdrop-filter: blur(3px);
+  /* 实底而非半透明毛玻璃：底下是一张繁忙的实拍照片，半透明会和墙面
+     糊成一团，爪印直接消失。实底 + 落地阴影读作「场景里的一枚小物件」。 */
+  background: var(--cream-warm);
+  box-shadow:
+    0 2px 6px rgba(74, 48, 16, 0.28),
+    0 8px 20px rgba(74, 48, 16, 0.18),
+    inset 0 1px 0 rgba(255, 255, 255, 0.9);
   cursor: pointer;
   pointer-events: auto;
   -webkit-tap-highlight-color: transparent;
@@ -23,7 +28,7 @@
   opacity: 1;
   transform: scale(1);
   transition:
-    background 260ms var(--ease-out),
+    box-shadow 260ms var(--ease-out),
     transform 260ms var(--ease-soft);
   /* 演出结束后由 Hero 卸载，这里只管淡入。fill 用 backwards 而非
      both —— both 的 forwards 半场会把 100% 关键帧的 transform:
@@ -47,7 +52,10 @@
 
 .dial:hover,
 .dial:focus-visible {
-  background: rgba(248, 240, 222, 0.92);
+  box-shadow:
+    0 3px 8px rgba(74, 48, 16, 0.34),
+    0 12px 26px rgba(74, 48, 16, 0.22),
+    inset 0 1px 0 rgba(255, 255, 255, 0.9);
   transform: scale(1.06);
 }
 
@@ -58,22 +66,22 @@
 }
 
 .ring {
-  width: 40px;
-  height: 40px;
+  width: 50px;
+  height: 50px;
   transform: rotate(-90deg); /* 12 点方向起步 */
 }
 
 .track {
   fill: none;
-  stroke: rgba(58, 91, 199, 0.16);
-  stroke-width: 2.2;
+  stroke: rgba(212, 112, 42, 0.2);
+  stroke-width: 3;
 }
 
 .arcRun,
 .arcWait {
   fill: none;
   stroke: var(--orange-deep);
-  stroke-width: 2.2;
+  stroke-width: 3;
   stroke-linecap: round;
 }
 
@@ -94,7 +102,8 @@
 
 /* 视频还没来：此时确实不知道要多久，用一段慢弧诚实表达 */
 .arcWait {
-  stroke-dasharray: 18 200;
+  stroke-dasharray: 24 200;
+  transform-origin: 25px 25px;
   animation: arcSpin 1.5s linear infinite;
 }
 
@@ -104,21 +113,17 @@
   }
 }
 
-.arcWait {
-  transform-origin: 20px 20px;
-}
-
 .paw {
-  width: 16px;
-  height: 14px;
-  fill: rgba(58, 91, 199, 0.72);
+  width: 19px;
+  height: 17px;
+  fill: var(--blue-deep);
   transition:
     opacity 180ms var(--ease-out),
     transform 180ms var(--ease-out);
 }
 
 .label {
-  font-size: 0.62rem;
+  font-size: 0.66rem;
   font-weight: 800;
   letter-spacing: 0.04em;
   color: var(--blue-deep);

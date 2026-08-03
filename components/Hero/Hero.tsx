@@ -118,18 +118,47 @@ export default function Hero({
           className={`${styles.cue} ${steps.cue ? styles.cueOn : ""}`}
           aria-hidden
         >
+          {/* 4 趾 + 1 掌垫。这两只原先各只画了 3 趾（比 PawMark 的诞生
+              还早），一屏上和进度环里的爪印并排出现会露馅。几何与
+              PawMark 同比例，只是嵌在这个 26×30 的走位坐标系里。 */}
           <svg viewBox="0 0 26 30" width="18">
             <g className={styles.pawA} fill="currentColor">
-              <ellipse cx="8" cy="8" rx="4" ry="3.4" />
-              <ellipse cx="3.4" cy="3.8" rx="1.7" ry="2.1" />
-              <ellipse cx="8" cy="2.2" rx="1.7" ry="2.1" />
-              <ellipse cx="12.6" cy="3.8" rx="1.7" ry="2.1" />
+              <ellipse cx="8" cy="8.6" rx="3.8" ry="3.1" />
+              <ellipse
+                cx="2.9"
+                cy="4.2"
+                rx="1.4"
+                ry="1.8"
+                transform="rotate(-22 2.9 4.2)"
+              />
+              <ellipse cx="6.2" cy="2" rx="1.4" ry="1.9" />
+              <ellipse cx="9.8" cy="2" rx="1.4" ry="1.9" />
+              <ellipse
+                cx="13.1"
+                cy="4.2"
+                rx="1.4"
+                ry="1.8"
+                transform="rotate(22 13.1 4.2)"
+              />
             </g>
             <g className={styles.pawB} fill="currentColor">
-              <ellipse cx="18" cy="24" rx="4" ry="3.4" />
-              <ellipse cx="13.4" cy="19.8" rx="1.7" ry="2.1" />
-              <ellipse cx="18" cy="18.2" rx="1.7" ry="2.1" />
-              <ellipse cx="22.6" cy="19.8" rx="1.7" ry="2.1" />
+              <ellipse cx="18" cy="24.6" rx="3.8" ry="3.1" />
+              <ellipse
+                cx="12.9"
+                cy="20.2"
+                rx="1.4"
+                ry="1.8"
+                transform="rotate(-22 12.9 20.2)"
+              />
+              <ellipse cx="16.2" cy="18" rx="1.4" ry="1.9" />
+              <ellipse cx="19.8" cy="18" rx="1.4" ry="1.9" />
+              <ellipse
+                cx="23.1"
+                cy="20.2"
+                rx="1.4"
+                ry="1.8"
+                transform="rotate(22 23.1 20.2)"
+              />
             </g>
           </svg>
         </div>
